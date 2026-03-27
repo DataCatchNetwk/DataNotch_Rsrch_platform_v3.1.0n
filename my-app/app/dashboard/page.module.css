@@ -1,0 +1,150 @@
+.container {
+  width: 100%;
+}
+
+.welcomeCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  border-radius: 16px;
+  margin-bottom: 40px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+
+  @media (max-width: 768px) {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+}
+
+.subtitle {
+  font-size: 16px;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+}
+
+.card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #667eea;
+  }
+}
+
+.cardIcon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.infoBox {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 32px;
+}
+
+.infoBox h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 24px 0;
+}
+
+@media (max-width: 768px) {
+  .infoBox {
+    padding: 20px;
+  }
+
+  .infoBox h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.infoItem label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.infoItem p {
+  font-size: 14px;
+  color: #1a1a1a;
+  margin: 0;
+  word-break: break-all;
+}
+
+.userId {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 12px !important;
+  color: #667eea !important;
+  background: #f5f7fb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  line-height: 1.6;
+}

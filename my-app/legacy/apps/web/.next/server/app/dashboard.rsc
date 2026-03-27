@@ -1,0 +1,24 @@
+1:"$Sreact.fragment"
+2:I[355,["177","static/chunks/app/layout-343ec5b5b9f6659d.js"],"AuthProvider"]
+3:I[1206,[],""]
+4:I[7686,["39","static/chunks/app/error-38b6ce25ebbd269a.js"],"default"]
+5:I[4908,[],""]
+6:I[7200,["345","static/chunks/app/not-found-18818d8fba8ab9fa.js"],"default"]
+7:I[5173,[],"ClientSegmentRoot"]
+8:I[106,["305","static/chunks/app/(dashboard)/layout-6dda22bbd6938c4b.js"],"default"]
+a:I[4935,[],"ClientPageRoot"]
+b:I[1706,["337","static/chunks/app/(dashboard)/dashboard/page-907438ed035ecd7c.js"],"default"]
+e:I[551,[],"OutletBoundary"]
+11:I[551,[],"ViewportBoundary"]
+13:I[551,[],"MetadataBoundary"]
+15:I[1985,[],""]
+:HL["/_next/static/css/a9baee9a91adb730.css","style"]
+:HL["/_next/static/css/22f7357ff076e3fc.css","style"]
+0:{"P":null,"b":"6XkkrFMSUHRt8EzHLsYUY","p":"","c":["","dashboard"],"i":false,"f":[[["",{"children":["(dashboard)",{"children":["dashboard",{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[null,["$","html",null,{"lang":"en","children":["$","body",null,{"style":{"margin":0,"fontFamily":"Arial, sans-serif","background":"#f5f7fb"},"children":["$","$L2",null,{"children":["$","$L3",null,{"parallelRouterKey":"children","error":"$4","errorStyles":[],"errorScripts":[],"template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L6",null,{}],"$undefined",[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}]}]]}],{"children":["(dashboard)",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/a9baee9a91adb730.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$L7",null,{"Component":"$8","slots":{"children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]},"params":{},"promise":"$@9"}]]}],{"children":["dashboard",["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$La",null,{"Component":"$b","searchParams":{},"params":"$0:f:0:1:2:children:1:props:children:1:props:params","promises":["$@c","$@d"]}],"$undefined",[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/22f7357ff076e3fc.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$Le",null,{"children":["$Lf","$L10",null]}]]}],{},null,false]},null,false]},null,false]},[["$","div","l",{"style":{"minHeight":"100vh","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center","background":"linear-gradient(135deg, #667eea 0%, #764ba2 100%)","color":"white","fontFamily":"-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"},"children":[["$","div",null,{"style":{"display":"inline-block","position":"relative","width":"80px","height":"80px"},"children":[["$","div",null,{"style":{"position":"absolute","border":"4px solid rgba(255, 255, 255, 0.3)","opacity":1,"borderRadius":"50%","animation":"lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite","width":"100%","height":"100%"}}],["$","div",null,{"style":{"position":"absolute","border":"4px solid rgba(255, 255, 255, 0.3)","opacity":1,"borderRadius":"50%","animation":"lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite","width":"100%","height":"100%","animationDelay":"-0.5s"}}]]}],["$","p",null,{"style":{"marginTop":"24px","fontSize":"16px","opacity":0.9},"children":"Loading..."}],["$","style",null,{"children":"\n        @keyframes lds-ripple {\n          0% {\n            top: 36px;\n            left: 36px;\n            width: 0;\n            height: 0;\n            opacity: 1;\n          }\n          100% {\n            top: 0px;\n            left: 0px;\n            width: 72px;\n            height: 72px;\n            opacity: 0;\n          }\n        }\n      "}]]}],[],[]],false],["$","$1","h",{"children":[null,["$","$1","A_65v4PCO_Uqhdxt99g01",{"children":[["$","$L11",null,{"children":"$L12"}],null]}],["$","$L13",null,{"children":"$L14"}]]}],false]],"m":"$undefined","G":["$15","$undefined"],"s":false,"S":true}
+9:{}
+c:{}
+d:{}
+12:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+f:null
+10:null
+14:[["$","title","0",{"children":"Health Data Platform"}],["$","meta","1",{"name":"description","content":"Centralized health data management system"}]]

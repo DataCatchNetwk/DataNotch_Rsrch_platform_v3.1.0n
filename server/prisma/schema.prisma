@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ImportJobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum ProcessedStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+model User {
+  id                 String      @id @default(cuid()) @db.VarChar(30)
+  firstname          String      @db.VarChar(100)
+  surname            String      @db.VarChar(100)
+  email              String      @unique @db.VarChar(191)
+  countryCode        String      @map("country_code") @db.VarChar(10)
+  mobileNumber       String      @map("mobile_number") @db.VarChar(20)
+  referralCode       String?     @map("referral_code") @db.VarChar(50)
+  passwordHash       String      @map("password_hash") @db.VarChar(255)
+  dateOfBirth        DateTime    @map("date_of_birth") @db.Date
+  resetToken         String?     @map("reset_token") @db.VarChar(255)
+  resetTokenExpires  DateTime?   @map("reset_token_expires")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  roles              UserRole[]
+  auditLogs          AuditLog[]
+  uploadBatches      UploadBatch[] @relation("UploadBatchCreatedBy")
+  importJobs         ImportJob[] @relation("ImportJobCreatedBy")
+
+  @@unique([countryCode, mobileNumber])
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(cuid()) @db.VarChar(30)
+  name        String           @unique @db.VarChar(191)
+  description String?          @db.VarChar(255)
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid()) @db.VarChar(30)
+  name        String           @unique @db.VarChar(191)
+  description String?          @db.VarChar(255)
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.VarChar(30)
+  roleId String @map("role_id") @db.VarChar(30)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String      @map("role_id") @db.VarChar(30)
+  permissionId String      @map("permission_id") @db.VarChar(30)
+  role         Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Domain {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  subdomains SubDomain[]
+  healthData HealthData[]
+  @@map("domains")
+}
+
+model SubDomain {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  domainId   String       @map("domain_id") @db.VarChar(30)
+  domain     Domain       @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  categories Category[]
+  healthData HealthData[]
+  @@index([domainId])
+  @@map("subdomains")
+}
+
+model Category {
+  id            String        @id @default(cuid()) @db.VarChar(30)
+  name          String        @unique @db.VarChar(191)
+  subDomainId   String        @map("subdomain_id") @db.VarChar(30)
+  subDomain     SubDomain     @relation(fields: [subDomainId], references: [id], onDelete: Restrict)
+  subcategories SubCategory[]
+  healthData    HealthData[]
+  @@index([subDomainId])
+  @@map("categories")
+}
+
+model SubCategory {
+  id           String       @id @default(cuid()) @db.VarChar(30)
+  name         String       @unique @db.VarChar(191)
+  categoryId   String       @map("category_id") @db.VarChar(30)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  healthData   HealthData[]
+  @@index([categoryId])
+  @@map("subcategories")
+}
+
+model HealthOutcome {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("health_outcomes")
+}
+
+model Variable {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("variables")
+}
+
+model Demographic {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("demographics")
+}
+
+model GeographyUnit {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("geography_units")
+}
+
+model DataUnit {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("data_units")
+}
+
+model DataSource {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("data_sources")
+}
+
+model DataPortal {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("data_portals")
+}
+
+model DataFormat {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("data_formats")
+}
+
+model DataLocation {
+  id         String       @id @default(cuid()) @db.VarChar(30)
+  name       String       @unique @db.VarChar(191)
+  healthData HealthData[]
+  @@map("data_locations")
+}
+
+model UploadBatch {
+  id            String          @id @default(cuid()) @db.VarChar(30)
+  fileName      String          @map("file_name") @db.VarChar(255)
+  originalName  String          @map("original_name") @db.VarChar(255)
+  mimeType      String          @map("mime_type") @db.VarChar(100)
+  status        ImportJobStatus @default(PENDING)
+  createdById   String          @map("created_by_id") @db.VarChar(30)
+  createdBy     User            @relation("UploadBatchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  importJobs    ImportJob[]
+
+  @@index([createdById])
+  @@map("upload_batches")
+}
+
+model ImportJob {
+  id             String          @id @default(cuid()) @db.VarChar(30)
+  uploadBatchId  String          @map("upload_batch_id") @db.VarChar(30)
+  status         ImportJobStatus @default(PENDING)
+  startedAt      DateTime?       @map("started_at")
+  finishedAt     DateTime?       @map("finished_at")
+  errorMessage   String?         @map("error_message") @db.Text
+  createdById    String          @map("created_by_id") @db.VarChar(30)
+  createdBy      User            @relation("ImportJobCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  uploadBatch    UploadBatch     @relation(fields: [uploadBatchId], references: [id], onDelete: Cascade)
+  validationErrors ValidationError[]
+
+  @@index([uploadBatchId])
+  @@index([createdById])
+  @@map("import_jobs")
+}
+
+model ValidationError {
+  id          String     @id @default(cuid()) @db.VarChar(30)
+  importJobId String     @map("import_job_id") @db.VarChar(30)
+  rowNumber   Int?       @map("row_number")
+  fieldName   String?    @map("field_name") @db.VarChar(191)
+  message     String     @db.Text
+  importJob   ImportJob  @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+
+  @@index([importJobId])
+  @@map("validation_errors")
+}
+
+model HealthData {
+  id               String          @id @default(cuid()) @db.VarChar(30)
+  title            String          @db.VarChar(255)
+  dataYear         Int             @map("data_year")
+  value            Decimal?        @db.Decimal(18, 4)
+  notes            String?         @db.Text
+  processedStatus  ProcessedStatus @default(PENDING) @map("processed_status")
+  processedAt      DateTime?       @map("processed_at")
+  domainId         String          @map("domain_id") @db.VarChar(30)
+  subDomainId      String          @map("subdomain_id") @db.VarChar(30)
+  categoryId       String          @map("category_id") @db.VarChar(30)
+  subCategoryId    String?         @map("subcategory_id") @db.VarChar(30)
+  healthOutcomeId  String          @map("health_outcome_id") @db.VarChar(30)
+  variableId       String          @map("variable_id") @db.VarChar(30)
+  demographicId    String          @map("demographic_id") @db.VarChar(30)
+  geographyUnitId  String          @map("geography_unit_id") @db.VarChar(30)
+  dataUnitId       String          @map("data_unit_id") @db.VarChar(30)
+  dataSourceId     String          @map("data_source_id") @db.VarChar(30)
+  dataPortalId     String?         @map("data_portal_id") @db.VarChar(30)
+  dataFormatId     String?         @map("data_format_id") @db.VarChar(30)
+  dataLocationId   String?         @map("data_location_id") @db.VarChar(30)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  domain           Domain          @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  subDomain        SubDomain       @relation(fields: [subDomainId], references: [id], onDelete: Restrict)
+  category         Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subCategory      SubCategory?    @relation(fields: [subCategoryId], references: [id], onDelete: Restrict)
+  healthOutcome    HealthOutcome   @relation(fields: [healthOutcomeId], references: [id], onDelete: Restrict)
+  variable         Variable        @relation(fields: [variableId], references: [id], onDelete: Restrict)
+  demographic      Demographic     @relation(fields: [demographicId], references: [id], onDelete: Restrict)
+  geographyUnit    GeographyUnit   @relation(fields: [geographyUnitId], references: [id], onDelete: Restrict)
+  dataUnit         DataUnit        @relation(fields: [dataUnitId], references: [id], onDelete: Restrict)
+  dataSource       DataSource      @relation(fields: [dataSourceId], references: [id], onDelete: Restrict)
+  dataPortal       DataPortal?     @relation(fields: [dataPortalId], references: [id], onDelete: Restrict)
+  dataFormat       DataFormat?     @relation(fields: [dataFormatId], references: [id], onDelete: Restrict)
+  dataLocation     DataLocation?   @relation(fields: [dataLocationId], references: [id], onDelete: Restrict)
+
+  @@index([dataYear])
+  @@index([domainId])
+  @@index([subDomainId])
+  @@index([categoryId])
+  @@index([healthOutcomeId])
+  @@index([variableId])
+  @@map("health_data")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid()) @db.VarChar(30)
+  userId     String?  @map("user_id") @db.VarChar(30)
+  action     String   @db.VarChar(100)
+  entity     String   @db.VarChar(100)
+  entityId   String?  @map("entity_id") @db.VarChar(30)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("audit_logs")
+}
