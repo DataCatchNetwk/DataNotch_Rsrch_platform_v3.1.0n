@@ -1,24 +1,13 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { useState } from 'react';
+import { Bell } from 'lucide-react';
 import { ProtectedRoute } from '@/components/protected-route';
-import styles from './layout.module.css';
-
-const navItems = [
-  { href: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { href: '/dashboard/datasets', icon: '💾', label: 'Datasets' },
-  { href: '/dashboard/reports', icon: '📋', label: 'Reports' },
-  { href: '/dashboard/profile', icon: '👤', label: 'Profile' },
-  { href: '/dashboard/access', icon: '🔑', label: 'Access' },
-];
+import { AppSidebar } from '@/components/app-sidebar';
+import { CommandPalette } from '@/components/command-palette';
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useAuth();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const pathname = usePathname();
 
   const handleLogout = async () => {
     try {
@@ -29,69 +18,76 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.logo}>
-            <span className={styles.logoEmoji}>🏥</span>
-            <h1 className={styles.logoText}>Health Data Platform</h1>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f3f6fb' }}>
+      <AppSidebar showAdminLink={Boolean(user?.roles.includes('ADMIN'))} />
+
+      <main style={{ flex: 1, minHeight: '100vh' }}>
+        <header
+          style={{
+            borderBottom: '1px solid #dbe3ef',
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(10px)',
+            padding: '14px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'sticky',
+            top: 0,
+            zIndex: 80,
+          }}
+        >
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, color: '#0f172a' }}>Research Workspace</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>Ctrl/Cmd + K to quickly navigate</p>
           </div>
 
-          <nav className={styles.nav}>
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`${styles.navLink} ${pathname === item.href ? styles.navLinkActive : ''}`}
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-            {user?.roles.includes('ADMIN') && (
-              <Link
-                href="/admin"
-                className={`${styles.navLink} ${pathname.startsWith('/admin') ? styles.navLinkActive : ''}`}
-              >
-                <span>🛡️</span>
-                <span>Admin</span>
-              </Link>
-            )}
-          </nav>
-
-          <div className={styles.userMenu}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <button
-              className={styles.userButton}
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              disabled={loading}
+              type="button"
+              aria-label="Notifications"
+              style={{
+                border: '1px solid #dbe3ef',
+                borderRadius: 10,
+                background: '#fff',
+                width: 38,
+                height: 38,
+                display: 'grid',
+                placeItems: 'center',
+              }}
             >
-              <span className={styles.userAvatar}>👤</span>
-              <span className={styles.userEmail}>{user?.email}</span>
-              <span className={styles.dropdown}>▼</span>
+              <Bell size={18} color="#334155" />
             </button>
 
-            {isUserMenuOpen && (
-              <div className={styles.userDropdown}>
-                <div className={styles.userInfo}>
-                  <p className={styles.userName}>{user?.firstname} {user?.surname}</p>
-                  <p className={styles.userEmailSmall}>{user?.email}</p>
-                  <div className={styles.roles}>
-                    {user?.roles.map((role) => (
-                      <span key={role} className={styles.roleBadge}>{role}</span>
-                    ))}
-                  </div>
-                </div>
-                <hr className={styles.divider} />
-                <button className={styles.logoutButton} onClick={handleLogout} disabled={loading}>
-                  🚪 Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
+                {user?.firstname} {user?.surname}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>{user?.email}</p>
+            </div>
 
-      <main className={styles.main}>{children}</main>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loading}
+              style={{
+                border: '1px solid #dbe3ef',
+                borderRadius: 10,
+                background: '#fff',
+                padding: '8px 12px',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#334155',
+                cursor: 'pointer',
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <div style={{ padding: 24 }}>{children}</div>
+        <CommandPalette />
+      </main>
     </div>
   );
 }

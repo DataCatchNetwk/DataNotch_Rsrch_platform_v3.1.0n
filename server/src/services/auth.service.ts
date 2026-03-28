@@ -21,6 +21,17 @@ type UserWithRoles = {
   roles: RoleEntry[];
 };
 
+type RegisterInput = {
+  firstname: string;
+  surname: string;
+  email: string;
+  country_code: string;
+  mobile_number: string;
+  password: string;
+  date_of_birth: string;
+  referral_code?: string;
+};
+
 function getRoleNames(user: UserWithRoles) {
   return user.roles.map((entry: RoleEntry) => entry.role.name);
 }
@@ -70,6 +81,10 @@ export async function registerUser(input: {
   date_of_birth: string;
   referral_code?: string;
 }) {
+  return registerUserWithRole(input, 'ANALYST');
+}
+
+async function registerUserWithRole(input: RegisterInput, roleName: 'ANALYST' | 'ADMIN') {
   const existing = await prisma.user.findFirst({
     where: {
       OR: [
@@ -81,7 +96,7 @@ export async function registerUser(input: {
 
   if (existing) throw new HttpError(409, 'User already exists');
 
-  const userRole = await prisma.role.findUnique({ where: { name: 'ANALYST' } });
+  const userRole = await prisma.role.findUnique({ where: { name: roleName } });
   if (!userRole) throw new HttpError(500, 'Default role not configured');
 
   const createdUser = await prisma.user.create({
@@ -104,6 +119,15 @@ export async function registerUser(input: {
   await logAudit({ userId: createdUser.id, action: 'REGISTER', entity: 'User', entityId: createdUser.id });
 
   return createAuthResponse(createdUser, 'Account created successfully');
+}
+
+export async function registerAdminUser(input: RegisterInput) {
+  const result = await registerUserWithRole(input, 'ADMIN');
+  await logAudit({ userId: result.user.id, action: 'REGISTER_ADMIN', entity: 'User', entityId: result.user.id });
+  return {
+    message: 'Admin account created successfully',
+    user: result.user,
+  };
 }
 
 export async function loginUser(input: { identifier: string; password: string }) {
