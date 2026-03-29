@@ -28,7 +28,7 @@ export default function RegisterPage() {
         ...form,
         referral_code: form.referral_code || undefined,
       });
-      router.push('/dashboard');
+      router.push('/dashboard/pending');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Registration failed');
     } finally {

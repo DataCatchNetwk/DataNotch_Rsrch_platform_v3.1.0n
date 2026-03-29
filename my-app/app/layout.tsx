@@ -1,6 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata = {
   title: 'Research Platform V3',
@@ -9,9 +10,11 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

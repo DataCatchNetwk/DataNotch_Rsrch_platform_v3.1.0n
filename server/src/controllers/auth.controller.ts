@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { forgotPassword, getCurrentUser, loginUser, registerAdminUser, registerUser, resetPassword } from '../services/auth.service.js';
+import { forgotPassword, getCurrentUser, getSsoAuthorizationUrl, loginUser, registerAdminUser, registerUser, resetPassword } from '../services/auth.service.js';
 
 export async function register(req: Request, res: Response) {
   const result = await registerUser(req.body);
@@ -29,4 +29,14 @@ export async function reset(req: Request, res: Response) {
 export async function me(req: Request, res: Response) {
   const result = await getCurrentUser(req.user!.id);
   res.json({ user: result });
+}
+
+export async function startSso(req: Request, res: Response) {
+  const provider = req.params.provider as 'google' | 'microsoft';
+  const authorizationUrl = getSsoAuthorizationUrl(provider);
+  res.json({ url: authorizationUrl });
+}
+
+export async function completeSso(_req: Request, res: Response) {
+  res.status(501).json({ message: 'SSO callback is not implemented yet for this deployment.' });
 }

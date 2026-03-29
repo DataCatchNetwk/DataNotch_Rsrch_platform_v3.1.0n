@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.js';
 import healthDataRoutes from './routes/health-data.js';
+import userRoutes from './routes/users.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 export function createApp() {
@@ -14,6 +15,8 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
   app.use('/api/auth', authRoutes);
+  app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/users', userRoutes);
   app.use('/api/health-data', healthDataRoutes);
 
   app.use(errorHandler);

@@ -1,19 +1,38 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 type RequestOptions = {
   method?: string;
   body?: unknown;
   token?: string;
+  headers?: Record<string, string>;
 };
 
 export async function apiFetch<T = unknown>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (opts.token) headers['Authorization'] = `Bearer ${opts.token}`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers ?? {}) };
+  if (opts.token && !headers['Authorization']) headers['Authorization'] = `Bearer ${opts.token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  let url = path;
+  if (!/^https?:\/\//i.test(path)) {
+    if (path.startsWith('/api/')) {
+      url = `${API_BASE}${path}`;
+    } else {
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      url = API_BASE.endsWith('/api') ? `${API_BASE}${normalizedPath}` : `${API_BASE}/api${normalizedPath}`;
+    }
+  }
+
+  const body =
+    opts.body === undefined
+      ? undefined
+      : typeof opts.body === 'string'
+        ? opts.body
+        : JSON.stringify(opts.body);
+
+  const res = await fetch(url, {
     method: opts.method ?? 'GET',
     headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    body,
   });
 
   const data = await res.json().catch(() => ({}));

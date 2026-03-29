@@ -489,6 +489,11 @@
   font-weight: 600;
 }
 
+.registerLink {
+  color: #667eea;
+  font-weight: 600;
+}
+
 /* Layer 8: Info Panel */
 .infoPanel {
   flex: 1;

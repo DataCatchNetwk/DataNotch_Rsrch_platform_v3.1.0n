@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Database, FileText, Home, Lock, UserCircle2, Shield, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 import styles from './app-sidebar.module.css';
 
 type AppSidebarProps = {
@@ -12,14 +13,17 @@ type AppSidebarProps = {
 
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
+  { title: 'My Studies', url: '/dashboard/reports', icon: FolderOpenDot },
   { title: 'Datasets', url: '/dashboard/datasets', icon: Database },
-  { title: 'Reports', url: '/dashboard/reports', icon: FileText },
-  { title: 'Access & Permissions', url: '/dashboard/access', icon: Lock },
-  { title: 'Profile', url: '/dashboard/profile', icon: UserCircle2 },
+  { title: 'Workspaces', url: '/dashboard/profile', icon: ClipboardList },
+  { title: 'Requests', url: '/dashboard/access', icon: FileUp },
+  { title: 'Collaborators', url: '/dashboard/reports?tab=collaborators', icon: Users2 },
+  { title: 'Notifications', url: '/dashboard/profile?tab=notifications', icon: Bell },
 ];
 
 export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const items = useMemo(() => {
@@ -27,12 +31,19 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
     return [...navItems, { title: 'Admin Console', url: '/admin', icon: Shield }];
   }, [showAdminLink]);
 
+  const initials = `${user?.firstname?.[0] ?? 'A'}${user?.surname?.[0] ?? 'D'}`.toUpperCase();
+  const fullName = [user?.firstname, user?.surname].filter(Boolean).join(' ') || 'Alize Doyle';
+  const email = user?.email || 'alize.doyle@research.org';
+
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''}`}>
       <div className={styles.header}>
         <div className={styles.brand}>
           <div className={styles.logo}>DN</div>
-          <h2 className={`${styles.title} ${collapsed ? styles.hideText : ''}`}>DataNotch</h2>
+          <div className={`${collapsed ? styles.hideText : ''}`}>
+            <h2 className={styles.title}>DataNotch</h2>
+            <p className={styles.subtitle}>Researcher Workspace</p>
+          </div>
         </div>
         <button
           type="button"
@@ -45,7 +56,7 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
       </div>
 
       <div className={styles.section}>
-        <p className={`${styles.label} ${collapsed ? styles.hideText : ''}`}>Workspace</p>
+        <p className={`${styles.label} ${collapsed ? styles.hideText : ''}`}>Main</p>
         <ul className={styles.menu}>
           {items.map((item) => {
             const Icon = item.icon;
@@ -62,8 +73,22 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
         </ul>
       </div>
 
+      <div className={`${styles.quickActions} ${collapsed ? styles.hideText : ''}`}>
+        <p className={styles.label}>Quick Actions</p>
+        <button type="button" className={`${styles.quickBtn} ${styles.quickBtnPrimary}`}>
+          <Plus size={14} /> New Study
+        </button>
+        <button type="button" className={styles.quickBtn}>Upload Data</button>
+        <button type="button" className={styles.quickBtn}>Browse Datasets</button>
+        <button type="button" className={styles.quickBtn}>Join Workspace</button>
+      </div>
+
       <div className={`${styles.footer} ${collapsed ? styles.hideText : ''}`}>
-        Powered by Health Data Platform
+        <div className={styles.footerAvatar}>{initials}</div>
+        <div>
+          <p className={styles.footerName}>{fullName}</p>
+          <p className={styles.footerEmail}>{email}</p>
+        </div>
       </div>
     </aside>
   );

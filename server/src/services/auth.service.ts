@@ -1,9 +1,12 @@
 import { prisma } from '../db/prisma.js';
+import { env } from '../config/env.js';
 import { HttpError } from '../utils/errors.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { randomToken, sha256 } from '../utils/crypto.js';
 import { signToken } from '../utils/jwt.js';
 import { logAudit } from './audit.service.js';
+
+type SsoProvider = 'google' | 'microsoft';
 
 type RoleEntry = {
   role: {
@@ -81,10 +84,50 @@ export async function registerUser(input: {
   date_of_birth: string;
   referral_code?: string;
 }) {
-  return registerUserWithRole(input, 'ANALYST');
+  return registerUserWithRole(input, 'PENDING');
 }
 
-async function registerUserWithRole(input: RegisterInput, roleName: 'ANALYST' | 'ADMIN') {
+export async function getPendingUsers() {
+  const pendingRole = await prisma.role.findUnique({ where: { name: 'PENDING' } });
+  if (!pendingRole) return [];
+
+  const userRoles = await prisma.userRole.findMany({
+    where: { roleId: pendingRole.id },
+    include: { user: true },
+  });
+
+  return userRoles.map((ur) => ({
+    id: ur.user.id,
+    firstname: ur.user.firstname,
+    surname: ur.user.surname,
+    email: ur.user.email,
+    createdAt: ur.user.createdAt,
+  }));
+}
+
+export async function approveUser(userId: string) {
+  const analystRole = await prisma.role.findUnique({ where: { name: 'ANALYST' } });
+  const pendingRole = await prisma.role.findUnique({ where: { name: 'PENDING' } });
+  if (!analystRole || !pendingRole) throw new HttpError(500, 'Roles not configured');
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new HttpError(404, 'User not found');
+
+  await prisma.$transaction([
+    prisma.userRole.deleteMany({ where: { userId, roleId: pendingRole.id } }),
+    prisma.userRole.upsert({
+      where: { userId_roleId: { userId, roleId: analystRole.id } },
+      update: {},
+      create: { userId, roleId: analystRole.id },
+    }),
+  ]);
+
+  await logAudit({ userId, action: 'APPROVE_USER', entity: 'User', entityId: userId });
+
+  return { message: 'User approved successfully', userId };
+}
+
+async function registerUserWithRole(input: RegisterInput, roleName: 'ANALYST' | 'ADMIN' | 'PENDING') {
   const existing = await prisma.user.findFirst({
     where: {
       OR: [
@@ -203,4 +246,44 @@ export async function getCurrentUser(userId: string) {
   if (!user) throw new HttpError(404, 'User not found');
 
   return serializeUser(user);
+}
+
+export function getSsoAuthorizationUrl(provider: SsoProvider) {
+  const state = randomToken();
+
+  if (provider === 'google') {
+    if (!env.GOOGLE_OAUTH_CLIENT_ID || !env.GOOGLE_OAUTH_REDIRECT_URI) {
+      throw new HttpError(503, 'Google sign-in is not configured.');
+    }
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: env.GOOGLE_OAUTH_CLIENT_ID,
+      redirect_uri: env.GOOGLE_OAUTH_REDIRECT_URI,
+      scope: 'openid email profile',
+      prompt: 'select_account',
+      state,
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
+  if (provider === 'microsoft') {
+    if (!env.MICROSOFT_OAUTH_CLIENT_ID || !env.MICROSOFT_OAUTH_REDIRECT_URI) {
+      throw new HttpError(503, 'Microsoft sign-in is not configured.');
+    }
+
+    const params = new URLSearchParams({
+      client_id: env.MICROSOFT_OAUTH_CLIENT_ID,
+      response_type: 'code',
+      redirect_uri: env.MICROSOFT_OAUTH_REDIRECT_URI,
+      response_mode: 'query',
+      scope: 'openid profile email User.Read',
+      state,
+    });
+
+    return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params.toString()}`;
+  }
+
+  throw new HttpError(400, 'Unsupported SSO provider');
 }

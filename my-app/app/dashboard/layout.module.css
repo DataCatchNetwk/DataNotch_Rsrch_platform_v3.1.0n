@@ -1,8 +1,19 @@
-.container {
+.shell {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #f5f7fb;
+  background: #f3f6fb;
+}
+
+.main {
+  flex: 1;
+  min-height: 100vh;
+  padding: 0;
+}
+
+@media (max-width: 960px) {
+  .main {
+    padding: 0;
+  }
 }
 
 .header {

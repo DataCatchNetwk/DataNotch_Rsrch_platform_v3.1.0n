@@ -16,6 +16,12 @@ async function main() {
     create: { name: 'ANALYST', description: 'Data analyst' },
   });
 
+  await prisma.role.upsert({
+    where: { name: 'PENDING' },
+    update: {},
+    create: { name: 'PENDING', description: 'Pending admin approval' },
+  });
+
   for (const name of ['users.read', 'users.manage', 'health_data.read', 'health_data.write']) {
     await prisma.permission.upsert({
       where: { name },
