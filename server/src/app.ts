@@ -10,6 +10,7 @@ import notificationRoutes from './routes/notifications.js';
 import pipelineRoutes from './routes/pipelines.js';
 import userRoutes from './routes/users.js';
 import workspaceRoutes from './routes/workspaces.js';
+import researcherApplicationsRoutes from './routes/researcher-applications.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 export function createApp() {
@@ -36,6 +37,7 @@ export function createApp() {
   app.use('/api/workspaces', workspaceRoutes);
   app.use('/api/v1/workspaces', workspaceRoutes);
   app.use('/api/health-data', healthDataRoutes);
+  app.use('/api/v1/admin/researcher-applications', researcherApplicationsRoutes);
 
   app.use(errorHandler);
   return app;

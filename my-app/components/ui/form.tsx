@@ -96,4 +96,11 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
 );
 FormMessage.displayName = 'FormMessage';
 
-export { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, useFormField };
+const FormDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => (
+    <p ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  ),
+);
+FormDescription.displayName = 'FormDescription';
+
+export { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription, useFormField };

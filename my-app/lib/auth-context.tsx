@@ -59,11 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     setState({ user: null, token: null, loading: false });
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
+    const stored = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
     if (!stored) {
       setState((s) => ({ ...s, loading: false }));
       return;
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((res) => setState({ user: res.user, token: stored, loading: false }))
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
         setState({ user: null, token: null, loading: false });
       });
   }, []);

@@ -60,6 +60,32 @@ enum NotificationType {
   DATASET_ADDED
   REPORT_CREATED
   MEMBER_ADDED
+  APPLICATION_SUBMITTED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  APPLICATION_NEEDS_MORE_INFO
+}
+
+enum AccountStatus {
+  PENDING_APPROVAL
+  APPROVED_2FA_PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+enum ResearcherType {
+  GENERAL_RESEARCHER
+  STUDENT_RESEARCHER
+  CLINICAL_RESEARCHER
+  EXTERNAL_COLLABORATOR
+}
+
+enum ApplicationReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_MORE_INFO
 }
 
 enum NotificationSeverity {
@@ -143,12 +169,14 @@ model User {
   twoFactorEnabled   Boolean     @default(false) @map("two_factor_enabled")
   notificationPreferences Json?  @map("notification_preferences")
   dateOfBirth        DateTime    @map("date_of_birth") @db.Date
-  resetToken         String?     @map("reset_token") @db.VarChar(255)
-  resetTokenExpires  DateTime?   @map("reset_token_expires")
-  lastLoginAt        DateTime?   @map("last_login_at")
-  createdAt          DateTime    @default(now()) @map("created_at")
-  updatedAt          DateTime    @updatedAt @map("updated_at")
+  resetToken         String?       @map("reset_token") @db.VarChar(255)
+  resetTokenExpires  DateTime?     @map("reset_token_expires")
+  lastLoginAt        DateTime?     @map("last_login_at")
+  accountStatus      AccountStatus @default(PENDING_APPROVAL) @map("account_status")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
   roles              UserRole[]
+  application        ResearcherApplication?
   auditLogs          AuditLog[]
   uploadBatches      UploadBatch[] @relation("UploadBatchCreatedBy")
   importJobs         ImportJob[] @relation("ImportJobCreatedBy")
@@ -754,4 +782,44 @@ model ModelRegistryEntry {
 
   @@index([workspaceId, name])
   @@index([datasetId])
+}
+
+model ResearcherApplication {
+  id                   String                  @id @default(cuid()) @db.VarChar(30)
+  userId               String                  @unique @map("user_id") @db.VarChar(30)
+  user                 User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  researcherType       ResearcherType          @map("researcher_type")
+  institution          String                  @db.VarChar(191)
+  department           String                  @db.VarChar(191)
+  roleTitle            String                  @map("role_title") @db.VarChar(191)
+  country              String                  @db.VarChar(100)
+  city                 String                  @db.VarChar(100)
+  yearsOfExperience    Int                     @map("years_of_experience")
+  researchArea         String                  @map("research_area") @db.VarChar(191)
+  shortBio             String                  @map("short_bio") @db.Text
+  researchInterests    String                  @map("research_interests") @db.Text
+  platformPurpose      String                  @map("platform_purpose") @db.Text
+  expectedDatasets     String                  @map("expected_datasets") @db.Text
+  collaborationType    String                  @map("collaboration_type") @db.VarChar(100)
+  featureNeedsJson     Json                    @map("feature_needs_json")
+  usesSensitiveData    Boolean                 @map("uses_sensitive_data")
+  irbRequired          Boolean                 @map("irb_required")
+  irbProtocolNumber    String?                 @map("irb_protocol_number") @db.VarChar(191)
+  dataSensitivityLevel String                  @map("data_sensitivity_level") @db.VarChar(50)
+  fundingSource        String?                 @map("funding_source") @db.VarChar(191)
+  supervisorName       String                  @map("supervisor_name") @db.VarChar(191)
+  supervisorEmail      String                  @map("supervisor_email") @db.VarChar(191)
+  cvFileUrl            String?                 @map("cv_file_url") @db.VarChar(512)
+  affiliationProofUrl  String?                 @map("affiliation_proof_url") @db.VarChar(512)
+  irbDocumentUrl       String?                 @map("irb_document_url") @db.VarChar(512)
+  reviewStatus         ApplicationReviewStatus @default(PENDING) @map("review_status")
+  adminReviewNotes     String?                 @map("admin_review_notes") @db.Text
+  reviewedByAdminId    String?                 @map("reviewed_by_admin_id") @db.VarChar(30)
+  reviewedAt           DateTime?               @map("reviewed_at")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+
+  @@index([reviewStatus, createdAt])
+  @@index([institution])
+  @@map("researcher_applications")
 }

@@ -16,6 +16,7 @@ export default function UserLoginPage() {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -33,6 +34,13 @@ export default function UserLoginPage() {
     setSubmitting(true);
     try {
       const user = await login(identifier, password);
+      if (!rememberMe) {
+        const storedToken = localStorage.getItem('auth_token');
+        if (storedToken) {
+          localStorage.removeItem('auth_token');
+          sessionStorage.setItem('auth_token', storedToken);
+        }
+      }
       if (user.roles.includes('ADMIN')) {
         router.push('/admin');
       } else if (user.roles.includes('PENDING') && !user.roles.includes('ANALYST')) {
@@ -99,7 +107,7 @@ export default function UserLoginPage() {
                     setIdentifier(e.target.value);
                     if (validationErrors.identifier) setValidationErrors({ ...validationErrors, identifier: '' });
                   }}
-                  placeholder="admin@healthplatform.local"
+                  placeholder="jerrywonder@yahoo.co.uk"
                   className="h-9.5 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-700 outline-none ring-violet-400 transition focus:ring-2"
                   disabled={submitting}
                 />
@@ -140,7 +148,13 @@ export default function UserLoginPage() {
 
             <div className="flex items-center justify-between gap-2 text-xs">
               <label className="inline-flex items-center gap-2 text-xs text-slate-700">
-                <input type="checkbox" defaultChecked disabled={submitting} className="h-4 w-4 rounded border-slate-300" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={submitting}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
                 Trust this device
               </label>
               <Link href="/forgot-password" className="font-semibold text-violet-600 hover:text-violet-700">Forgot password?</Link>
@@ -158,8 +172,14 @@ export default function UserLoginPage() {
           <div className="my-3 border-t border-slate-200" />
           <p className="mb-2 text-center text-[10px] font-semibold tracking-wide text-slate-400">OR CONTINUE WITH</p>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Globe className="h-3.5 w-3.5" />Continue with Google</button>
-            <button type="button" className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"><ShieldCheck className="h-3.5 w-3.5" />Continue with Microsoft</button>
+            <button type="button" className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Continue with Google
+            </button>
+            <button type="button" className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M1.6 2A1.6 1.6 0 0 0 0 3.6v16.8A1.6 1.6 0 0 0 1.6 22H10V2H1.6z" fill="#0A2767"/><circle cx="5.5" cy="12" r="3.5" fill="none" stroke="white" strokeWidth="1.5"/><path d="M10 5h12.4A1.6 1.6 0 0 1 24 6.6v10.8A1.6 1.6 0 0 1 22.4 19H10V5z" fill="#0078D4"/><path d="M10 5.5l7 5.3 7-5.3" fill="none" stroke="white" strokeWidth="1.2"/></svg>
+              Continue with Microsoft Outlook
+            </button>
           </div>
 
           <div className="mt-3 text-center text-xs text-slate-600">

@@ -1,0 +1,105 @@
+enum UserRole {
+  USER
+  ADMIN
+  REVIEWER
+}
+
+enum AccountStatus {
+  PENDING_APPROVAL
+  APPROVED_2FA_PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+enum ResearcherType {
+  GENERAL_RESEARCHER
+  STUDENT_RESEARCHER
+  CLINICAL_RESEARCHER
+  EXTERNAL_COLLABORATOR
+}
+
+enum ApplicationReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_MORE_INFO
+}
+
+model User {
+  id               String        @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String        @unique
+  institutionEmail String?
+  phoneCode        String?
+  mobileNumber     String?
+  passwordHash     String
+  role             UserRole      @default(USER)
+  accountStatus    AccountStatus @default(PENDING_APPROVAL)
+  dateOfBirth      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  application      ResearcherApplication?
+  notifications    Notification[]
+}
+
+model ResearcherApplication {
+  id                  String                  @id @default(cuid())
+  userId              String                  @unique
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  researcherType      ResearcherType          @default(GENERAL_RESEARCHER)
+  institution         String
+  department          String
+  roleTitle           String
+  country             String
+  city                String
+  yearsOfExperience   String
+
+  researchArea        String
+  shortBio            String                  @db.Text
+  researchInterests   String                  @db.Text
+  platformPurpose     String                  @db.Text
+  expectedDatasets    String                  @db.Text
+  collaborationType   String
+  featureNeedsJson    Json
+
+  usesSensitiveData   String
+  irbRequired         String
+  irbProtocolNumber   String?
+  dataSensitivityLevel String
+  fundingSource       String?
+  supervisorName      String
+  supervisorEmail     String
+
+  cvFileUrl           String?
+  affiliationProofUrl String?
+  irbDocumentUrl      String?
+
+  reviewStatus        ApplicationReviewStatus @default(PENDING)
+  adminReviewNotes    String?                 @db.Text
+  reviewedByAdminId   String?
+  reviewedAt          DateTime?
+
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  @@index([reviewStatus, createdAt])
+  @@index([institution])
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String
+  title        String
+  body         String   @db.Text
+  metadataJson Json?
+  isRead       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
