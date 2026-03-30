@@ -359,7 +359,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={activityData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                           <XAxis dataKey="date" stroke="#9ca3af" />
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
                 </Card>
 
                 {/* System Metrics */}
-                <Card className="bg-gradient-to-br from-violet-600/20 to-pink-600/20 border-violet-500/30 rounded-3xl">
+                <Card className="bg-linear-to-br from-violet-600/20 to-pink-600/20 border-violet-500/30 rounded-3xl">
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <div className="h-12 w-12 rounded-xl bg-violet-600/30 flex items-center justify-center">
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
                         <span className="text-emerald-400 font-medium">68%</span>
                       </div>
                       <div className="w-full bg-zinc-800 rounded-full h-2">
-                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: "68%" }}></div>
+                        <div className="bg-emerald-500 h-2 rounded-full w-[68%]"></div>
                       </div>
                     </div>
                     <Button variant="outline" className="w-full rounded-2xl text-sm">

@@ -7,7 +7,14 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const result = await loginUser(req.body);
+  const result = await loginUser(req.body, {
+    userAgent: req.get('user-agent') ?? undefined,
+    ipAddress:
+      req.ip ??
+      (typeof req.headers['x-forwarded-for'] === 'string'
+        ? req.headers['x-forwarded-for'].split(',')[0]?.trim()
+        : undefined),
+  });
   res.json(result);
 }
 

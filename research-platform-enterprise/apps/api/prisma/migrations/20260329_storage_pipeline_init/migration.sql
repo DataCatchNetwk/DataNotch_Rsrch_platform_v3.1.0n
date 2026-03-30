@@ -1,0 +1,1 @@
+-- Run `npx prisma migrate dev` to apply the schema. This placeholder exists so the folder structure is complete.

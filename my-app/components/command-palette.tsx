@@ -1,23 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Database, FileText, Home, Lock, UserCircle2 } from 'lucide-react';
 import styles from './command-palette.module.css';
+import { ALL_NAV_ITEMS } from '@/src/config/route-map-and-icons';
 
-type PaletteItem = {
-  label: string;
-  url: string;
-  icon: ComponentType<{ className?: string }>;
-};
-
-const items: PaletteItem[] = [
-  { label: 'Dashboard', url: '/dashboard', icon: Home },
-  { label: 'Datasets', url: '/dashboard/datasets', icon: Database },
-  { label: 'Reports', url: '/dashboard/reports', icon: FileText },
-  { label: 'Access & Permissions', url: '/dashboard/access', icon: Lock },
-  { label: 'Profile', url: '/dashboard/profile', icon: UserCircle2 },
-];
+// Derive palette items directly from the shared nav config — no duplication needed.
+const items = ALL_NAV_ITEMS.map(({ title, href, icon }) => ({
+  label: title,
+  url: href,
+  icon,
+}));
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);

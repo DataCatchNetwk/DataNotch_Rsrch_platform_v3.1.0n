@@ -20,24 +20,148 @@ enum ProcessedStatus {
   FAILED
 }
 
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  RESEARCHER
+  VIEWER
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum DatasetVisibility {
+  PRIVATE
+  WORKSPACE
+  PUBLIC
+  RESTRICTED
+}
+
+enum AnalysisJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ReportStatus {
+  DRAFT
+  READY
+  ARCHIVED
+}
+
+enum NotificationType {
+  REQUEST_CREATED
+  REQUEST_REVIEWED
+  REQUEST_COMMENT
+  DATASET_ADDED
+  REPORT_CREATED
+  MEMBER_ADDED
+}
+
+enum NotificationSeverity {
+  INFO
+  SUCCESS
+  WARNING
+}
+
+enum PipelineRunStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  PARTIAL_SUCCESS
+}
+
+enum PipelineStepStatus {
+  PENDING
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+  CANCELED
+}
+
+enum PipelineStepType {
+  INGEST
+  PROFILE
+  VALIDATE
+  CLEAN
+  TRANSFORM
+  FEATURE_ENGINEERING
+  SPLIT
+  TRAIN
+  EVALUATE
+  EXPLAIN
+  CHART
+  REPORT
+  EXPORT
+  PUBLISH
+}
+
+enum WorkerJobStatus {
+  QUEUED
+  ACTIVE
+  COMPLETED
+  FAILED
+  RETRYING
+  CANCELED
+}
+
+enum ArtifactKind {
+  DATASET
+  CLEANED_DATASET
+  FEATURE_SET
+  MODEL
+  METRICS
+  CHART
+  REPORT
+  EXPORT_PACKAGE
+  LOG
+}
+
 model User {
   id                 String      @id @default(cuid()) @db.VarChar(30)
   firstname          String      @db.VarChar(100)
   surname            String      @db.VarChar(100)
   email              String      @unique @db.VarChar(191)
+  institution        String?     @db.VarChar(191)
+  department         String?     @db.VarChar(191)
+  researchGroup      String?     @map("research_group") @db.VarChar(191)
+  timezone           String?     @db.VarChar(100)
   countryCode        String      @map("country_code") @db.VarChar(10)
   mobileNumber       String      @map("mobile_number") @db.VarChar(20)
   referralCode       String?     @map("referral_code") @db.VarChar(50)
   passwordHash       String      @map("password_hash") @db.VarChar(255)
+  passwordChangedAt  DateTime?   @map("password_changed_at")
+  twoFactorEnabled   Boolean     @default(false) @map("two_factor_enabled")
+  notificationPreferences Json?  @map("notification_preferences")
   dateOfBirth        DateTime    @map("date_of_birth") @db.Date
   resetToken         String?     @map("reset_token") @db.VarChar(255)
   resetTokenExpires  DateTime?   @map("reset_token_expires")
+  lastLoginAt        DateTime?   @map("last_login_at")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
   roles              UserRole[]
   auditLogs          AuditLog[]
   uploadBatches      UploadBatch[] @relation("UploadBatchCreatedBy")
   importJobs         ImportJob[] @relation("ImportJobCreatedBy")
+  workspaceMemberships WorkspaceMember[]
+  ownedWorkspaces    Workspace[] @relation("WorkspaceOwner")
+  datasetsCreated    Dataset[] @relation("DatasetCreatedBy")
+  analysisJobsCreated AnalysisJob[] @relation("AnalysisJobCreatedBy")
+  reportsCreated     Report[] @relation("ReportCreatedBy")
+  notifications      Notification[]
+  uploadedAssets     FileAsset[] @relation("FileAssetUploadedBy")
+  pipelineRunsTriggered PipelineRun[] @relation("PipelineRunTriggeredBy")
+  pipelineArtifactsCreated PipelineArtifact[] @relation("PipelineArtifactCreatedBy")
+  modelRegistryEntriesCreated ModelRegistryEntry[] @relation("ModelRegistryEntryCreatedBy")
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
@@ -288,4 +412,346 @@ model AuditLog {
 
   @@index([userId])
   @@map("audit_logs")
+}
+
+model Workspace {
+  id           String           @id @default(cuid()) @db.VarChar(30)
+  name         String           @db.VarChar(120)
+  description  String?          @db.Text
+  status       WorkspaceStatus  @default(ACTIVE)
+  ownerId      String           @db.VarChar(30)
+  owner        User             @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members      WorkspaceMember[]
+  datasets     Dataset[]
+  analysisJobs AnalysisJob[]
+  reports      Report[]
+  notifications Notification[]
+  pipelineRuns PipelineRun[]
+  pipelineArtifacts PipelineArtifact[]
+  modelRegistryEntries ModelRegistryEntry[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WorkspaceMember {
+  id          String         @id @default(cuid()) @db.VarChar(30)
+  workspaceId String         @db.VarChar(30)
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String         @db.VarChar(30)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole
+  joinedAt    DateTime       @default(now())
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([role])
+}
+
+model Dataset {
+  id           String            @id @default(cuid()) @db.VarChar(30)
+  name         String            @db.VarChar(140)
+  description  String?           @db.Text
+  version      Int               @default(1)
+  visibility   DatasetVisibility @default(WORKSPACE)
+  storagePath  String?           @db.VarChar(255)
+  mimeType     String?           @db.VarChar(100)
+  sizeBytes    Int?
+  recordCount  Int?
+  tags         String[]
+  workspaceId  String            @db.VarChar(30)
+  workspace    Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdById  String            @db.VarChar(30)
+  createdBy    User              @relation("DatasetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  analysisJobs AnalysisJob[]
+  reports      Report[]          @relation("ReportDatasets")
+  fileAssets   FileAsset[]
+  pipelineRuns PipelineRun[]
+  pipelineArtifacts PipelineArtifact[]
+  modelRegistryEntries ModelRegistryEntry[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([visibility])
+  @@index([createdAt])
+}
+
+model AnalysisJob {
+  id             String            @id @default(cuid()) @db.VarChar(30)
+  name           String            @db.VarChar(140)
+  description    String?           @db.Text
+  status         AnalysisJobStatus @default(QUEUED)
+  jobType        String            @db.VarChar(80)
+  parametersJson Json?
+  resultsJson    Json?
+  logsText       String?           @db.Text
+  workspaceId    String            @db.VarChar(30)
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  datasetId      String?           @db.VarChar(30)
+  dataset        Dataset?          @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  createdById    String            @db.VarChar(30)
+  createdBy      User              @relation("AnalysisJobCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  failedAt       DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([workspaceId])
+  @@index([datasetId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Report {
+  id           String       @id @default(cuid()) @db.VarChar(30)
+  title        String       @db.VarChar(160)
+  description  String?      @db.Text
+  status       ReportStatus @default(DRAFT)
+  reportType   String       @db.VarChar(80)
+  storagePath  String?      @db.VarChar(255)
+  publicUrl    String?      @db.VarChar(255)
+  metadataJson Json?
+  workspaceId  String       @db.VarChar(30)
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdById  String       @db.VarChar(30)
+  createdBy    User         @relation("ReportCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  datasets     Dataset[]    @relation("ReportDatasets")
+  fileAssets   FileAsset[]
+  pipelineArtifacts PipelineArtifact[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Notification {
+  id          String               @id @default(cuid()) @db.VarChar(30)
+  userId      String               @map("user_id") @db.VarChar(30)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?              @map("workspace_id") @db.VarChar(30)
+  workspace   Workspace?           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String               @db.VarChar(191)
+  description String               @db.Text
+  severity    NotificationSeverity @default(INFO)
+  isRead      Boolean              @default(false) @map("is_read")
+  readAt      DateTime?            @map("read_at")
+  link        String?              @db.VarChar(255)
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model FileAsset {
+  id           String    @id @default(cuid()) @db.VarChar(30)
+  fileName     String    @map("file_name") @db.VarChar(255)
+  originalName String    @map("original_name") @db.VarChar(255)
+  mimeType     String    @map("mime_type") @db.VarChar(100)
+  sizeBytes    Int       @map("size_bytes")
+  storagePath  String    @map("storage_path") @db.VarChar(255)
+  publicUrl    String?   @map("public_url") @db.VarChar(255)
+  uploadedById String    @map("uploaded_by_id") @db.VarChar(30)
+  uploadedBy   User      @relation("FileAssetUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  datasetId    String?   @map("dataset_id") @db.VarChar(30)
+  dataset      Dataset?  @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  reportId     String?   @map("report_id") @db.VarChar(30)
+  report       Report?   @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([datasetId])
+  @@index([reportId])
+  @@index([uploadedById])
+  @@map("file_assets")
+}
+
+model PipelineTemplate {
+  id             String      @id @default(cuid()) @db.VarChar(30)
+  name           String      @db.VarChar(191)
+  code           String      @unique @db.VarChar(120)
+  description    String?     @db.Text
+  isActive       Boolean     @default(true)
+  version        Int         @default(1)
+  definitionJson Json
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  runs           PipelineRun[]
+}
+
+model PipelineRun {
+  id               String            @id @default(cuid()) @db.VarChar(30)
+  workspaceId      String            @db.VarChar(30)
+  datasetId        String?           @db.VarChar(30)
+  requestId        String?           @db.VarChar(30)
+  triggeredById    String            @db.VarChar(30)
+  templateId       String?           @db.VarChar(30)
+  name             String            @db.VarChar(191)
+  status           PipelineRunStatus @default(DRAFT)
+  currentStepIndex Int               @default(0)
+  progressPercent  Float             @default(0)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  canceledAt       DateTime?
+  failureReason    String?           @db.Text
+  parametersJson   Json?
+  contextJson      Json?
+  metricsJson      Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dataset          Dataset?          @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  triggeredBy      User              @relation("PipelineRunTriggeredBy", fields: [triggeredById], references: [id], onDelete: Restrict)
+  template         PipelineTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  steps            PipelineStep[]
+  jobs             WorkerJob[]
+  artifacts        PipelineArtifact[]
+  events           PipelineEvent[]
+  modelRegistryEntries ModelRegistryEntry[]
+
+  @@index([workspaceId, status])
+  @@index([datasetId])
+  @@index([requestId])
+  @@index([triggeredById])
+}
+
+model PipelineStep {
+  id              String             @id @default(cuid()) @db.VarChar(30)
+  pipelineRunId   String             @db.VarChar(30)
+  order           Int
+  name            String             @db.VarChar(191)
+  type            PipelineStepType
+  status          PipelineStepStatus @default(PENDING)
+  progressPercent Float              @default(0)
+  workerType      String?            @db.VarChar(120)
+  dependsOnStepId String?            @db.VarChar(30)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  failureReason   String?            @db.Text
+  inputJson       Json?
+  outputJson      Json?
+  configJson      Json?
+  metricsJson     Json?
+  retryCount      Int                @default(0)
+  maxRetries      Int                @default(2)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  pipelineRun     PipelineRun        @relation(fields: [pipelineRunId], references: [id], onDelete: Cascade)
+  jobs            WorkerJob[]
+
+  @@unique([pipelineRunId, order])
+  @@index([pipelineRunId, status])
+}
+
+model WorkerJob {
+  id              String          @id @default(cuid()) @db.VarChar(30)
+  pipelineRunId   String          @db.VarChar(30)
+  pipelineStepId  String?         @db.VarChar(30)
+  queueName       String          @db.VarChar(120)
+  jobName         String          @db.VarChar(191)
+  workerType      String          @db.VarChar(120)
+  status          WorkerJobStatus @default(QUEUED)
+  brokerJobId     String?         @db.VarChar(120)
+  attempt         Int             @default(0)
+  progressPercent Float           @default(0)
+  payloadJson     Json
+  resultJson      Json?
+  errorJson       Json?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  pipelineRun     PipelineRun     @relation(fields: [pipelineRunId], references: [id], onDelete: Cascade)
+  pipelineStep    PipelineStep?   @relation(fields: [pipelineStepId], references: [id], onDelete: SetNull)
+
+  @@index([pipelineRunId, status])
+  @@index([pipelineStepId])
+  @@index([brokerJobId])
+}
+
+model PipelineArtifact {
+  id              String       @id @default(cuid()) @db.VarChar(30)
+  pipelineRunId   String       @db.VarChar(30)
+  workspaceId     String       @db.VarChar(30)
+  datasetId       String?      @db.VarChar(30)
+  reportId        String?      @db.VarChar(30)
+  kind            ArtifactKind
+  name            String       @db.VarChar(191)
+  storageKey      String       @db.VarChar(255)
+  mimeType        String?      @db.VarChar(120)
+  sizeBytes       BigInt?
+  checksum        String?      @db.VarChar(191)
+  metadataJson    Json?
+  createdById     String?      @db.VarChar(30)
+  createdAt       DateTime     @default(now())
+
+  pipelineRun     PipelineRun  @relation(fields: [pipelineRunId], references: [id], onDelete: Cascade)
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dataset         Dataset?     @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  report          Report?      @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  createdBy       User?        @relation("PipelineArtifactCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([pipelineRunId, kind])
+  @@index([workspaceId, kind])
+}
+
+model PipelineEvent {
+  id              String      @id @default(cuid()) @db.VarChar(30)
+  pipelineRunId   String      @db.VarChar(30)
+  stepOrder       Int?
+  eventType       String      @db.VarChar(120)
+  level           String      @db.VarChar(50)
+  message         String      @db.Text
+  dataJson        Json?
+  createdAt       DateTime    @default(now())
+
+  pipelineRun     PipelineRun @relation(fields: [pipelineRunId], references: [id], onDelete: Cascade)
+
+  @@index([pipelineRunId, createdAt])
+}
+
+model ModelRegistryEntry {
+  id              String       @id @default(cuid()) @db.VarChar(30)
+  workspaceId     String       @db.VarChar(30)
+  pipelineRunId   String?      @db.VarChar(30)
+  datasetId       String?      @db.VarChar(30)
+  name            String       @db.VarChar(191)
+  version         String       @db.VarChar(120)
+  framework       String?      @db.VarChar(120)
+  taskType        String?      @db.VarChar(120)
+  storageKey      String       @db.VarChar(255)
+  metricsJson     Json?
+  paramsJson      Json?
+  schemaJson      Json?
+  isActive        Boolean      @default(true)
+  promotedAt      DateTime?
+  createdById     String?      @db.VarChar(30)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pipelineRun     PipelineRun? @relation(fields: [pipelineRunId], references: [id], onDelete: SetNull)
+  dataset         Dataset?     @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  createdBy       User?        @relation("ModelRegistryEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, name])
+  @@index([datasetId])
 }

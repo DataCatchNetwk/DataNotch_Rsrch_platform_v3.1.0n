@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AnalysisJobStatus, DatasetVisibility, ReportStatus, WorkspaceRole, WorkspaceStatus } from '@prisma/client';
 
 /** Strip everything except digits from a string */
 const digitsOnly = (v: string) => v.replace(/\D/g, '');
@@ -72,4 +73,46 @@ export const createHealthDataSchema = z.object({
   data_portal_id: z.string().optional(),
   data_format_id: z.string().optional(),
   data_location_id: z.string().optional(),
+});
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().trim().min(3, 'Workspace name must be at least 3 characters').max(120),
+  description: z.string().trim().max(2000).optional(),
+});
+
+export const updateWorkspaceSchema = createWorkspaceSchema.partial();
+
+export const addWorkspaceMemberSchema = z.object({
+  userId: z.string().trim().min(1, 'User ID is required'),
+  role: z.nativeEnum(WorkspaceRole),
+});
+
+export const updateWorkspaceMemberRoleSchema = z.object({
+  role: z.nativeEnum(WorkspaceRole),
+});
+
+export const createDatasetSchema = z.object({
+  name: z.string().trim().min(2, 'Dataset name must be at least 2 characters').max(140),
+  description: z.string().trim().max(2000).optional(),
+  visibility: z.nativeEnum(DatasetVisibility).optional(),
+  recordCount: z.number().int().optional(),
+  tags: z.array(z.string().trim()).optional(),
+});
+
+export const createAnalysisJobSchema = z.object({
+  name: z.string().trim().min(2, 'Analysis name must be at least 2 characters').max(140),
+  jobType: z.string().trim().min(2, 'Job type must be at least 2 characters').max(80),
+  description: z.string().trim().max(2000).optional(),
+  datasetId: z.string().trim().optional(),
+  parametersJson: z.unknown().optional(),
+  autoPipeline: z.boolean().optional(),
+  analysisType: z.string().trim().max(80).optional(),
+});
+
+export const createReportSchema = z.object({
+  title: z.string().trim().min(2, 'Report title must be at least 2 characters').max(160),
+  reportType: z.string().trim().min(2, 'Report type must be at least 2 characters').max(80),
+  description: z.string().trim().max(2000).optional(),
+  datasetIds: z.array(z.string().trim()).optional(),
+  metadataJson: z.unknown().optional(),
 });

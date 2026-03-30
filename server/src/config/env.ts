@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const port = Number(process.env.PORT ?? 3001);
+
 function requireEnv(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
   if (!value) throw new Error(`Missing environment variable: ${name}`);
@@ -24,8 +26,11 @@ function buildDatabaseUrl(): string {
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? 'development',
-  PORT: Number(process.env.PORT ?? 3001),
+  PORT: port,
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:3000',
+  SERVER_PUBLIC_URL: process.env.SERVER_PUBLIC_URL ?? `http://localhost:${port}`,
+  REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  PIPELINE_EVENT_STREAM_KEY: process.env.PIPELINE_EVENT_STREAM_KEY ?? 'pipeline:events',
   DATABASE_URL: buildDatabaseUrl(),
   JWT_SECRET: requireEnv('JWT_SECRET', 'replace-me-in-production'),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d',

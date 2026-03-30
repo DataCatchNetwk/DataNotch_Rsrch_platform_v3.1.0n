@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import styles from './app-sidebar.module.css';
@@ -15,14 +15,17 @@ const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
   { title: 'My Studies', url: '/dashboard/reports', icon: FolderOpenDot },
   { title: 'Datasets', url: '/dashboard/datasets', icon: Database },
-  { title: 'Workspaces', url: '/dashboard/profile', icon: ClipboardList },
-  { title: 'Requests', url: '/dashboard/access', icon: FileUp },
+  { title: 'Analysis Jobs', url: '/dashboard/analysis/jobs', icon: FlaskConical },
+  { title: 'Workspaces', url: '/dashboard/workspaces', icon: ClipboardList },
+  { title: 'Monitoring', url: '/dashboard/monitoring/pipelines', icon: Activity },
+  { title: 'Requests', url: '/dashboard/requests', icon: FileUp },
   { title: 'Collaborators', url: '/dashboard/reports?tab=collaborators', icon: Users2 },
-  { title: 'Notifications', url: '/dashboard/profile?tab=notifications', icon: Bell },
+  { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
 ];
 
 export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -75,12 +78,16 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
 
       <div className={`${styles.quickActions} ${collapsed ? styles.hideText : ''}`}>
         <p className={styles.label}>Quick Actions</p>
-        <button type="button" className={`${styles.quickBtn} ${styles.quickBtnPrimary}`}>
+        <button
+          type="button"
+          className={`${styles.quickBtn} ${styles.quickBtnPrimary}`}
+          onClick={() => router.push('/dashboard/reports?tab=new-study')}
+        >
           <Plus size={14} /> New Study
         </button>
-        <button type="button" className={styles.quickBtn}>Upload Data</button>
-        <button type="button" className={styles.quickBtn}>Browse Datasets</button>
-        <button type="button" className={styles.quickBtn}>Join Workspace</button>
+        <button type="button" className={styles.quickBtn} onClick={() => router.push('/dashboard/datasets?upload=1')}>Upload Data</button>
+        <button type="button" className={styles.quickBtn} onClick={() => router.push('/dashboard/datasets')}>Browse Datasets</button>
+        <button type="button" className={styles.quickBtn} onClick={() => router.push('/dashboard/workspaces')}>Join Workspace</button>
       </div>
 
       <div className={`${styles.footer} ${collapsed ? styles.hideText : ''}`}>

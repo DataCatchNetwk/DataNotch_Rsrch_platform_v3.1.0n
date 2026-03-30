@@ -1,4 +1,4 @@
-const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 type RequestOptions = {
@@ -29,11 +29,20 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
         ? opts.body
         : JSON.stringify(opts.body);
 
-  const res = await fetch(url, {
-    method: opts.method ?? 'GET',
-    headers,
-    body,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: opts.method ?? 'GET',
+      headers,
+      body,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? `Unable to reach the API at ${API_BASE}. Start the server and database, then try again.`
+        : 'Unable to reach the API. Start the server and try again.';
+    throw new ApiError(0, message, { cause: error, url });
+  }
 
   const data = await res.json().catch(() => ({}));
 

@@ -151,6 +151,7 @@ async function registerUserWithRole(input: RegisterInput, roleName: 'ANALYST' | 
       mobileNumber: input.mobile_number,
       referralCode: input.referral_code,
       passwordHash: await hashPassword(input.password),
+      passwordChangedAt: new Date(),
       dateOfBirth: new Date(input.date_of_birth),
       roles: {
         create: [{ roleId: userRole.id }],
@@ -173,7 +174,10 @@ export async function registerAdminUser(input: RegisterInput) {
   };
 }
 
-export async function loginUser(input: { identifier: string; password: string }) {
+export async function loginUser(
+  input: { identifier: string; password: string },
+  metadata?: { userAgent?: string; ipAddress?: string }
+) {
   const normalizedIdentifier = input.identifier.trim();
   const emailIdentifier = normalizedIdentifier.toLowerCase();
   const user = await prisma.user.findFirst({
@@ -190,7 +194,18 @@ export async function loginUser(input: { identifier: string; password: string })
   const valid = await verifyPassword(input.password, user.passwordHash);
   if (!valid) throw new HttpError(401, 'Invalid credentials');
 
-  await logAudit({ userId: user.id, action: 'LOGIN', entity: 'User', entityId: user.id });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  await logAudit({
+    userId: user.id,
+    action: 'LOGIN',
+    entity: 'User',
+    entityId: user.id,
+    metadata,
+  });
 
   return createAuthResponse(user, 'Login successful');
 }
@@ -232,6 +247,7 @@ export async function resetPassword(input: { token: string; new_password: string
     where: { id: user.id },
     data: {
       passwordHash: await hashPassword(input.new_password),
+      passwordChangedAt: new Date(),
       resetToken: null,
       resetTokenExpires: null,
     },
