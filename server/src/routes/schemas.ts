@@ -116,3 +116,34 @@ export const createReportSchema = z.object({
   datasetIds: z.array(z.string().trim()).optional(),
   metadataJson: z.unknown().optional(),
 });
+
+export const adminUserIdParamsSchema = z.object({
+  userId: z.string().trim().min(1, 'User ID is required'),
+});
+
+export const adminRequestIdParamsSchema = z.object({
+  requestId: z.string().trim().min(1, 'Request ID is required'),
+});
+
+export const adminUpdateUserRoleSchema = z.object({
+  role: z.enum(['USER', 'REVIEWER', 'STAFF', 'ADMIN', 'SUPER_ADMIN']),
+}).strict();
+
+export const adminUpdateUserStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'PENDING', 'SUSPENDED']),
+}).strict();
+
+export const governanceListUsersQuerySchema = z.object({
+  search: z.string().trim().optional(),
+  role: z.enum(['USER', 'REVIEWER', 'STAFF', 'ADMIN', 'SUPER_ADMIN']).optional(),
+  status: z.enum(['ACTIVE', 'PENDING', 'SUSPENDED']).optional(),
+});
+
+export const governanceBulkRoleSchema = z.object({
+  userIds: z.array(z.string().trim().min(1)).min(1),
+  role: z.enum(['USER', 'REVIEWER', 'STAFF', 'ADMIN', 'SUPER_ADMIN']),
+}).strict();
+
+export const governanceBulkSuspendSchema = z.object({
+  userIds: z.array(z.string().trim().min(1)).min(1),
+}).strict();

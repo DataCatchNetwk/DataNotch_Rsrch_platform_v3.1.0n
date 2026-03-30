@@ -1,13 +1,27 @@
-import { PrismaClient } from '@prisma/client';
+import { AccountStatus, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+async function assignRole(userId: string, roleId: string) {
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId, roleId } },
+    update: {},
+    create: { userId, roleId },
+  });
+}
 
 async function main() {
   const adminRole = await prisma.role.upsert({
     where: { name: 'ADMIN' },
     update: {},
     create: { name: 'ADMIN', description: 'Platform administrator' },
+  });
+
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: 'SUPER_ADMIN' },
+    update: {},
+    create: { name: 'SUPER_ADMIN', description: 'Platform super administrator' },
   });
 
   const analystRole = await prisma.role.upsert({
@@ -37,6 +51,12 @@ async function main() {
       update: {},
       create: { roleId: adminRole.id, permissionId: p.id },
     });
+
+    await prisma.rolePermission.upsert({
+      where: { roleId_permissionId: { roleId: superAdminRole.id, permissionId: p.id } },
+      update: {},
+      create: { roleId: superAdminRole.id, permissionId: p.id },
+    });
   }
 
   const analystPerm = permissions.find((permission: { name: string }) => permission.name === 'health_data.read');
@@ -51,7 +71,7 @@ async function main() {
   const passwordHash = await bcrypt.hash('Admin@12345', 12);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@healthplatform.local' },
-    update: {},
+    update: { accountStatus: AccountStatus.ACTIVE },
     create: {
       firstname: 'System',
       surname: 'Admin',
@@ -60,14 +80,29 @@ async function main() {
       mobileNumber: '5551234567',
       passwordHash,
       dateOfBirth: new Date('1990-01-01'),
+      accountStatus: AccountStatus.ACTIVE,
     },
   });
 
-  await prisma.userRole.upsert({
-    where: { userId_roleId: { userId: admin.id, roleId: adminRole.id } },
-    update: {},
-    create: { userId: admin.id, roleId: adminRole.id },
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'superadmin@healthplatform.local' },
+    update: { accountStatus: AccountStatus.ACTIVE },
+    create: {
+      firstname: 'System',
+      surname: 'Super Admin',
+      email: 'superadmin@healthplatform.local',
+      countryCode: '+1',
+      mobileNumber: '5551234568',
+      passwordHash,
+      dateOfBirth: new Date('1990-01-01'),
+      accountStatus: AccountStatus.ACTIVE,
+    },
   });
+
+  await assignRole(admin.id, adminRole.id);
+  await assignRole(admin.id, superAdminRole.id);
+  await assignRole(superAdmin.id, adminRole.id);
+  await assignRole(superAdmin.id, superAdminRole.id);
 
   const domain = await prisma.domain.upsert({ where: { name: 'Population Health' }, update: {}, create: { name: 'Population Health' } });
   const subDomain = await prisma.subDomain.upsert({ where: { name: 'Maternal Health' }, update: {}, create: { name: 'Maternal Health', domainId: domain.id } });

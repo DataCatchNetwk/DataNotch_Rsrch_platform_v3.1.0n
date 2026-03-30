@@ -17,3 +17,23 @@ export async function logAudit(params: {
     },
   });
 }
+
+export async function logAdminAuditEvent(params: {
+  actorUserId?: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH';
+  metadata?: unknown;
+}) {
+  await prisma.adminAuditEvent.create({
+    data: {
+      actorUserId: params.actorUserId,
+      action: params.action,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      severity: params.severity ?? 'MEDIUM',
+      metadataJson: params.metadata as never,
+    },
+  });
+}

@@ -8,6 +8,8 @@ import analysisJobsRoutes from './modules/analysis-jobs/analysis-jobs.module.js'
 import profileRoutes from './modules/profile/profile.module.js';
 import notificationRoutes from './routes/notifications.js';
 import pipelineRoutes from './routes/pipelines.js';
+import adminRoutes from './routes/admin.js';
+import adminGovernanceRoutes from './routes/admin-governance.js';
 import userRoutes from './routes/users.js';
 import workspaceRoutes from './routes/workspaces.js';
 import researcherApplicationsRoutes from './routes/researcher-applications.js';
@@ -33,6 +35,8 @@ export function createApp() {
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/pipeline-runs', pipelineRoutes);
   app.use('/api/v1/pipeline-runs', pipelineRoutes);
+  app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/admin-governance', adminGovernanceRoutes);
   app.use('/api/v1/users', userRoutes);
   app.use('/api/workspaces', workspaceRoutes);
   app.use('/api/v1/workspaces', workspaceRoutes);

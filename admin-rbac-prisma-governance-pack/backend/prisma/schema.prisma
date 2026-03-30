@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  REVIEWER
+  STAFF
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AuditSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id               String            @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String            @unique
+  role             UserRole          @default(USER)
+  status           UserStatus        @default(PENDING)
+  institution      String?
+  department       String?
+  lastLoginAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  adminAuditEvents AdminAuditEvent[] @relation("AuditActor")
+  accessRequests   AccessRequest[]   @relation("AccessRequestRequester")
+}
+
+model AccessRequest {
+  id            String              @id @default(cuid())
+  requesterId   String
+  requestedRole UserRole
+  justification String?
+  status        AccessRequestStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  requester     User                @relation("AccessRequestRequester", fields: [requesterId], references: [id])
+
+  @@index([requesterId])
+  @@index([status])
+}
+
+model AdminAuditEvent {
+  id           String        @id @default(cuid())
+  action       String
+  targetType   String
+  targetId     String
+  actorUserId  String?
+  severity     AuditSeverity @default(MEDIUM)
+  metadataJson Json?
+  createdAt    DateTime      @default(now())
+
+  actor        User?         @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([actorUserId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}

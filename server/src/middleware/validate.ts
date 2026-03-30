@@ -11,3 +11,14 @@ export function validateBody(schema: ZodTypeAny) {
     }
   };
 }
+
+export function validateParams(schema: ZodTypeAny) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    try {
+      req.params = schema.parse(req.params);
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}

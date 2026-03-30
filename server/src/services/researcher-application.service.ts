@@ -4,6 +4,7 @@ import { prisma } from '../db/prisma.js';
 import { hashPassword } from '../utils/password.js';
 import { HttpError } from '../utils/errors.js';
 import type { ApplicationReviewStatus, ResearcherType } from '@prisma/client';
+import { logAdminAuditEvent } from './audit.service.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -193,6 +194,15 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
       },
     });
 
+    await tx.accessRequest.create({
+      data: {
+        requesterId: user.id,
+        requestedRole: 'USER',
+        justification: dto.platformPurpose,
+        status: 'PENDING',
+      },
+    });
+
     await tx.notification.create({
       data: {
         userId: user.id,
@@ -338,6 +348,15 @@ export async function reviewApplication(
       },
     });
 
+    await tx.accessRequest.updateMany({
+      where: { requesterId: application.userId, status: 'PENDING' },
+      data: {
+        status: nextReviewStatus === 'APPROVED' ? 'APPROVED' : 'REJECTED',
+        reviewedById: reviewerUserId,
+        reviewedAt: new Date(),
+      },
+    });
+
     await tx.notification.create({
       data: {
         userId: application.userId,
@@ -358,6 +377,15 @@ export async function reviewApplication(
   });
 
   // No-op placeholder
+  await logAdminAuditEvent({
+    actorUserId: reviewerUserId,
+    action: nextReviewStatus === 'APPROVED' ? 'ACCESS_REQUEST_APPROVED' : 'ACCESS_REQUEST_REJECTED',
+    targetType: 'ResearcherApplication',
+    targetId: application.id,
+    severity: nextReviewStatus === 'APPROVED' ? 'MEDIUM' : 'HIGH',
+    metadata: { reviewStatus: nextReviewStatus, accountStatus: updated.updatedUser.accountStatus },
+  });
+
   console.info('[application-queue] enqueueReviewCompleted', {
     applicationId: application.id,
     userId: application.userId,
@@ -408,6 +436,17 @@ export async function requestMoreInfo(
         title: 'Additional information requested',
         description: `The admin has requested more information about your application: ${dto.notes}`,
         severity: 'WARNING',
+      },
+    });
+
+    await tx.adminAuditEvent.create({
+      data: {
+        actorUserId: reviewerUserId,
+        action: 'ACCESS_REQUEST_MORE_INFO',
+        targetType: 'ResearcherApplication',
+        targetId: application.id,
+        severity: 'MEDIUM',
+        metadataJson: { notes: dto.notes, dueDate: dto.dueDate },
       },
     });
 
