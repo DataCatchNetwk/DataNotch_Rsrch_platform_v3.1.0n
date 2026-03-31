@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, ClipboardList, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
+import { Activity, ClipboardList, LifeBuoy, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ const items = [
   { href: '/admin/access', label: 'Access Governance', icon: Lock },
   { href: '/admin/registrations', label: 'Registration Queue', icon: ClipboardList },
   { href: '/admin/audit', label: 'Audit Logs', icon: ScrollText },
+  { href: '/admin/support', label: 'Support Center', icon: LifeBuoy },
   { href: '/admin/monitoring', label: 'System Monitoring', icon: Activity },
 ];
 
@@ -50,7 +51,10 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
           <nav className="space-y-1">
             {items.map((item) => {
               const Icon = item.icon;
-              const active = pathname === item.href;
+              const active =
+                item.href === '/admin'
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}

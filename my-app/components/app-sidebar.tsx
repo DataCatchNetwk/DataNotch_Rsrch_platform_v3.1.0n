@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical } from 'lucide-react';
+import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical, LifeBuoy, LogOut } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import styles from './app-sidebar.module.css';
@@ -19,6 +19,7 @@ const navItems = [
   { title: 'Workspaces', url: '/dashboard/workspaces', icon: ClipboardList },
   { title: 'Monitoring', url: '/dashboard/monitoring/pipelines', icon: Activity },
   { title: 'Requests', url: '/dashboard/requests', icon: FileUp },
+  { title: 'Support', url: '/dashboard/support', icon: LifeBuoy },
   { title: 'Collaborators', url: '/dashboard/reports?tab=collaborators', icon: Users2 },
   { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
 ];
@@ -28,6 +29,12 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   const items = useMemo(() => {
     if (!showAdminLink) return navItems;
@@ -97,6 +104,16 @@ export function AppSidebar({ showAdminLink = false }: AppSidebarProps) {
           <p className={styles.footerEmail}>{email}</p>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className={styles.logoutBtn}
+        title="Log Out"
+      >
+        <LogOut className={styles.icon} />
+        <span className={collapsed ? styles.hideText : ''}>Log Out</span>
+      </button>
     </aside>
   );
 }

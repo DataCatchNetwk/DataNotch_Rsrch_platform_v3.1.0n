@@ -1,0 +1,90 @@
+name: Network Enforcement Smoke Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - admin
+  workflow_dispatch:
+
+jobs:
+  network-enforcement:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: health_data
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d health_data"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: server
+
+    env:
+      PORT: 4000
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: health_data
+      JWT_SECRET: ci-test-secret
+      AUTH_NETWORK_BLOCK_ENABLED: true
+      AUTH_NETWORK_FAIL_CLOSED: true
+      AUTH_NETWORK_CHECK_URL: http://127.0.0.1:9
+      AUTH_NETWORK_CHECK_TIMEOUT_MS: 1000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install server dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Start API server
+        run: |
+          npm run dev > /tmp/server.log 2>&1 &
+          echo $! > /tmp/server.pid
+
+      - name: Wait for API health
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://localhost:4000/health > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API failed to become healthy"
+          cat /tmp/server.log
+          exit 1
+
+      - name: Run network enforcement smoke test
+        run: npm run test:network-enforcement
+
+      - name: Print server logs on failure
+        if: failure()
+        run: cat /tmp/server.log
+
+      - name: Stop API server
+        if: always()
+        run: |
+          if [ -f /tmp/server.pid ]; then
+            kill $(cat /tmp/server.pid) || true
+          fi

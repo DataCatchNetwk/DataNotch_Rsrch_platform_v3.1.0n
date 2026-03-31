@@ -169,6 +169,49 @@ enum ArtifactKind {
   LOG
 }
 
+enum SupportTicketStatus {
+  OPEN
+  TRIAGED
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+  SPAM
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SupportTicketCategory {
+  LOGIN
+  BILLING
+  TECHNICAL
+  DATASET
+  ACCESS
+  ACCOUNT
+  SECURITY
+  OTHER
+}
+
+enum SupportTicketSource {
+  LOGIN_PAGE
+  USER_DASHBOARD
+  ADMIN_CREATED
+  EMAIL_INGEST
+  API
+}
+
+enum SupportMessageAuthorType {
+  USER
+  ADMIN
+  AI
+  SYSTEM
+}
+
 model User {
   id                 String      @id @default(cuid()) @db.VarChar(30)
   firstname          String      @db.VarChar(100)
@@ -211,9 +254,84 @@ model User {
   pipelineRunsTriggered PipelineRun[] @relation("PipelineRunTriggeredBy")
   pipelineArtifactsCreated PipelineArtifact[] @relation("PipelineArtifactCreatedBy")
   modelRegistryEntriesCreated ModelRegistryEntry[] @relation("ModelRegistryEntryCreatedBy")
+  assignedSupportTickets  SupportTicket[] @relation("AssignedSupportTickets")
+  createdSupportTickets   SupportTicket[] @relation("CreatedSupportTickets")
+  supportMessages         SupportMessage[]
+  supportActivities       SupportActivity[]
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
+}
+
+model SupportTicket {
+  id                String                 @id @default(cuid()) @db.VarChar(30)
+  ticketNumber      String                 @unique @map("ticket_number") @db.VarChar(50)
+  subject           String                 @db.VarChar(255)
+  description       String                 @db.Text
+  requesterEmail    String                 @map("requester_email") @db.VarChar(191)
+  requesterName     String?                @map("requester_name") @db.VarChar(191)
+  category          SupportTicketCategory
+  status            SupportTicketStatus    @default(OPEN)
+  priority          SupportTicketPriority  @default(MEDIUM)
+  source            SupportTicketSource    @default(LOGIN_PAGE)
+  tags              String[]
+  sentimentScore    Float?                 @map("sentiment_score")
+  spamScore         Float?                 @map("spam_score")
+  urgencyScore      Float?                 @map("urgency_score")
+  aiSummary         String?                @map("ai_summary") @db.Text
+  aiSuggestedReply  String?                @map("ai_suggested_reply") @db.Text
+  aiTriageReason    String?                @map("ai_triage_reason") @db.Text
+  aiLastAnalyzedAt  DateTime?              @map("ai_last_analyzed_at")
+  attachmentUrl     String?                @map("attachment_url") @db.VarChar(500)
+  attachmentName    String?                @map("attachment_name") @db.VarChar(255)
+  assignedToId      String?                @map("assigned_to_id") @db.VarChar(30)
+  assignedTo        User?                  @relation("AssignedSupportTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdByUserId   String?                @map("created_by_user_id") @db.VarChar(30)
+  createdByUser     User?                  @relation("CreatedSupportTickets", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  firstResponseAt   DateTime?              @map("first_response_at")
+  resolvedAt        DateTime?              @map("resolved_at")
+  closedAt          DateTime?              @map("closed_at")
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+  messages          SupportMessage[]
+  activities        SupportActivity[]
+
+  @@index([status, priority, createdAt])
+  @@index([assignedToId, status])
+  @@index([requesterEmail])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id              String                   @id @default(cuid()) @db.VarChar(30)
+  ticketId        String                   @map("ticket_id") @db.VarChar(30)
+  ticket          SupportTicket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorType      SupportMessageAuthorType @map("author_type")
+  authorUserId    String?                  @map("author_user_id") @db.VarChar(30)
+  authorUser      User?                    @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+  body            String                   @db.Text
+  isInternal      Boolean                  @default(false) @map("is_internal")
+  attachmentUrl   String?                  @map("attachment_url") @db.VarChar(500)
+  attachmentName  String?                  @map("attachment_name") @db.VarChar(255)
+  createdAt       DateTime                 @default(now()) @map("created_at")
+
+  @@index([ticketId, createdAt])
+  @@map("support_messages")
+}
+
+model SupportActivity {
+  id            String         @id @default(cuid()) @db.VarChar(30)
+  ticketId      String         @map("ticket_id") @db.VarChar(30)
+  ticket        SupportTicket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actorUserId   String?        @map("actor_user_id") @db.VarChar(30)
+  actorUser     User?          @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  type          String         @db.VarChar(100)
+  description   String         @db.Text
+  metaJson      Json?          @map("meta_json")
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  @@index([ticketId, createdAt])
+  @@map("support_activities")
 }
 
 model Role {

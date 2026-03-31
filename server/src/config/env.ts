@@ -39,6 +39,10 @@ export const env = {
   GOOGLE_OAUTH_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '',
   MICROSOFT_OAUTH_CLIENT_ID: process.env.MICROSOFT_OAUTH_CLIENT_ID ?? '',
   MICROSOFT_OAUTH_CLIENT_SECRET: process.env.MICROSOFT_OAUTH_CLIENT_SECRET ?? '',
-  GOOGLE_OAUTH_REDIRECT_URI: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? 'http://localhost:3001/api/v1/auth/sso/google/callback',
-  MICROSOFT_OAUTH_REDIRECT_URI: process.env.MICROSOFT_OAUTH_REDIRECT_URI ?? 'http://localhost:3001/api/v1/auth/sso/microsoft/callback',
+  GOOGLE_OAUTH_REDIRECT_URI: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? `http://localhost:${port}/api/v1/auth/sso/google/callback`,
+  MICROSOFT_OAUTH_REDIRECT_URI: process.env.MICROSOFT_OAUTH_REDIRECT_URI ?? `http://localhost:${port}/api/v1/auth/sso/microsoft/callback`,
+  AUTH_NETWORK_BLOCK_ENABLED: (process.env.AUTH_NETWORK_BLOCK_ENABLED ?? 'true').toLowerCase() !== 'false',
+  AUTH_NETWORK_FAIL_CLOSED: (process.env.AUTH_NETWORK_FAIL_CLOSED ?? 'true').toLowerCase() !== 'false',
+  AUTH_NETWORK_CHECK_URL: process.env.AUTH_NETWORK_CHECK_URL ?? 'https://api.ipapi.is',
+  AUTH_NETWORK_CHECK_TIMEOUT_MS: Number(process.env.AUTH_NETWORK_CHECK_TIMEOUT_MS ?? 6000),
 };

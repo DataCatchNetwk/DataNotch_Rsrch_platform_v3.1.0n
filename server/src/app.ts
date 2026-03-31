@@ -16,6 +16,7 @@ import systemMonitoringRoutes from './modules/system-monitoring/system-monitorin
 import userRoutes from './routes/users.js';
 import workspaceRoutes from './routes/workspaces.js';
 import researcherApplicationsRoutes from './routes/researcher-applications.js';
+import supportRoutes from './routes/support.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 export function createApp() {
@@ -48,6 +49,8 @@ export function createApp() {
   app.use('/api/v1/workspaces', workspaceRoutes);
   app.use('/api/health-data', healthDataRoutes);
   app.use('/api/v1/admin/researcher-applications', researcherApplicationsRoutes);
+  app.use('/api/support', supportRoutes);
+  app.use('/api/v1/support', supportRoutes);
 
   app.use(errorHandler);
   return app;

@@ -1,0 +1,126 @@
+enum SupportTicketStatus {
+  OPEN
+  TRIAGED
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+  SPAM
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SupportTicketCategory {
+  LOGIN
+  BILLING
+  TECHNICAL
+  DATASET
+  ACCESS
+  ACCOUNT
+  SECURITY
+  OTHER
+}
+
+enum SupportTicketSource {
+  LOGIN_PAGE
+  USER_DASHBOARD
+  ADMIN_CREATED
+  EMAIL_INGEST
+  API
+}
+
+enum SupportMessageAuthorType {
+  USER
+  ADMIN
+  AI
+  SYSTEM
+}
+
+model SupportTicket {
+  id                String                 @id @default(cuid())
+  ticketNumber      String                 @unique
+  subject           String
+  description       String
+  requesterEmail    String
+  requesterName     String?
+  category          SupportTicketCategory
+  status            SupportTicketStatus    @default(OPEN)
+  priority          SupportTicketPriority  @default(MEDIUM)
+  source            SupportTicketSource    @default(LOGIN_PAGE)
+
+  tags              String[]
+  sentimentScore    Float?
+  spamScore         Float?
+  urgencyScore      Float?
+  aiSummary         String?
+  aiSuggestedReply  String?
+  aiTriageReason    String?
+  aiLastAnalyzedAt  DateTime?
+
+  attachmentUrl     String?
+  attachmentName    String?
+
+  assignedToId      String?
+  assignedTo        User?                  @relation("AssignedSupportTickets", fields: [assignedToId], references: [id])
+
+  createdByUserId   String?
+  createdByUser     User?                  @relation("CreatedSupportTickets", fields: [createdByUserId], references: [id])
+
+  firstResponseAt   DateTime?
+  resolvedAt        DateTime?
+  closedAt          DateTime?
+
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  messages          SupportMessage[]
+  activities        SupportActivity[]
+
+  @@index([status, priority, createdAt])
+  @@index([assignedToId, status])
+  @@index([requesterEmail])
+}
+
+model SupportMessage {
+  id            String                   @id @default(cuid())
+  ticketId      String
+  ticket        SupportTicket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  authorType    SupportMessageAuthorType
+  authorUserId  String?
+  authorUser    User?                    @relation(fields: [authorUserId], references: [id])
+
+  body          String
+  isInternal    Boolean                  @default(false)
+  createdAt     DateTime                 @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model SupportActivity {
+  id            String        @id @default(cuid())
+  ticketId      String
+  ticket        SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  actorUserId   String?
+  actorUser     User?         @relation(fields: [actorUserId], references: [id])
+
+  type          String
+  description   String
+  metaJson      Json?
+
+  createdAt     DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+// Add these fields to your existing User model:
+// assignedSupportTickets  SupportTicket[]  @relation("AssignedSupportTickets")
+// createdSupportTickets   SupportTicket[]  @relation("CreatedSupportTickets")
+// supportMessages         SupportMessage[]
+// supportActivities       SupportActivity[]

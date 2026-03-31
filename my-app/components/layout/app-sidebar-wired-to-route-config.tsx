@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronRight, LogOut } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/src/lib/utils";
@@ -22,7 +22,13 @@ export function AppSidebarWiredToRouteConfig({
   badgeOverrides,
 }: AppSidebarWiredProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   const effectiveRoles = roleOverride ?? user?.roles ?? ["USER"];
   const sections = buildSidebarSections(effectiveRoles, badgeOverrides);
@@ -91,7 +97,15 @@ export function AppSidebarWiredToRouteConfig({
           ))}
         </nav>
 
-        <div className="border-t border-slate-200 p-4">
+        <div className="border-t border-slate-200 p-4 space-y-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 hover:border-red-300"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            Log Out
+          </button>
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-900">Workspace Hub</p>
             <p className="mt-1 text-xs leading-5 text-slate-500">

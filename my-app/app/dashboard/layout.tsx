@@ -34,7 +34,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          {children}
+          <div className="mx-auto max-w-screen-xl px-6 py-8">
+            {children}
+          </div>
           <CommandPalette />
         </main>
       </div>
