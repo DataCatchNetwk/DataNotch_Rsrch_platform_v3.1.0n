@@ -1,4 +1,4 @@
-import { AccessRequestStatus, AccountStatus, AnalysisJobStatus, ApplicationReviewStatus, ImportJobStatus } from '@prisma/client';
+import { AccessRequestStatus, AccountStatus, AnalysisJobStatus, ImportJobStatus } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { HttpError } from '../utils/errors.js';
 import { reviewApplication } from './researcher-application.service.js';
@@ -161,23 +161,31 @@ export async function updateAdminUserStatus(userId: string, status: AdminStatus)
 }
 
 export async function getRegistrations() {
-  const items = await prisma.researcherApplication.findMany({
+  const items = await prisma.accessRequest.findMany({
     orderBy: { createdAt: 'desc' },
-    include: { user: true },
+    include: {
+      requester: {
+        include: {
+          application: true,
+        },
+      },
+      decisionReasons: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
   });
 
   return items.map((item) => ({
     id: item.id,
-    fullName: `${item.user.firstname} ${item.user.surname}`.trim(),
-    email: item.user.email,
-    institution: item.institution,
-    requestedRole: 'USER',
+    fullName: `${item.requester.firstname} ${item.requester.surname}`.trim(),
+    email: item.requester.email,
+    institution: item.requester.application?.institution ?? item.requester.institution ?? 'Not provided',
+    requestedRole: item.requestedRole,
     submittedAt: formatTimestamp(item.createdAt),
-    status: item.reviewStatus === ApplicationReviewStatus.APPROVED
-      ? 'APPROVED'
-      : item.reviewStatus === ApplicationReviewStatus.REJECTED
-        ? 'REJECTED'
-        : 'PENDING',
+    status: item.status,
+    decisionReason: item.decisionReasons[0]?.reason ?? null,
+    decisionType: item.decisionReasons[0]?.decisionType ?? null,
   }));
 }
 

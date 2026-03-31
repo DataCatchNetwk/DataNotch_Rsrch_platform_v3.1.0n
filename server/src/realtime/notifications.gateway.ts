@@ -88,3 +88,7 @@ export function emitToPipelineRun(runId: string, payload: unknown) {
 export function emitPipelineMetrics(payload: unknown) {
   io?.emit('pipelines:metrics', payload);
 }
+
+export function emitSystemMonitoringSnapshot(payload: unknown) {
+  io?.emit('system-monitoring:snapshot', payload);
+}

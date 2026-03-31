@@ -14,6 +14,7 @@ type GovernanceUserTableProps = {
   selectedIds: string[];
   pendingRoleUserId?: string | null;
   pendingStatusUserId?: string | null;
+  currentUserId?: string | null;
   search: string;
   roleFilter: string;
   statusFilter: string;
@@ -25,7 +26,7 @@ type GovernanceUserTableProps = {
   onUserRoleChange: (userId: string, role: GovernanceRole) => void;
   onUserStatusChange: (userId: string, status: GovernanceStatus) => void;
   onBulkRoleAssign: (role: GovernanceRole) => void;
-  onBulkSuspend: () => void;
+  onBulkStatusUpdate: (status: GovernanceStatus) => void;
 };
 
 export function GovernanceUserTable({
@@ -33,6 +34,7 @@ export function GovernanceUserTable({
   selectedIds,
   pendingRoleUserId,
   pendingStatusUserId,
+  currentUserId,
   search,
   roleFilter,
   statusFilter,
@@ -44,19 +46,35 @@ export function GovernanceUserTable({
   onUserRoleChange,
   onUserStatusChange,
   onBulkRoleAssign,
-  onBulkSuspend,
+  onBulkStatusUpdate,
 }: GovernanceUserTableProps) {
-  const allSelected = users.length > 0 && users.every((user) => selectedIds.includes(user.id));
+  const isLocked = React.useCallback(
+    (user: GovernanceUser) => user.id === currentUserId || (!isSuperAdmin && user.role === 'SUPER_ADMIN'),
+    [currentUserId, isSuperAdmin],
+  );
+
+  const selectableUsers = React.useMemo(() => users.filter((user) => !isLocked(user)), [isLocked, users]);
+  const allSelected = selectableUsers.length > 0 && selectableUsers.every((user) => selectedIds.includes(user.id));
+  const selectedUsers = React.useMemo(() => users.filter((user) => selectedIds.includes(user.id)), [selectedIds, users]);
+
+  const bulkSuspendCount = selectedUsers.filter((user) => !isLocked(user) && user.status !== 'SUSPENDED').length;
+  const bulkActivateCount = selectedUsers.filter((user) => !isLocked(user) && user.status !== 'ACTIVE').length;
+  const bulkPendingCount = selectedUsers.filter((user) => !isLocked(user) && user.status !== 'PENDING').length;
 
   const toggleAll = (checked: boolean) => {
     if (checked) {
-      onSelectedIdsChange(users.map((user) => user.id));
+      onSelectedIdsChange(selectableUsers.map((user) => user.id));
       return;
     }
     onSelectedIdsChange([]);
   };
 
   const toggleOne = (userId: string, checked: boolean) => {
+    const target = users.find((user) => user.id === userId);
+    if (!target || isLocked(target)) {
+      return;
+    }
+
     if (checked) {
       onSelectedIdsChange(Array.from(new Set([...selectedIds, userId])));
       return;
@@ -109,10 +127,17 @@ export function GovernanceUserTable({
               </Button>
             </>
           ) : null}
-          <Button size="sm" variant="destructive" onClick={onBulkSuspend}>
+          <Button size="sm" variant="destructive" disabled={bulkSuspendCount === 0} onClick={() => onBulkStatusUpdate('SUSPENDED')}>
             <UserX className="mr-2 h-4 w-4" />
             Bulk Suspend
           </Button>
+          <Button size="sm" variant="outline" disabled={bulkActivateCount === 0} onClick={() => onBulkStatusUpdate('ACTIVE')}>
+            Reactivate to ACTIVE
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkPendingCount === 0} onClick={() => onBulkStatusUpdate('PENDING')}>
+            Set PENDING
+          </Button>
+          {bulkSuspendCount === 0 ? <span className="text-xs text-slate-500">All selected users are already SUSPENDED or protected.</span> : null}
         </div>
       ) : null}
 
@@ -135,7 +160,11 @@ export function GovernanceUserTable({
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
-                  <Checkbox checked={selectedIds.includes(user.id)} onCheckedChange={(checked) => toggleOne(user.id, Boolean(checked))} />
+                  <Checkbox
+                    checked={selectedIds.includes(user.id)}
+                    disabled={isLocked(user)}
+                    onCheckedChange={(checked) => toggleOne(user.id, Boolean(checked))}
+                  />
                 </TableCell>
                 <TableCell className="font-medium">{user.fullName}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -145,7 +174,7 @@ export function GovernanceUserTable({
                   <Select
                     value={user.role}
                     onValueChange={(value) => onUserRoleChange(user.id, value as GovernanceRole)}
-                    disabled={!isSuperAdmin || pendingRoleUserId === user.id}
+                    disabled={!isSuperAdmin || pendingRoleUserId === user.id || user.id === currentUserId}
                   >
                     <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -161,7 +190,7 @@ export function GovernanceUserTable({
                   <Select
                     value={user.status}
                     onValueChange={(value) => onUserStatusChange(user.id, value as GovernanceStatus)}
-                    disabled={pendingStatusUserId === user.id}
+                    disabled={pendingStatusUserId === user.id || isLocked(user)}
                   >
                     <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                     <SelectContent>

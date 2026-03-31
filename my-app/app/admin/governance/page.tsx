@@ -11,8 +11,6 @@ import { GovernanceAccessRequestQueue } from '@/components/admin-governance/acce
 import { GovernanceAuditExplorer } from '@/components/admin-governance/audit-explorer';
 import {
   approveGovernanceAccessRequest,
-  bulkAssignGovernanceRole,
-  bulkSuspendGovernanceUsers,
   listGovernanceAccessRequests,
   listGovernanceAuditEvents,
   listGovernanceUsers,
@@ -25,6 +23,7 @@ import {
   type GovernanceStatus,
   type GovernanceUser,
 } from '@/lib/api/admin-governance-api-client';
+import { bulkAssignPolicyRole, bulkUpdatePolicyStatus } from '@/lib/api/admin-policy-api-client';
 import { toast } from 'sonner';
 
 function AdminGovernanceContent() {
@@ -100,9 +99,15 @@ function AdminGovernanceContent() {
 
   async function onBulkRoleAssign(role: GovernanceRole) {
     if (!selectedIds.length) return;
+    const reason = window.prompt(`Provide a reason for bulk role assignment to ${role}:`);
+    if (!reason || reason.trim().length < 3) {
+      toast.error('A reason is required.');
+      return;
+    }
+
     setBulkPending(true);
     try {
-      await bulkAssignGovernanceRole(selectedIds, role);
+      await bulkAssignPolicyRole(selectedIds, role, reason.trim());
       toast.success(`Updated ${selectedIds.length} users to ${role}.`);
       setSelectedIds([]);
       await load();
@@ -113,16 +118,22 @@ function AdminGovernanceContent() {
     }
   }
 
-  async function onBulkSuspend() {
+  async function onBulkStatusUpdate(status: GovernanceStatus) {
     if (!selectedIds.length) return;
+    const reason = window.prompt(`Provide a reason for bulk status update to ${status}:`);
+    if (!reason || reason.trim().length < 3) {
+      toast.error('A reason is required.');
+      return;
+    }
+
     setBulkPending(true);
     try {
-      await bulkSuspendGovernanceUsers(selectedIds);
-      toast.success(`Suspended ${selectedIds.length} users.`);
+      await bulkUpdatePolicyStatus(selectedIds, status, reason.trim());
+      toast.success(`Updated ${selectedIds.length} users to ${status}.`);
       setSelectedIds([]);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Bulk suspend failed.');
+      toast.error(err instanceof Error ? err.message : 'Bulk status update failed.');
     } finally {
       setBulkPending(false);
     }
@@ -201,7 +212,7 @@ function AdminGovernanceContent() {
                 onUserRoleChange={(userId, role) => void onUserRoleChange(userId, role)}
                 onUserStatusChange={(userId, status) => void onUserStatusChange(userId, status)}
                 onBulkRoleAssign={(role) => void onBulkRoleAssign(role)}
-                onBulkSuspend={() => void onBulkSuspend()}
+                onBulkStatusUpdate={(status) => void onBulkStatusUpdate(status)}
               />
             </div>
           </AdminCard>

@@ -29,6 +29,8 @@ export type RegistrationRequest = {
   requestedRole: string;
   submittedAt: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  decisionReason?: string | null;
+  decisionType?: 'APPROVED' | 'REJECTED' | null;
 };
 
 export type AccessSummary = {

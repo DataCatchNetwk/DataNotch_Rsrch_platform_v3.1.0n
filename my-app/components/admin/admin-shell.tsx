@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, ClipboardList, Lock, ScrollText, Shield, ShieldCheck, Users } from 'lucide-react';
+import { Activity, ClipboardList, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ const items = [
   { href: '/admin', label: 'Admin Dashboard', icon: Shield },
   { href: '/admin/users', label: 'User Management', icon: Users },
   { href: '/admin/governance', label: 'Governance Center', icon: ShieldCheck },
+  { href: '/admin/policy', label: 'Policy & Bulk Ops', icon: SlidersHorizontal },
   { href: '/admin/access', label: 'Access Governance', icon: Lock },
   { href: '/admin/registrations', label: 'Registration Queue', icon: ClipboardList },
   { href: '/admin/audit', label: 'Audit Logs', icon: ScrollText },

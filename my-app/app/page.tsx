@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
   const router = useRouter();
-  const { login, user, loading: authLoading } = useAuth();
+  const { login, logout, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +31,25 @@ export default function HomePage() {
 
     try {
       const authenticatedUser = await login(email, password);
-      router.push(authenticatedUser.roles.includes('ADMIN') || isAdmin ? '/admin' : '/dashboard');
+      const isAdminAccount = authenticatedUser.roles.includes('ADMIN') || authenticatedUser.roles.includes('SUPER_ADMIN');
+
+      if (isAdmin && !isAdminAccount) {
+        // Researcher account tried to use the Admin tab
+        logout();
+        setError('This account does not have admin access. Please use the Researcher tab to sign in.');
+        setPassword('');
+        return;
+      }
+
+      if (!isAdmin && isAdminAccount) {
+        // Admin account tried to use the Researcher tab
+        logout();
+        setError('Admin accounts must sign in using the Admin tab.');
+        setPassword('');
+        return;
+      }
+
+      router.push(isAdminAccount ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : 'An error occurred');
       setPassword('');
@@ -70,7 +88,7 @@ export default function HomePage() {
           <div className="mb-6 flex rounded-lg border border-gray-200 p-1">
             <button
               type="button"
-              onClick={() => setIsAdmin(false)}
+              onClick={() => { setIsAdmin(false); setError(''); }}
               className={`flex-1 rounded px-4 py-2 text-sm font-medium transition ${
                 !isAdmin ? 'bg-purple-600 text-white' : 'bg-transparent text-gray-600 hover:text-gray-900'
               }`}
@@ -79,7 +97,7 @@ export default function HomePage() {
             </button>
             <button
               type="button"
-              onClick={() => setIsAdmin(true)}
+              onClick={() => { setIsAdmin(true); setError(''); }}
               className={`flex-1 rounded px-4 py-2 text-sm font-medium transition ${
                 isAdmin ? 'bg-purple-600 text-white' : 'bg-transparent text-gray-600 hover:text-gray-900'
               }`}

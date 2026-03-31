@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
               <div style={s.success}>
                 <span>✅</span> {resetMessage}
                 <div style={{ marginTop: 8 }}>
-                  <a href="/login/user" style={{ color: '#667eea', fontWeight: 600 }}>Go to Login</a>
+                  <a href="/" style={{ color: '#667eea', fontWeight: 600 }}>Go to Login</a>
                 </div>
               </div>
             )}
@@ -133,7 +133,7 @@ export default function ForgotPasswordPage() {
         )}
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#666' }}>
-          <a href="/login/user" style={{ color: '#667eea', fontWeight: 600, textDecoration: 'none' }}>Back to Login</a>
+          <a href="/" style={{ color: '#667eea', fontWeight: 600, textDecoration: 'none' }}>Back to Login</a>
         </p>
       </div>
     </div>

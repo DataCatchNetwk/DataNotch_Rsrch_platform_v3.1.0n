@@ -107,6 +107,10 @@ export async function updateGovernanceUserRole(actor: { id: string; roles: strin
     throw new HttpError(403, 'SUPER_ADMIN role required for role changes');
   }
 
+  if (actor.id === userId) {
+    throw new HttpError(400, 'You cannot change your own role from this endpoint');
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, include: { roles: { include: { role: true } } } });
   if (!user) throw new HttpError(404, `User ${userId} not found`);
 
@@ -141,8 +145,19 @@ export async function updateGovernanceUserStatus(actor: { id: string; roles: str
         ? AccountStatus.SUSPENDED
         : AccountStatus.PENDING_APPROVAL;
 
-  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  const existing = await prisma.user.findUnique({ where: { id: userId }, include: { roles: { include: { role: true } } } });
   if (!existing) throw new HttpError(404, `User ${userId} not found`);
+
+  if (actor.id === userId) {
+    throw new HttpError(400, 'You cannot change your own status from this endpoint');
+  }
+
+  if (!actor.roles.includes('SUPER_ADMIN')) {
+    const targetIsSuperAdmin = existing.roles.some((entry) => entry.role.name === 'SUPER_ADMIN');
+    if (targetIsSuperAdmin) {
+      throw new HttpError(403, 'Only SUPER_ADMIN can update SUPER_ADMIN status');
+    }
+  }
 
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: nextStatus } });
 

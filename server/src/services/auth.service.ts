@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js';
+import type { AccountStatus } from '@prisma/client';
 import { env } from '../config/env.js';
 import { HttpError } from '../utils/errors.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
@@ -21,6 +22,7 @@ type UserWithRoles = {
   email: string;
   countryCode: string;
   mobileNumber: string;
+  accountStatus: AccountStatus;
   roles: RoleEntry[];
 };
 
@@ -39,7 +41,22 @@ function getRoleNames(user: UserWithRoles) {
   return user.roles.map((entry: RoleEntry) => entry.role.name);
 }
 
-function serializeUser(user: UserWithRoles) {
+async function getLatestApprovalDecision(userId: string) {
+  const decision = await prisma.approvalDecisionReason.findFirst({
+    where: { accessRequest: { requesterId: userId } },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!decision) return null;
+  return {
+    type: decision.decisionType,
+    reason: decision.reason,
+    createdAt: decision.createdAt,
+  };
+}
+
+async function serializeUser(user: UserWithRoles) {
+  const latestDecision = await getLatestApprovalDecision(user.id);
   return {
     id: user.id,
     firstname: user.firstname,
@@ -48,21 +65,26 @@ function serializeUser(user: UserWithRoles) {
     country_code: user.countryCode,
     mobile_number: user.mobileNumber,
     roles: getRoleNames(user),
+    accountStatus: user.accountStatus,
+    latestDecision,
   };
 }
 
-function createAuthResponse(user: UserWithRoles, message: string) {
+async function createAuthResponse(user: UserWithRoles, message: string) {
   const roles = getRoleNames(user);
+  const latestDecision = await getLatestApprovalDecision(user.id);
 
   return {
     message,
-    token: signToken({ id: user.id, email: user.email, roles }),
+    token: signToken({ id: user.id, email: user.email, roles, accountStatus: user.accountStatus }),
     user: {
       id: user.id,
       firstname: user.firstname,
       surname: user.surname,
       email: user.email,
       roles,
+      accountStatus: user.accountStatus,
+      latestDecision,
     },
   };
 }

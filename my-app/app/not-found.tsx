@@ -38,7 +38,7 @@ export default function NotFound() {
         </p>
 
         <Link
-          href="/login/user"
+          href="/"
           style={{
             display: 'inline-block',
             padding: '12px 32px',

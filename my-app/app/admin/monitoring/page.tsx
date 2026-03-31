@@ -1,54 +1,109 @@
 'use client';
 
-import * as React from 'react';
+import {
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { ProtectedRoute } from '@/components/protected-route';
-import { AdminCard } from '@/components/admin/admin-card';
-import { AdminShell } from '@/components/admin/admin-shell';
-import { AdminError, AdminLoading } from '@/components/admin/admin-states';
-import { getMonitoringSnapshot, type MonitoringSnapshot } from '@/lib/api/admin-api-client';
+import { MonitoringAlertsStrip } from '@/components/admin-monitoring/alerts-strip';
+import { MonitoringControlPlaneHero } from '@/components/admin-monitoring/control-plane-hero';
+import { MonitoringLogsPanel } from '@/components/admin-monitoring/logs-panel';
+import { MonitoringMetricsGrid } from '@/components/admin-monitoring/metrics-grid';
+import { MonitoringOperationsActionsCard } from '@/components/admin-monitoring/operations-actions-card';
+import { MonitoringServiceHealthSection } from '@/components/admin-monitoring/service-health-section';
+import { MonitoringQueueInspector } from '@/components/admin-monitoring/queue-inspector';
+import { MonitoringShell } from '@/components/admin-monitoring/monitoring-shell';
+import { MonitoringError, MonitoringLoading } from '@/components/admin-monitoring/monitoring-states';
+import { MonitoringTrendSection } from '@/components/admin-monitoring/trend-section';
+import {
+  clearMonitoringQueue,
+  refreshMonitoring,
+  retryFailedJobs,
+} from '@/lib/api/system-monitoring-api-client';
+import { useMonitoringPageData } from '@/hooks/use-monitoring-page-data';
+import { useMonitoringRealtimeController } from '@/hooks/use-monitoring-realtime-controller';
+import { toast } from 'sonner';
 
 function MonitoringContent() {
-  const [snapshot, setSnapshot] = React.useState<MonitoringSnapshot | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const {
+    overview,
+    alerts,
+    metrics,
+    services,
+    queue,
+    logs,
+    loading,
+    actionLoading,
+    error,
+    load,
+    applyRealtimeSnapshot,
+    runAction,
+  } = useMonitoringPageData();
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const {
+    realtimeMode,
+    handleRealtimeModeChange,
+    realtimeConnected,
+    realtimeError,
+    healthPanel,
+  } = useMonitoringRealtimeController({ onSnapshot: applyRealtimeSnapshot });
+
+  const handleAction = async (key: string, fn: () => Promise<{ ok: true; message: string }>) => {
     try {
-      setSnapshot(await getMonitoringSnapshot());
+      const result = await runAction(key, fn);
+      toast.success(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load monitoring snapshot.');
-    } finally {
-      setLoading(false);
+      toast.error(err instanceof Error ? err.message : 'Monitoring action failed.');
     }
-  }, []);
-
-  React.useEffect(() => {
-    void load();
-  }, [load]);
+  };
 
   return (
-    <AdminShell title="System Monitoring" description="Observe API, workers, queues, and runtime health.">
-      {loading ? <AdminLoading cards={2} /> : null}
-      {!loading && error ? <AdminError message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error && snapshot ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {[
-            ['API Latency (ms)', snapshot.apiLatencyMs],
-            ['Worker Status', snapshot.workerStatus],
-            ['Queue Depth', snapshot.queueDepth],
-            ['Failure Rate (%)', snapshot.failureRate],
-            ['CPU Load (%)', snapshot.cpuLoad],
-            ['Memory Usage (%)', snapshot.memoryUsage],
-          ].map(([label, value]) => (
-            <AdminCard key={String(label)} title={String(label)}>
-              <p className="text-3xl font-semibold tracking-tight">{value}</p>
-            </AdminCard>
-          ))}
+    <MonitoringShell>
+      {loading ? <MonitoringLoading /> : error ? <MonitoringError message={error} onRetry={() => void load()} /> : overview && metrics && queue ? (
+        <div className="space-y-5">
+          <MonitoringControlPlaneHero
+            overview={overview}
+            realtimeMode={realtimeMode}
+            onRealtimeModeChange={handleRealtimeModeChange}
+            realtimeConnected={realtimeConnected}
+            realtimeError={realtimeError}
+            healthPanel={healthPanel}
+            actionLoading={actionLoading}
+            onRefresh={() => void handleAction('refresh', refreshMonitoring)}
+            onRetryFailed={() => void handleAction('retry', retryFailedJobs)}
+            onClearQueue={() => void handleAction('clear', clearMonitoringQueue)}
+            refreshIcon={<RefreshCw className="mr-2 h-4 w-4" />}
+            retryIcon={<RotateCcw className="mr-2 h-4 w-4" />}
+            clearIcon={<Trash2 className="mr-2 h-4 w-4" />}
+          />
+
+          <MonitoringAlertsStrip alerts={alerts} />
+
+          <MonitoringMetricsGrid metrics={metrics} />
+
+          <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+            <div className="space-y-5">
+              <MonitoringTrendSection metrics={metrics} />
+
+              <MonitoringServiceHealthSection services={services} />
+            </div>
+
+            <div className="space-y-5">
+              <MonitoringQueueInspector queue={queue} />
+
+              <MonitoringLogsPanel logs={logs} />
+
+              <MonitoringOperationsActionsCard
+                onRestartWorkers={() => toast.info('Worker restart requires infrastructure orchestration access.')}
+                onRunHealthCheck={() => void handleAction('refresh-inline', refreshMonitoring)}
+                onExportLogs={() => toast.info('Monitoring logs export endpoint can be added in a follow-up.')}
+              />
+            </div>
+          </section>
         </div>
       ) : null}
-    </AdminShell>
+    </MonitoringShell>
   );
 }
 

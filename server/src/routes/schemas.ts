@@ -147,3 +147,20 @@ export const governanceBulkRoleSchema = z.object({
 export const governanceBulkSuspendSchema = z.object({
   userIds: z.array(z.string().trim().min(1)).min(1),
 }).strict();
+
+export const adminPolicyBulkRoleSchema = z.object({
+  userIds: z.array(z.string().trim().min(1)).min(1),
+  role: z.enum(['USER', 'REVIEWER', 'STAFF', 'ADMIN', 'SUPER_ADMIN']),
+  reason: z.string().trim().min(3, 'Reason is required'),
+}).strict();
+
+export const adminPolicyBulkStatusSchema = z.object({
+  userIds: z.array(z.string().trim().min(1)).min(1),
+  status: z.enum(['ACTIVE', 'PENDING', 'SUSPENDED']),
+  reason: z.string().trim().min(3, 'Reason is required'),
+}).strict();
+
+export const adminPolicyApprovalDecisionSchema = z.object({
+  reason: z.string().trim().min(3, 'Reason is required'),
+  assignRole: z.enum(['USER', 'REVIEWER', 'STAFF', 'ADMIN', 'SUPER_ADMIN']).optional(),
+}).strict();

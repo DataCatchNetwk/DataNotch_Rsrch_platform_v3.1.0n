@@ -100,6 +100,11 @@ enum AuditSeverity {
   HIGH
 }
 
+enum ApprovalDecisionReasonType {
+  APPROVED
+  REJECTED
+}
+
 enum NotificationSeverity {
   INFO
   SUCCESS
@@ -192,6 +197,7 @@ model User {
   accessRequestsRequested AccessRequest[] @relation("AccessRequestRequester")
   accessRequestsReviewed  AccessRequest[] @relation("AccessRequestReviewer")
   adminAuditEventsAuthored AdminAuditEvent[] @relation("AdminAuditActor")
+  approvalDecisionReasonsAuthored ApprovalDecisionReason[] @relation("ApprovalDecisionActor")
   auditLogs          AuditLog[]
   uploadBatches      UploadBatch[] @relation("UploadBatchCreatedBy")
   importJobs         ImportJob[] @relation("ImportJobCreatedBy")
@@ -615,6 +621,7 @@ model AccessRequest {
 
   requester     User                @relation("AccessRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   reviewedBy    User?               @relation("AccessRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  decisionReasons ApprovalDecisionReason[]
 
   @@index([requesterId])
   @@index([reviewedById])
@@ -638,6 +645,23 @@ model AdminAuditEvent {
   @@index([targetType, targetId])
   @@index([createdAt])
   @@map("admin_audit_events")
+}
+
+model ApprovalDecisionReason {
+  id              String                     @id @default(cuid()) @db.VarChar(30)
+  accessRequestId String                     @map("access_request_id") @db.VarChar(30)
+  actorUserId     String?                    @map("actor_user_id") @db.VarChar(30)
+  decisionType    ApprovalDecisionReasonType @map("decision_type")
+  reason          String                     @db.Text
+  createdAt       DateTime                   @default(now()) @map("created_at")
+
+  accessRequest   AccessRequest              @relation(fields: [accessRequestId], references: [id], onDelete: Cascade)
+  actor           User?                      @relation("ApprovalDecisionActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([accessRequestId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@map("approval_decision_reasons")
 }
 
 model FileAsset {

@@ -16,6 +16,22 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Monitoring Realtime Settings
+
+The admin monitoring page supports environment-based control over automatic WebSocket recovery:
+
+```bash
+NEXT_PUBLIC_WS_BASE_URL=ws://localhost:4000
+NEXT_PUBLIC_MONITORING_WS_AUTO_RECOVER=true
+NEXT_PUBLIC_MONITORING_WS_RECOVERY_THRESHOLD=3
+```
+
+`NEXT_PUBLIC_WS_BASE_URL` sets the Socket.IO base URL used by monitoring WebSocket connections.
+
+`NEXT_PUBLIC_MONITORING_WS_AUTO_RECOVER` enables or disables automatic promotion from SSE back to WebSocket after a fallback.
+
+`NEXT_PUBLIC_MONITORING_WS_RECOVERY_THRESHOLD` sets how many stable SSE events must be observed before retrying WebSocket.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

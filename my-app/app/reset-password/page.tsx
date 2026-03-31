@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
         method: 'POST',
         body: { token, new_password: newPassword },
       });
-      router.push('/login/user');
+      router.push('/');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Reset failed');
     } finally {
@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#666' }}>
-          <a href="/login/user" style={{ color: '#667eea', fontWeight: 600, textDecoration: 'none' }}>Back to Login</a>
+          <a href="/" style={{ color: '#667eea', fontWeight: 600, textDecoration: 'none' }}>Back to Login</a>
         </p>
       </div>
     </div>

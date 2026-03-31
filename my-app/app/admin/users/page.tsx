@@ -9,8 +9,6 @@ import { AdminError, AdminLoading } from '@/components/admin/admin-states';
 import { GovernanceUserTable } from '@/components/admin-governance/user-table';
 import { toast } from 'sonner';
 import {
-  bulkAssignGovernanceRole,
-  bulkSuspendGovernanceUsers,
   type GovernanceRole,
   type GovernanceStatus,
   listGovernanceUsers,
@@ -18,6 +16,7 @@ import {
   updateGovernanceUserStatus,
   type GovernanceUser,
 } from '@/lib/api/admin-governance-api-client';
+import { bulkAssignPolicyRole, bulkUpdatePolicyStatus } from '@/lib/api/admin-policy-api-client';
 
 function AdminUsersContent() {
   const { user } = useAuth();
@@ -32,6 +31,21 @@ function AdminUsersContent() {
   const [pendingStatusUserId, setPendingStatusUserId] = React.useState<string | null>(null);
   const [bulkPending, setBulkPending] = React.useState(false);
   const canManageRoles = user?.roles.includes('SUPER_ADMIN') ?? false;
+
+  const selectedUsers = React.useMemo(
+    () => users.filter((item) => selectedIds.includes(item.id)),
+    [users, selectedIds],
+  );
+
+  const getBulkEligibleIds = React.useCallback(
+    (status: GovernanceStatus) =>
+      selectedUsers
+        .filter((item) => item.status !== status)
+        .filter((item) => item.id !== user?.id)
+        .filter((item) => canManageRoles || item.role !== 'SUPER_ADMIN')
+        .map((item) => item.id),
+    [canManageRoles, selectedUsers, user?.id],
+  );
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -56,6 +70,11 @@ function AdminUsersContent() {
   }, [load]);
 
   async function updateRole(userId: string, role: GovernanceRole) {
+    if (userId === user?.id) {
+      toast.error('You cannot change your own role from this screen.');
+      return;
+    }
+
     setPendingRoleUserId(userId);
     try {
       const updated = await updateGovernanceUserRole(userId, role);
@@ -69,6 +88,22 @@ function AdminUsersContent() {
   }
 
   async function updateStatus(userId: string, status: GovernanceStatus) {
+    if (userId === user?.id) {
+      toast.error('You cannot change your own status from this screen.');
+      return;
+    }
+
+    const target = users.find((item) => item.id === userId);
+    if (!canManageRoles && target?.role === 'SUPER_ADMIN') {
+      toast.error('Only SUPER_ADMIN can update SUPER_ADMIN account status.');
+      return;
+    }
+
+    if (target?.status === status) {
+      toast.info(`User is already ${status}.`);
+      return;
+    }
+
     setPendingStatusUserId(userId);
     try {
       const updated = await updateGovernanceUserStatus(userId, status);
@@ -83,10 +118,29 @@ function AdminUsersContent() {
 
   async function bulkAssign(role: GovernanceRole) {
     if (!selectedIds.length) return;
+    const eligibleIds = selectedUsers
+      .filter((item) => item.role !== role)
+      .filter((item) => item.id !== user?.id)
+      .map((item) => item.id);
+
+    if (!eligibleIds.length) {
+      toast.info(`No eligible selected users for role ${role}.`);
+      return;
+    }
+
+    const reason = window.prompt(`Provide a reason for bulk role assignment to ${role}:`);
+    if (!reason || reason.trim().length < 3) {
+      toast.error('A reason is required.');
+      return;
+    }
+
     setBulkPending(true);
     try {
-      await bulkAssignGovernanceRole(selectedIds, role);
-      toast.success(`Updated ${selectedIds.length} users to ${role}.`);
+      await bulkAssignPolicyRole(eligibleIds, role, reason.trim());
+      if (eligibleIds.length < selectedIds.length) {
+        toast.info(`Skipped ${selectedIds.length - eligibleIds.length} ineligible selections.`);
+      }
+      toast.success(`Updated ${eligibleIds.length} users to ${role}.`);
       setSelectedIds([]);
       await load();
     } catch (err) {
@@ -96,16 +150,32 @@ function AdminUsersContent() {
     }
   }
 
-  async function bulkSuspend() {
+  async function bulkStatusUpdate(status: GovernanceStatus) {
     if (!selectedIds.length) return;
+    const eligibleIds = getBulkEligibleIds(status);
+
+    if (!eligibleIds.length) {
+      toast.info(`No eligible selected users for status ${status}.`);
+      return;
+    }
+
+    const reason = window.prompt(`Provide a reason for bulk status update to ${status}:`);
+    if (!reason || reason.trim().length < 3) {
+      toast.error('A reason is required.');
+      return;
+    }
+
     setBulkPending(true);
     try {
-      await bulkSuspendGovernanceUsers(selectedIds);
-      toast.success(`Suspended ${selectedIds.length} users.`);
+      await bulkUpdatePolicyStatus(eligibleIds, status, reason.trim());
+      if (eligibleIds.length < selectedIds.length) {
+        toast.info(`Skipped ${selectedIds.length - eligibleIds.length} ineligible selections.`);
+      }
+      toast.success(`Updated ${eligibleIds.length} users to ${status}.`);
       setSelectedIds([]);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Bulk suspend failed.');
+      toast.error(err instanceof Error ? err.message : 'Bulk status update failed.');
     } finally {
       setBulkPending(false);
     }
@@ -123,6 +193,7 @@ function AdminUsersContent() {
               selectedIds={selectedIds}
               pendingRoleUserId={pendingRoleUserId}
               pendingStatusUserId={pendingStatusUserId}
+              currentUserId={user?.id ?? null}
               search={search}
               roleFilter={roleFilter}
               statusFilter={statusFilter}
@@ -134,7 +205,7 @@ function AdminUsersContent() {
               onUserRoleChange={(userId, role) => void updateRole(userId, role)}
               onUserStatusChange={(userId, status) => void updateStatus(userId, status)}
               onBulkRoleAssign={(role) => void bulkAssign(role)}
-              onBulkSuspend={() => void bulkSuspend()}
+              onBulkStatusUpdate={(status) => void bulkStatusUpdate(status)}
             />
           </div>
         </AdminCard>

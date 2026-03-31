@@ -1,0 +1,19 @@
+
+// Merge these additions into your existing Prisma schema.
+
+enum ApprovalDecisionReasonType {
+  APPROVED
+  REJECTED
+}
+
+model ApprovalDecisionReason {
+  id             String                     @id @default(cuid())
+  accessRequestId String
+  actorUserId    String?
+  decisionType   ApprovalDecisionReasonType
+  reason         String
+  createdAt      DateTime                   @default(now())
+
+  @@index([accessRequestId])
+  @@index([actorUserId])
+}

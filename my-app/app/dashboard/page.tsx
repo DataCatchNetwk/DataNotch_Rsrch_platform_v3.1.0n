@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import UserLandingPage from '../login/user/userLanding';
+import UserLandingPage from './user-landing';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -12,16 +12,16 @@ export default function DashboardPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.push('/login/user');
+      router.push('/');
       return;
     }
-    if (user.roles.includes('PENDING') && !user.roles.includes('ANALYST')) {
+    if (user.accountStatus !== 'ACTIVE') {
       router.push('/dashboard/pending');
     }
   }, [user, loading, router]);
 
   if (loading || !user) return null;
-  if (user.roles.includes('PENDING') && !user.roles.includes('ANALYST')) return null;
+  if (user.accountStatus !== 'ACTIVE') return null;
 
   return <UserLandingPage />;
 }

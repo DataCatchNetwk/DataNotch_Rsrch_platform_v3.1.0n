@@ -9,6 +9,12 @@ export type AuthUser = {
   surname: string;
   email: string;
   roles: string[];
+  accountStatus?: 'PENDING_APPROVAL' | 'APPROVED_2FA_PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
+  latestDecision?: {
+    type: 'APPROVED' | 'REJECTED';
+    reason: string;
+    createdAt: string | Date;
+  } | null;
 };
 
 type AuthState = {

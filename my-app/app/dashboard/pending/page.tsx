@@ -13,18 +13,18 @@ export default function PendingApprovalPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.push('/login/user');
+      router.push('/');
       return;
     }
     // If the user has been approved already, redirect to dashboard
-    if (user.roles.includes('ANALYST') || user.roles.includes('ADMIN')) {
-      router.push(user.roles.includes('ADMIN') ? '/admin' : '/dashboard');
+    if (user.accountStatus === 'ACTIVE' || user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')) {
+      router.push(user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN') ? '/admin' : '/dashboard');
     }
   }, [user, loading, router]);
 
   const handleLogout = () => {
     logout();
-    router.push('/login/user');
+    router.push('/');
   };
 
   if (loading || !user) return null;
@@ -46,10 +46,13 @@ export default function PendingApprovalPage() {
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold text-zinc-900 mb-2">Pending Admin Approval</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 mb-2">
+              {user.accountStatus === 'REJECTED' ? 'Access Request Rejected' : 'Pending Admin Approval'}
+            </h1>
             <p className="text-zinc-500 mb-8 leading-relaxed">
-              Your account has been created successfully. An administrator needs to review and
-              approve your access before you can use the platform.
+              {user.accountStatus === 'REJECTED'
+                ? 'Your request was reviewed and rejected. You remain blocked from platform access.'
+                : 'Your account has been created successfully. An administrator needs to review and approve your access before you can use the platform.'}
             </p>
 
             {/* User info */}
@@ -70,8 +73,13 @@ export default function PendingApprovalPage() {
             <div className="space-y-3 mb-8 text-left">
               {[
                 { icon: CheckCircle2, label: 'Account created', done: true },
-                { icon: ShieldCheck, label: 'Awaiting admin review', done: false, active: true },
-                { icon: CheckCircle2, label: 'Access granted to platform', done: false },
+                {
+                  icon: ShieldCheck,
+                  label: user.accountStatus === 'REJECTED' ? 'Admin decision: rejected' : 'Awaiting admin review',
+                  done: false,
+                  active: true,
+                },
+                { icon: CheckCircle2, label: 'Access granted to platform', done: user.accountStatus === 'ACTIVE' },
               ].map((step, i) => (
                 <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
                   step.done
@@ -93,10 +101,17 @@ export default function PendingApprovalPage() {
             <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 mb-8 text-left">
               <Mail className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
-                You'll receive an email notification at <strong>{user.email}</strong> once your
-                account is approved.
+                {user.accountStatus === 'REJECTED'
+                  ? 'Contact support or your administrator if you believe this decision should be reviewed.'
+                  : <>You'll receive an email notification at <strong>{user.email}</strong> once your account is approved.</>}
               </p>
             </div>
+            {user.latestDecision?.reason ? (
+              <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-left text-sm text-amber-800">
+                <p className="font-semibold">Admin decision reason</p>
+                <p className="mt-1">{user.latestDecision.reason}</p>
+              </div>
+            ) : null}
 
             <Button
               variant="ghost"
