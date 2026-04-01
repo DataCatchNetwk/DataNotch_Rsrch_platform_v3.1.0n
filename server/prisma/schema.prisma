@@ -39,6 +39,50 @@ enum DatasetVisibility {
   RESTRICTED
 }
 
+enum DatasetDomain {
+  HEALTH
+  SOCIAL
+  CLIMATE
+  EDUCATION
+  ECONOMIC
+  DEMOGRAPHIC
+  ENVIRONMENT
+  MOBILITY
+  GENOMICS
+  IMAGING
+  WEARABLE
+  SURVEY
+  OTHER
+}
+
+enum DatasetAccessLevel {
+  OPEN
+  INTERNAL
+  RESTRICTED
+  APPROVAL_REQUIRED
+}
+
+enum DatasetDepositStatus {
+  DRAFT
+  AVAILABLE
+  ARCHIVED
+}
+
+enum DatasetAccessAction {
+  VIEW_DETAILS
+  PREVIEW
+  FAVORITED
+  UNFAVORITED
+  PULL_REQUESTED
+}
+
+enum DatasetPullStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 enum AnalysisJobStatus {
   QUEUED
   RUNNING
@@ -212,6 +256,114 @@ enum SupportMessageAuthorType {
   SYSTEM
 }
 
+// Research Platform Enums
+enum ResearchDomain {
+  HEALTH
+  SOCIAL_SCIENCE
+  CLIMATE
+  GENOMICS
+  PUBLIC_HEALTH
+  IMAGING
+  WEARABLES
+  SURVEY
+  OTHER
+}
+
+enum WorkspaceSnapshotStatus {
+  DRAFT
+  FROZEN
+  ARCHIVED
+}
+
+enum AnalysisRunType {
+  DESCRIPTIVE
+  REGRESSION
+  CLASSIFICATION
+  SURVIVAL
+  CLUSTERING
+  DIM_REDUCTION
+  GENOMICS
+  CUSTOM
+}
+
+enum AnalysisRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum AnalysisAlgorithmType {
+  // ── Tree-based ───────────────────────────────────────────────────────────
+  DECISION_TREE
+  RANDOM_FOREST
+  GRADIENT_BOOSTING
+  XGBOOST
+  LIGHTGBM
+  CATBOOST
+  EXTRA_TREES
+  ADABOOST
+  BAGGING
+
+  // ── Neural Networks ──────────────────────────────────────────────────────
+  ANN_MLP
+  CNN
+  RNN
+  LSTM
+  GRU
+  TRANSFORMER
+  AUTOENCODER
+
+  // ── Bayesian ─────────────────────────────────────────────────────────────
+  NAIVE_BAYES
+  BAYESIAN_NETWORK
+  GAUSSIAN_PROCESS
+
+  // ── Statistical / Linear ─────────────────────────────────────────────────
+  LINEAR_REGRESSION
+  LOGISTIC_REGRESSION
+  RIDGE
+  LASSO
+  ELASTIC_NET
+  ANOVA
+  LINEAR_MIXED_MODELS
+  POLYNOMIAL_REGRESSION
+
+  // ── Support Vector ───────────────────────────────────────────────────────
+  SVM
+  SVR
+
+  // ── Nearest Neighbour ────────────────────────────────────────────────────
+  KNN
+
+  // ── Clustering / Unsupervised ────────────────────────────────────────────
+  K_MEANS
+  DBSCAN
+  HIERARCHICAL_CLUSTERING
+  GAUSSIAN_MIXTURE
+  MEAN_SHIFT
+  SPECTRAL_CLUSTERING
+
+  // ── Survival ─────────────────────────────────────────────────────────────
+  KAPLAN_MEIER
+  COX_PH
+  COMPETING_RISKS
+  RANDOM_SURVIVAL_FOREST
+  WEIBULL_AFT
+
+  // ── Dimensionality Reduction ─────────────────────────────────────────────
+  PCA
+  UMAP
+  TSNE
+  NMF
+  ICA
+  FACTOR_ANALYSIS
+
+  // ── Custom ───────────────────────────────────────────────────────────────
+  CUSTOM
+}
+
 model User {
   id                 String      @id @default(cuid()) @db.VarChar(30)
   firstname          String      @db.VarChar(100)
@@ -258,6 +410,12 @@ model User {
   createdSupportTickets   SupportTicket[] @relation("CreatedSupportTickets")
   supportMessages         SupportMessage[]
   supportActivities       SupportActivity[]
+  datasetFavorites        DatasetFavorite[]
+  datasetPullRequests     DatasetPullRequest[]
+  datasetAccessLogs       DatasetAccessLog[]
+  cohortDefinitions       CohortDefinition[] @relation("CohortDefinitionCreatedBy")
+  featureSets             FeatureSet[] @relation("FeatureSetCreatedBy")
+  ownedResearchWorkspaces ResearchWorkspace[] @relation("ResearchWorkspaceOwner")
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
@@ -596,6 +754,7 @@ model Workspace {
   pipelineRuns PipelineRun[]
   pipelineArtifacts PipelineArtifact[]
   modelRegistryEntries ModelRegistryEntry[]
+  datasetPullRequests DatasetPullRequest[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
@@ -632,7 +791,20 @@ model Dataset {
   mimeType     String?           @db.VarChar(100)
   sizeBytes    Int?
   recordCount  Int?
+  columnCount  Int?
   tags         String[]
+  domain       DatasetDomain       @default(OTHER)
+  category     String?             @db.VarChar(120)
+  sourceName   String?             @map("source_name") @db.VarChar(191)
+  sourceUrl    String?             @map("source_url") @db.VarChar(255)
+  accessLevel  DatasetAccessLevel  @default(INTERNAL) @map("access_level")
+  isFeatured   Boolean             @default(false) @map("is_featured")
+  isDepositListed Boolean          @default(false) @map("is_deposit_listed")
+  depositStatus DatasetDepositStatus @default(DRAFT) @map("deposit_status")
+  schemaJson   Json?               @map("schema_json")
+  previewRowsJson Json?            @map("preview_rows_json")
+  metadataJson Json?               @map("metadata_json")
+  publishedAt  DateTime?           @map("published_at")
   workspaceId  String            @db.VarChar(30)
   workspace    Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdById  String            @db.VarChar(30)
@@ -643,13 +815,76 @@ model Dataset {
   pipelineRuns PipelineRun[]
   pipelineArtifacts PipelineArtifact[]
   modelRegistryEntries ModelRegistryEntry[]
+  favorites    DatasetFavorite[]
+  pullRequests DatasetPullRequest[]
+  accessLogs   DatasetAccessLog[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
   @@index([workspaceId])
   @@index([createdById])
   @@index([visibility])
+  @@index([domain])
+  @@index([accessLevel])
+  @@index([isFeatured])
+  @@index([isDepositListed])
+  @@index([depositStatus])
   @@index([createdAt])
+}
+
+model DatasetFavorite {
+  id        String   @id @default(cuid()) @db.VarChar(30)
+  userId    String   @map("user_id") @db.VarChar(30)
+  datasetId String   @map("dataset_id") @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, datasetId])
+  @@index([userId])
+  @@index([datasetId])
+  @@map("dataset_favorites")
+}
+
+model DatasetPullRequest {
+  id            String            @id @default(cuid()) @db.VarChar(30)
+  datasetId     String            @map("dataset_id") @db.VarChar(30)
+  requestedById String            @map("requested_by_id") @db.VarChar(30)
+  workspaceId   String            @map("workspace_id") @db.VarChar(30)
+  selectedFields String[]         @map("selected_fields")
+  queryJson     Json?             @map("query_json")
+  status        DatasetPullStatus @default(QUEUED)
+  errorMessage  String?           @map("error_message") @db.Text
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  completedAt   DateTime?         @map("completed_at")
+  dataset       Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  requestedBy   User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  workspace     Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId])
+  @@index([requestedById])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("dataset_pull_requests")
+}
+
+model DatasetAccessLog {
+  id         String              @id @default(cuid()) @db.VarChar(30)
+  datasetId  String              @map("dataset_id") @db.VarChar(30)
+  userId     String?             @map("user_id") @db.VarChar(30)
+  action     DatasetAccessAction
+  metadataJson Json?             @map("metadata_json")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  dataset    Dataset             @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  user       User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([datasetId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("dataset_access_logs")
 }
 
 model AnalysisJob {
@@ -1017,4 +1252,154 @@ model ResearcherApplication {
   @@index([reviewStatus, createdAt])
   @@index([institution])
   @@map("researcher_applications")
+}
+
+// Research Platform Models
+model CohortDefinition {
+  id               String         @id @default(cuid()) @db.VarChar(30)
+  name             String         @db.VarChar(191)
+  description      String?        @db.Text
+  domain           ResearchDomain
+  criteriaJson     Json
+  sourceDatasetIds String[]
+  createdById      String         @db.VarChar(30)
+  version          Int            @default(1)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  createdBy        User           @relation("CohortDefinitionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([domain])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("cohort_definitions")
+}
+
+model FeatureSet {
+  id               String         @id @default(cuid()) @db.VarChar(30)
+  name             String         @db.VarChar(191)
+  description      String?        @db.Text
+  domain           ResearchDomain
+  recipeJson       Json
+  validationJson   Json?
+  cohortId         String?        @db.VarChar(30)
+  version          Int            @default(1)
+  createdById      String         @db.VarChar(30)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  createdBy        User           @relation("FeatureSetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([domain])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("feature_sets")
+}
+
+model ResearchWorkspace {
+  id               String                   @id @default(cuid()) @db.VarChar(30)
+  name             String                   @db.VarChar(191)
+  description      String?                  @db.Text
+  domain           ResearchDomain
+  ownerId          String                   @db.VarChar(30)
+  snapshotStatus   WorkspaceSnapshotStatus  @default(DRAFT)
+  activeCohortId   String?                  @db.VarChar(30)
+  activeFeatureSetId String?                @db.VarChar(30)
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  owner            User                     @relation("ResearchWorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  analysisRuns     AnalysisRun[]
+  experiments      Experiment[]
+
+  @@index([ownerId, snapshotStatus])
+  @@index([domain])
+  @@index([createdAt])
+  @@map("research_workspaces")
+}
+
+model AnalysisRun {
+  id                   String                @id @default(cuid()) @db.VarChar(30)
+  researchWorkspaceId  String                @db.VarChar(30)
+  type                 AnalysisRunType
+  algorithm            AnalysisAlgorithmType?
+  status               AnalysisRunStatus     @default(QUEUED)
+  configJson           Json
+  metricsJson          Json?
+  artifactsJson        Json?
+  datasetVersionRef    String?               @db.VarChar(30)
+  featureSetVersionRef String?               @db.VarChar(30)
+  startedAt            DateTime?
+  finishedAt           DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  researchWorkspace    ResearchWorkspace     @relation(fields: [researchWorkspaceId], references: [id], onDelete: Cascade)
+
+  @@index([researchWorkspaceId, status])
+  @@index([type])
+  @@index([algorithm])
+  @@index([createdAt])
+  @@map("analysis_runs")
+}
+
+model Experiment {
+  id               String             @id @default(cuid()) @db.VarChar(30)
+  name             String             @db.VarChar(191)
+  description      String?            @db.Text
+  researchWorkspaceId String           @db.VarChar(30)
+  championRunId    String?            @db.VarChar(30)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  researchWorkspace ResearchWorkspace  @relation(fields: [researchWorkspaceId], references: [id], onDelete: Cascade)
+
+  @@index([researchWorkspaceId])
+  @@index([createdAt])
+  @@map("experiments")
+}
+
+model OntologyConcept {
+  id          String         @id @default(cuid()) @db.VarChar(30)
+  code        String         @db.VarChar(120)
+  system      String         @db.VarChar(120)
+  displayName String         @db.VarChar(255)
+  synonyms    String[]
+  domain      ResearchDomain
+  createdAt   DateTime       @default(now())
+
+  @@unique([code, system])
+  @@index([domain])
+  @@index([code])
+  @@map("ontology_concepts")
+}
+
+model GraphResearchNode {
+  id          String   @id @default(cuid()) @db.VarChar(30)
+  nodeType    String   @db.VarChar(120)
+  label       String   @db.VarChar(255)
+  payloadJson Json?
+  createdAt   DateTime @default(now())
+
+  edges       GraphResearchEdge[] @relation("FromNode")
+
+  @@index([nodeType])
+  @@index([label])
+  @@map("graph_research_nodes")
+}
+
+model GraphResearchEdge {
+  id          String   @id @default(cuid()) @db.VarChar(30)
+  fromNodeId  String   @db.VarChar(30)
+  toNodeId    String   @db.VarChar(30)
+  edgeType    String   @db.VarChar(120)
+  weight      Float?
+  payloadJson Json?
+  createdAt   DateTime @default(now())
+
+  fromNode    GraphResearchNode @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+
+  @@index([fromNodeId, edgeType])
+  @@index([toNodeId])
+  @@map("graph_research_edges")
 }

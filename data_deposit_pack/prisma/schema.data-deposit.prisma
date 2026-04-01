@@ -1,0 +1,155 @@
+// Merge these additions into your existing Prisma schema
+
+enum DatasetDomain {
+  HEALTH
+  SOCIAL
+  CLIMATE
+  ECONOMIC
+  EDUCATION
+  MOBILITY
+  ENVIRONMENT
+  GENOMICS
+  IMAGING
+  WEARABLE
+  SURVEY
+  OTHER
+}
+
+enum DatasetDepositStatus {
+  DRAFT
+  INGESTING
+  AVAILABLE
+  ARCHIVED
+  FAILED
+}
+
+enum DatasetAccessLevel {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+  CONTROLLED
+}
+
+enum DatasetZone {
+  RAW
+  STANDARDIZED
+  CURATED
+  ANALYTICS_READY
+  PUBLISHED
+}
+
+model Dataset {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String?             @unique
+  description       String?
+
+  // Existing fields should remain in place
+  // createdById, workspaceId, file assets, versions, etc.
+
+  domain            DatasetDomain       @default(OTHER)
+  category          String?
+  tags              String[]
+  sourceName        String?
+  sourceType        String?
+  sourceUrl         String?
+  license           String?
+  citation          String?
+
+  depositStatus     DatasetDepositStatus @default(DRAFT)
+  accessLevel       DatasetAccessLevel   @default(INTERNAL)
+  zone              DatasetZone          @default(RAW)
+  isDepositListed   Boolean              @default(false)
+  isFeatured        Boolean              @default(false)
+  isFavoritable     Boolean              @default(true)
+
+  rowCount          Int?
+  columnCount       Int?
+  sizeBytes         BigInt?
+  schemaJson        Json?
+  previewRowsJson   Json?
+  profilingJson     Json?
+  qualityScore      Float?
+  sensitivityLabel  String?
+  retentionPolicy   String?
+  refreshCadence    String?
+  lastIngestedAt    DateTime?
+  publishedAt       DateTime?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  favorites         DatasetFavorite[]
+  accessLogs        DatasetAccessLog[]
+  pulls             DatasetPullRequest[]
+  ingestionRuns     DatasetIngestionRun[]
+
+  @@index([domain, accessLevel, depositStatus])
+  @@index([isDepositListed, publishedAt])
+  @@index([sourceName])
+}
+
+model DatasetFavorite {
+  id         String   @id @default(cuid())
+  userId      String
+  datasetId   String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, datasetId])
+  @@index([datasetId])
+}
+
+model DatasetAccessLog {
+  id            String   @id @default(cuid())
+  userId         String?
+  datasetId      String
+  action         String
+  metadataJson   Json?
+  createdAt      DateTime @default(now())
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  dataset        Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model DatasetPullRequest {
+  id              String   @id @default(cuid())
+  datasetId        String
+  requestedById    String
+  workspaceId      String
+  status           String   @default("QUEUED")
+  queryJson        Json?
+  selectedFields   String[]
+  requestedAt      DateTime @default(now())
+  completedAt      DateTime?
+
+  dataset          Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  requestedBy      User     @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, requestedAt])
+  @@index([workspaceId, requestedAt])
+}
+
+model DatasetIngestionRun {
+  id              String   @id @default(cuid())
+  datasetId        String
+  providerKey      String
+  status           String
+  rowsRead         Int?
+  rowsWritten      Int?
+  errorMessage     String?
+  startedAt        DateTime @default(now())
+  finishedAt       DateTime?
+  metadataJson     Json?
+
+  dataset          Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, startedAt])
+  @@index([providerKey, startedAt])
+}

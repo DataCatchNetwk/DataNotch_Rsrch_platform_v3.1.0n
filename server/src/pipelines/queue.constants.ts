@@ -6,6 +6,7 @@ export const RESEARCH_QUEUES = {
   REPORT: 'research.report',
   EXPORT: 'research.export',
   PUBLISH: 'research.publish',
+  PULL_JOB: 'research.pull-job',
   DLQ: 'research.dlq',
 } as const;
 

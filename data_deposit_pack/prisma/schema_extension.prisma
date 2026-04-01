@@ -1,0 +1,102 @@
+enum DatasetDomain {
+  HEALTH
+  SOCIAL
+  CLIMATE
+  EDUCATION
+  ECONOMIC
+  DEMOGRAPHIC
+  ENVIRONMENT
+  MOBILITY
+  GENOMICS
+  OTHER
+}
+
+enum DatasetAccessibility {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+  APPROVAL_REQUIRED
+}
+
+enum DatasetDepositStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Dataset {
+  id                 String                @id @default(cuid())
+  name               String
+  slug               String                @unique
+  description        String?
+  tags               String[]
+
+  domain             DatasetDomain         @default(OTHER)
+  subdomain          String?
+  sourceSystem       String?
+  sourceUrl          String?
+  ownerOrg           String?
+  license            String?
+  accessibility      DatasetAccessibility  @default(INTERNAL)
+  depositStatus      DatasetDepositStatus  @default(DRAFT)
+
+  rowCount           Int?
+  columnCount        Int?
+  fileSizeBytes      BigInt?
+  updateCadence      String?
+  lastIngestedAt     DateTime?
+  lastProfiledAt     DateTime?
+  lastPublishedAt    DateTime?
+
+  schemaJson         Json?
+  sampleRowsJson     Json?
+  profileJson        Json?
+  lineageJson        Json?
+
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  favorites          DepositFavorite[]
+  pullRequests       DepositPullRequest[]
+  ingestionRuns      IngestionRun[]
+}
+
+model DepositFavorite {
+  id                 String   @id @default(cuid())
+  userId             String
+  datasetId          String
+  createdAt          DateTime @default(now())
+
+  dataset            Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, datasetId])
+  @@index([userId])
+}
+
+model DepositPullRequest {
+  id                 String   @id @default(cuid())
+  userId             String
+  datasetId          String
+  workspaceId        String
+  requestedColumns   String[]
+  filterJson         Json?
+  createdAt          DateTime @default(now())
+
+  dataset            Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([userId, workspaceId])
+}
+
+model IngestionRun {
+  id                 String   @id @default(cuid())
+  datasetId          String
+  sourceType         String
+  status             String
+  startedAt          DateTime @default(now())
+  finishedAt         DateTime?
+  detailsJson        Json?
+
+  dataset            Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, startedAt])
+}

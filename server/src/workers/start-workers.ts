@@ -8,6 +8,7 @@ import { PublishProcessor } from './processors/publish.processor.js';
 import { ReportProcessor } from './processors/report.processor.js';
 import { TrainProcessor } from './processors/train.processor.js';
 import { TransformProcessor } from './processors/transform.processor.js';
+import { PullJobProcessor } from './processors/pull-job.processor.js';
 import { startQueueEvents } from './queue-events.js';
 
 export async function startWorkers() {
@@ -25,6 +26,7 @@ export async function startWorkers() {
     new ReportProcessor(prisma, orchestrator).start(),
     new ExportProcessor(prisma, orchestrator).start(),
     new PublishProcessor(prisma, orchestrator).start(),
+    new PullJobProcessor(prisma).start(),
   ];
 
   workers.forEach((worker) => {

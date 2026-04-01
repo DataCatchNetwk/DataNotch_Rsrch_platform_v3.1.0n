@@ -1,13 +1,12 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RealtimeToggle } from '@/components/admin-monitoring/realtime-toggle';
 import type { MonitoringOverview } from '@/lib/api/system-monitoring-api-client';
-import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
 function healthBadge(health: MonitoringOverview['health']) {
@@ -53,12 +52,20 @@ export function MonitoringControlPlaneHero({
   retryIcon: React.ReactNode;
   clearIcon: React.ReactNode;
 }) {
-  const { logout } = useAuth();
   const router = useRouter();
+  const ADMIN_SIGNOUT_FALLBACK_URL = 'http://localhost:3000/admin';
 
-  function handleSignOut() {
-    logout();
-    router.push('/admin');
+  function handleBackToAdminDashboard() {
+    router.replace('/admin');
+
+    // Hard fallback in case client-side navigation is interrupted.
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        if (window.location.pathname !== '/admin') {
+          window.location.assign(ADMIN_SIGNOUT_FALLBACK_URL);
+        }
+      }, 150);
+    }
   }
 
   return (
@@ -103,9 +110,9 @@ export function MonitoringControlPlaneHero({
             <Button variant="destructive" onClick={onClearQueue} disabled={actionLoading === 'clear'}>
               {clearIcon}Clear Queue
             </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-end" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+            <Button variant="ghost" size="sm" className="w-full justify-end" onClick={handleBackToAdminDashboard}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {'Back To Dashboard'}
             </Button>
           </div>
         </div>

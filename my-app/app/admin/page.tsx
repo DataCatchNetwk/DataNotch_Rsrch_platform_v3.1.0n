@@ -181,6 +181,7 @@ function metricAccent(title: string) {
 function AdminContent() {
   const router = useRouter();
   const { logout } = useAuth();
+  const ADMIN_SIGNOUT_FALLBACK_URL = 'http://localhost:3000/admin';
   const [overview, setOverview] = React.useState<AdminOverview | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -270,7 +271,16 @@ function AdminContent() {
 
   function handleSignOut() {
     logout();
-    router.push('/');
+    router.replace('/admin');
+
+    // Hard fallback in case client-side navigation is interrupted.
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        if (window.location.pathname !== '/admin') {
+          window.location.assign(ADMIN_SIGNOUT_FALLBACK_URL);
+        }
+      }, 150);
+    }
   }
 
   return (

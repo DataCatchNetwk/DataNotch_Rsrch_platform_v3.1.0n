@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Activity, ClipboardList, LifeBuoy, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Activity, ArrowLeft, ClipboardList, LifeBuoy, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const items = [
@@ -26,8 +27,22 @@ type AdminShellProps = {
 
 export function AdminShell({ title, description, children }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
+  const ADMIN_DASHBOARD_FALLBACK_URL = 'http://localhost:3000/admin';
   const roleLabel = ['SUPER_ADMIN', 'ADMIN', 'REVIEWER', 'STAFF', 'USER'].find((role) => user?.roles.includes(role)) ?? 'ADMIN';
+
+  function handleBackToDashboard() {
+    router.replace('/admin');
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        if (window.location.pathname !== '/admin') {
+          window.location.assign(ADMIN_DASHBOARD_FALLBACK_URL);
+        }
+      }, 150);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/70">
@@ -39,8 +54,16 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{title}</h1>
               <p className="mt-2 text-sm text-slate-600">{description}</p>
             </div>
-            <div className="rounded-full border bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-              Role: {roleLabel}
+            <div className="flex items-center gap-2">
+              {pathname !== '/admin' ? (
+                <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {'Back To Dashboard'}
+                </Button>
+              ) : null}
+              <div className="rounded-full border bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                Role: {roleLabel}
+              </div>
             </div>
           </div>
         </div>

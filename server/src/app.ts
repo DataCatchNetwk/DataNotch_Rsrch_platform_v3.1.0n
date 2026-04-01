@@ -17,6 +17,7 @@ import userRoutes from './routes/users.js';
 import workspaceRoutes from './routes/workspaces.js';
 import researcherApplicationsRoutes from './routes/researcher-applications.js';
 import supportRoutes from './routes/support.js';
+import dataDepositRoutes from './routes/data-deposit.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 export function createApp() {
@@ -51,6 +52,7 @@ export function createApp() {
   app.use('/api/v1/admin/researcher-applications', researcherApplicationsRoutes);
   app.use('/api/support', supportRoutes);
   app.use('/api/v1/support', supportRoutes);
+  app.use('/api/v1/datasets/deposit', dataDepositRoutes);
 
   app.use(errorHandler);
   return app;

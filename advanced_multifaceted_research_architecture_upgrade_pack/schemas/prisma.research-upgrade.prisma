@@ -1,0 +1,130 @@
+enum ResearchDomain {
+  HEALTH
+  SOCIAL_SCIENCE
+  CLIMATE
+  GENOMICS
+  PUBLIC_HEALTH
+  IMAGING
+  WEARABLES
+  SURVEY
+  OTHER
+}
+
+enum WorkspaceSnapshotStatus {
+  DRAFT
+  FROZEN
+  ARCHIVED
+}
+
+enum AnalysisRunType {
+  DESCRIPTIVE
+  REGRESSION
+  CLASSIFICATION
+  SURVIVAL
+  CLUSTERING
+  DIM_REDUCTION
+  GENOMICS
+  CUSTOM
+}
+
+enum AnalysisRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+model CohortDefinition {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  domain            ResearchDomain
+  criteriaJson      Json
+  sourceDatasetIds  String[]
+  createdById       String
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model FeatureSet {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  domain            ResearchDomain
+  recipeJson        Json
+  validationJson    Json?
+  cohortId          String?
+  version           Int      @default(1)
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ResearchWorkspace {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  domain            ResearchDomain
+  ownerId           String
+  snapshotStatus    WorkspaceSnapshotStatus @default(DRAFT)
+  activeCohortId    String?
+  activeFeatureSetId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model AnalysisRun {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  type              AnalysisRunType
+  status            AnalysisRunStatus @default(QUEUED)
+  configJson        Json
+  metricsJson       Json?
+  artifactsJson     Json?
+  datasetVersionRef String?
+  featureSetVersionRef String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Experiment {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  workspaceId       String
+  championRunId     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model OntologyConcept {
+  id                String   @id @default(cuid())
+  code              String
+  system            String
+  displayName       String
+  synonyms          String[]
+  domain            ResearchDomain
+  createdAt         DateTime @default(now())
+}
+
+model GraphResearchNode {
+  id                String   @id @default(cuid())
+  nodeType          String
+  label             String
+  payloadJson       Json?
+  createdAt         DateTime @default(now())
+}
+
+model GraphResearchEdge {
+  id                String   @id @default(cuid())
+  fromNodeId        String
+  toNodeId          String
+  edgeType          String
+  weight            Float?
+  payloadJson       Json?
+  createdAt         DateTime @default(now())
+}
