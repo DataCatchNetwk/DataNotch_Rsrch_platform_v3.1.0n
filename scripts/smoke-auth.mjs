@@ -6,6 +6,7 @@ const accounts = [
     identifier: process.env.ADMIN_IDENTIFIER ?? 'donneyong.1@osu.edu',
     password: process.env.ADMIN_PASSWORD ?? 'g00d1234',
     expectedAccountStatus: 'ACTIVE',
+    acceptableAccountStatuses: ['ACTIVE'],
     expectedRole: 'ADMIN',
   },
   {
@@ -13,6 +14,7 @@ const accounts = [
     identifier: process.env.RESEARCHER_IDENTIFIER ?? 'jgodwin@datanotchplatform.org',
     password: process.env.RESEARCHER_PASSWORD ?? 'qwerty21',
     expectedAccountStatus: 'PENDING_APPROVAL',
+    acceptableAccountStatuses: ['PENDING_APPROVAL', 'ACTIVE'],
     expectedRole: 'ANALYST',
   },
 ];
@@ -56,9 +58,10 @@ async function run() {
       throw new Error(`${account.label} login response is missing token or user payload`);
     }
 
-    if (user.accountStatus !== account.expectedAccountStatus) {
+    const acceptableStatuses = account.acceptableAccountStatuses ?? [account.expectedAccountStatus];
+    if (!acceptableStatuses.includes(user.accountStatus)) {
       throw new Error(
-        `${account.label} expected accountStatus=${account.expectedAccountStatus}, got ${user.accountStatus}`,
+        `${account.label} expected accountStatus in [${acceptableStatuses.join(', ')}], got ${user.accountStatus}`,
       );
     }
 

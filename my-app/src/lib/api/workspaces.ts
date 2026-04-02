@@ -465,6 +465,13 @@ export async function createPipelineRun(payload: {
   templateCode?: string;
   name: string;
   parameters?: Record<string, unknown>;
+  manualSteps?: Array<{
+    order: number;
+    name: string;
+    type: PipelineStepType;
+    workerType?: string;
+    config?: Record<string, unknown>;
+  }>;
 }) {
   const data = await apiRequest<PipelineRunEnvelope>("/pipeline-runs", {
     method: "POST",

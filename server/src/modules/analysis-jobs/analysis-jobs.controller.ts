@@ -31,6 +31,24 @@ export class AnalysisJobsController {
     res.json(AnalysisJobsMapper.toDetailsDto(result))
   }
 
+  archive = async (req: Request, res: Response) => {
+    const params = analysisJobIdParamSchema.parse(req.params)
+    const result = await this.analysisJobsService.archive(requireUser(req), params.jobId)
+    res.json(result)
+  }
+
+  restore = async (req: Request, res: Response) => {
+    const params = analysisJobIdParamSchema.parse(req.params)
+    const result = await this.analysisJobsService.restore(requireUser(req), params.jobId)
+    res.json(result)
+  }
+
+  duplicate = async (req: Request, res: Response) => {
+    const params = analysisJobIdParamSchema.parse(req.params)
+    const result = await this.analysisJobsService.duplicate(requireUser(req), params.jobId)
+    res.json(result)
+  }
+
   retry = async (req: Request, res: Response) => {
     const params = analysisJobIdParamSchema.parse(req.params)
     const result = await this.analysisJobsService.retry(requireUser(req), params.jobId)
@@ -48,8 +66,29 @@ export class AnalysisJobsController {
     res.json(result)
   }
 
+  archiveBulk = async (req: Request, res: Response) => {
+    const result = await this.analysisJobsService.archiveBulk(requireUser(req), req.body)
+    res.json(result)
+  }
+
+  restoreBulk = async (req: Request, res: Response) => {
+    const result = await this.analysisJobsService.restoreBulk(requireUser(req), req.body)
+    res.json(result)
+  }
+
   cancelBulk = async (req: Request, res: Response) => {
     const result = await this.analysisJobsService.cancelBulk(requireUser(req), req.body)
+    res.json(result)
+  }
+
+  delete = async (req: Request, res: Response) => {
+    const params = analysisJobIdParamSchema.parse(req.params)
+    const result = await this.analysisJobsService.delete(requireUser(req), params.jobId)
+    res.json(result)
+  }
+
+  deleteBulk = async (req: Request, res: Response) => {
+    const result = await this.analysisJobsService.deleteBulk(requireUser(req), req.body)
     res.json(result)
   }
 

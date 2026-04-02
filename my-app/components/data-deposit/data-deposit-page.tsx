@@ -57,7 +57,7 @@ export function DataDepositPageView() {
         getMyWorkspaces(),
       ]);
 
-      setDatasets(catalog);
+      setDatasets(catalog.items);
       setWorkspaces(workspaceList);
     } catch (error) {
       toast.error((error as Error).message || "Failed to load central repository data.");
@@ -99,7 +99,7 @@ export function DataDepositPageView() {
     try {
       setPreviewDatasetId(dataset.id);
       const preview = await previewDepositDataset(dataset.id);
-      setPreviewJson(JSON.stringify(preview.previewRowsJson ?? [], null, 2));
+      setPreviewJson(JSON.stringify(preview.rows ?? [], null, 2));
     } catch (error) {
       toast.error((error as Error).message || "Unable to preview dataset.");
       setPreviewDatasetId(null);
@@ -118,8 +118,8 @@ export function DataDepositPageView() {
     setPullingId(dataset.id);
 
     try {
-      const result = await pullDepositDataset(dataset.id, { workspaceId });
-      toast.success(`Pulled into workspace as ${result.dataset.name}.`);
+      const result = await pullDepositDataset(dataset.id, { workspaceId, mode: "COPY" });
+      toast.success(result.message || "Pull request queued.");
     } catch (error) {
       toast.error((error as Error).message || "Unable to pull dataset.");
     } finally {
@@ -173,7 +173,7 @@ export function DataDepositPageView() {
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>Rows: {dataset.rowCount ?? "-"}</div>
                 <div>Columns: {dataset.columnCount ?? "-"}</div>
-                <div>Access: {dataset.accessLevel}</div>
+                <div>Access: {dataset.accessibility}</div>
                 <div>Source: {dataset.sourceName || "-"}</div>
               </div>
 

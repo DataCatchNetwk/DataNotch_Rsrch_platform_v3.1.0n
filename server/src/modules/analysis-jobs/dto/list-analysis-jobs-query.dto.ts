@@ -21,6 +21,7 @@ export const listAnalysisJobsQuerySchema = z.object({
   status: analysisJobStatusSchema.optional(),
   workspaceId: z.string().trim().min(1).optional(),
   datasetId: z.string().trim().min(1).optional(),
+  includeArchived: z.coerce.boolean().optional().default(false),
   sort: analysisJobsSortSchema.optional(),
   submittedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   page: z.coerce.number().int().min(1).default(1),

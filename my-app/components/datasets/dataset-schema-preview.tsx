@@ -14,32 +14,52 @@ export function DatasetSchemaPreview({
       <CardHeader>
         <CardTitle>Schema Preview</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="p-0">
         {columns.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No schema profile available yet.</p>
+          <p className="p-6 text-sm text-muted-foreground">No schema profile available yet.</p>
         ) : (
-          <div className="space-y-3">
-            {columns.map((column) => (
-              <div
-                key={column.name}
-                className="flex flex-col gap-2 rounded-xl border p-4 md:flex-row md:items-start md:justify-between"
-              >
-                <div>
-                  <p className="font-medium">{column.name}</p>
-                  <p className="text-sm text-muted-foreground">{column.type}</p>
-                  {column.sampleValues?.length ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Sample: {column.sampleValues.join(", ")}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{column.nullable ? "Nullable" : "Required"}</Badge>
-                  {column.unique ? <Badge>Unique</Badge> : null}
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Column</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">Nullable</th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">Unique</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Null %</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Sample values</th>
+                </tr>
+              </thead>
+              <tbody>
+                {columns.map((column) => {
+                  const nullPct = (column as DatasetColumnProfile & { nullPercent?: number }).nullPercent
+                  return (
+                    <tr key={column.name} className="border-b last:border-0 hover:bg-muted/20">
+                      <td className="px-4 py-2.5 font-medium">{column.name}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground font-mono text-xs">{column.type}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <Badge variant="outline">{column.nullable ? "Yes" : "No"}</Badge>
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {column.unique ? <Badge>Unique</Badge> : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        {nullPct != null ? (
+                          <span className={nullPct > 20 ? "text-red-600 font-medium" : nullPct > 5 ? "text-yellow-600" : "text-muted-foreground"}>
+                            {nullPct.toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[180px] truncate">
+                        {column.sampleValues?.slice(0, 4).join(", ") || "—"}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>

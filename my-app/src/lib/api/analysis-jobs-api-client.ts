@@ -20,10 +20,21 @@ export interface AnalysisJobsListQuery {
   status?: AnalysisJobStatus | "ALL"
   workspaceId?: string
   datasetId?: string
+  includeArchived?: boolean
   sortBy?: AnalysisJobsSortOption
   submittedDate?: string
   page?: number
   pageSize?: number
+}
+
+export interface AnalysisJobQueueDto {
+  queueName: string | null
+  backendAvailable: boolean
+  waitingJobs: number
+  activeJobs: number
+  queuedMinutes: number | null
+  estimatedWaitMinutes: number | null
+  note: string
 }
 
 export interface AnalysisJobsListItemDto {
@@ -39,6 +50,8 @@ export interface AnalysisJobsListItemDto {
   ownerName: string
   artifactCount: number
   pipelineName?: string | null
+  archivedAt?: string | null
+  queue?: AnalysisJobQueueDto | null
 }
 
 export interface AnalysisJobDetailsDto {
@@ -54,6 +67,8 @@ export interface AnalysisJobDetailsDto {
   ownerName: string
   artifactCount: number
   pipelineName?: string | null
+  archivedAt?: string | null
+  queue?: AnalysisJobQueueDto | null
   params?: Record<string, string | number | boolean | null> | null
   logs?: string[] | AnalysisJobLogDto[] | null
 }
@@ -78,7 +93,23 @@ export interface RetryJobResponse {
   message?: string
 }
 
+export interface DuplicateJobResponse {
+  ok: true
+  newJobId?: string
+  message?: string
+}
+
 export interface CancelJobResponse {
+  ok: true
+  message?: string
+}
+
+export interface ArchiveJobResponse {
+  ok: true
+  message?: string
+}
+
+export interface DeleteJobResponse {
   ok: true
   message?: string
 }
@@ -121,6 +152,8 @@ export interface AnalysisJobsPageItem {
   reportId?: string | null
   parameters?: Record<string, unknown> | null
   logs: AnalysisJobsPageLogEntry[]
+  archivedAt?: string | null
+  queue?: AnalysisJobQueueDto | null
 }
 
 export type AnalysisJobDetails = AnalysisJobsPageItem
@@ -170,7 +203,7 @@ function buildApiUrl(path: string) {
       : `${API_BASE}/api${normalizedPath}`
 }
 
-function withQuery(path: string, query?: Record<string, string | number | undefined>) {
+function withQuery(path: string, query?: Record<string, string | number | boolean | undefined>) {
   const url = new URL(buildApiUrl(path))
 
   if (query) {
@@ -370,6 +403,8 @@ function mapListItem(dto: AnalysisJobsListItemDto): AnalysisJobsPageItem {
     artifactIds,
     reportId: artifactIds.length > 0 ? `${dto.id}-report` : null,
     logs: [],
+    archivedAt: dto.archivedAt ?? null,
+    queue: dto.queue ?? null,
   }
 }
 
@@ -410,6 +445,7 @@ export async function listAnalysisJobs(query: AnalysisJobsListQuery = {}): Promi
     status: query.status && query.status !== "ALL" ? query.status : undefined,
     workspaceId: query.workspaceId,
     datasetId: query.datasetId,
+    includeArchived: query.includeArchived,
     sort: normalizeSort(query.sortBy),
     submittedDate: query.submittedDate,
     page: query.page,
@@ -448,12 +484,44 @@ export async function retryAnalysisJob(jobId: string): Promise<RetryJobResponse>
   ])
 }
 
+export async function duplicateAnalysisJob(jobId: string): Promise<DuplicateJobResponse> {
+  return requestFirst<DuplicateJobResponse>([
+    { path: `/analysis/jobs/${jobId}/duplicate`, init: { method: "POST" } },
+    { path: `/v1/analysis-jobs/${jobId}/duplicate`, init: { method: "POST" } },
+    { path: `/analysis-jobs/${jobId}/duplicate`, init: { method: "POST" } },
+  ])
+}
+
 export async function cancelAnalysisJob(jobId: string): Promise<CancelJobResponse> {
   return requestFirst<CancelJobResponse>([
     { path: `/analysis/jobs/${jobId}/cancel`, init: { method: "POST" } },
     { path: `/analysis/jobs/${jobId}/cancel`, init: { method: "PATCH" } },
     { path: `/v1/analysis-jobs/${jobId}/cancel`, init: { method: "POST" } },
     { path: `/analysis-jobs/${jobId}/cancel`, init: { method: "POST" } },
+  ])
+}
+
+export async function deleteAnalysisJob(jobId: string): Promise<DeleteJobResponse> {
+  return requestFirst<DeleteJobResponse>([
+    { path: `/analysis/jobs/${jobId}`, init: { method: "DELETE" } },
+    { path: `/v1/analysis-jobs/${jobId}`, init: { method: "DELETE" } },
+    { path: `/analysis-jobs/${jobId}`, init: { method: "DELETE" } },
+  ])
+}
+
+export async function archiveAnalysisJob(jobId: string): Promise<ArchiveJobResponse> {
+  return requestFirst<ArchiveJobResponse>([
+    { path: `/analysis/jobs/${jobId}/archive`, init: { method: "POST" } },
+    { path: `/v1/analysis-jobs/${jobId}/archive`, init: { method: "POST" } },
+    { path: `/analysis-jobs/${jobId}/archive`, init: { method: "POST" } },
+  ])
+}
+
+export async function restoreAnalysisJob(jobId: string): Promise<ArchiveJobResponse> {
+  return requestFirst<ArchiveJobResponse>([
+    { path: `/analysis/jobs/${jobId}/restore`, init: { method: "POST" } },
+    { path: `/v1/analysis-jobs/${jobId}/restore`, init: { method: "POST" } },
+    { path: `/analysis-jobs/${jobId}/restore`, init: { method: "POST" } },
   ])
 }
 
@@ -471,6 +539,30 @@ export async function cancelAnalysisJobsBulk(jobIds: string[]): Promise<BulkJobA
     { path: "/analysis/jobs/bulk/cancel", init: { method: "PATCH", json: { jobIds } } },
     { path: "/v1/analysis-jobs/bulk/cancel", init: { method: "POST", json: { jobIds } } },
     { path: "/analysis-jobs/bulk/cancel", init: { method: "POST", json: { jobIds } } },
+  ])
+}
+
+export async function deleteAnalysisJobsBulk(jobIds: string[]): Promise<BulkJobActionResponse> {
+  return requestFirst<BulkJobActionResponse>([
+    { path: "/analysis/jobs/bulk/delete", init: { method: "POST", json: { jobIds } } },
+    { path: "/v1/analysis-jobs/bulk/delete", init: { method: "POST", json: { jobIds } } },
+    { path: "/analysis-jobs/bulk/delete", init: { method: "POST", json: { jobIds } } },
+  ])
+}
+
+export async function archiveAnalysisJobsBulk(jobIds: string[]): Promise<BulkJobActionResponse> {
+  return requestFirst<BulkJobActionResponse>([
+    { path: "/analysis/jobs/bulk/archive", init: { method: "POST", json: { jobIds } } },
+    { path: "/v1/analysis-jobs/bulk/archive", init: { method: "POST", json: { jobIds } } },
+    { path: "/analysis-jobs/bulk/archive", init: { method: "POST", json: { jobIds } } },
+  ])
+}
+
+export async function restoreAnalysisJobsBulk(jobIds: string[]): Promise<BulkJobActionResponse> {
+  return requestFirst<BulkJobActionResponse>([
+    { path: "/analysis/jobs/bulk/restore", init: { method: "POST", json: { jobIds } } },
+    { path: "/v1/analysis-jobs/bulk/restore", init: { method: "POST", json: { jobIds } } },
+    { path: "/analysis-jobs/bulk/restore", init: { method: "POST", json: { jobIds } } },
   ])
 }
 

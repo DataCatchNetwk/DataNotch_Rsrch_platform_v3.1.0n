@@ -12,6 +12,7 @@ export interface DatasetColumnProfile {
   type: string
   nullable: boolean
   unique?: boolean
+  nullPercent?: number
   sampleValues?: string[]
 }
 
@@ -72,6 +73,15 @@ export interface DatasetDetails {
   quality?: DatasetQualitySummary | null
   schemaPreview: DatasetColumnProfile[]
   versions: DatasetVersionInfo[]
+  previewColumns?: string[]
+  previewRows?: Array<Record<string, unknown>>
+  license?: string | null
+  sourceName?: string | null
+  sourceUrl?: string | null
+  domain?: string | null
+  tags?: string[]
+  provenance?: string | null
+  refreshCadence?: string | null
 }
 
 export interface DatasetArtifactsResponse {

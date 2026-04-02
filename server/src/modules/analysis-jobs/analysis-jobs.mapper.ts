@@ -44,6 +44,18 @@ export class AnalysisJobsMapper {
       ownerName: item.ownerName,
       artifactCount: item.artifactCount,
       pipelineName: item.pipelineName ?? null,
+      archivedAt: item.archivedAt ? toIsoString(item.archivedAt) : null,
+      queue: item.queue
+        ? {
+            queueName: item.queue.queueName,
+            backendAvailable: item.queue.backendAvailable,
+            waitingJobs: item.queue.waitingJobs,
+            activeJobs: item.queue.activeJobs,
+            queuedMinutes: item.queue.queuedMinutes,
+            estimatedWaitMinutes: item.queue.estimatedWaitMinutes,
+            note: item.queue.note,
+          }
+        : null,
     }
   }
 

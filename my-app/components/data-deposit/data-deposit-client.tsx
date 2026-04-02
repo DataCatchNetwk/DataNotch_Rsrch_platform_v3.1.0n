@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { toast } from 'sonner';
 
 import {
+  getDepositPullStatusStreamUrl,
   getDepositPullStatus,
   listDepositDatasets,
   previewDepositDataset,
@@ -42,7 +44,8 @@ const DOMAINS = [
   'OTHER',
 ] as const;
 
-export function DataDepositClient() {
+export function DataDepositClient({ onBackToDatasets }: { onBackToDatasets?: () => void } = {}) {
+  const router = useRouter();
   const [items, setItems] = useState<DepositDatasetSummary[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [search, setSearch] = useState('');
@@ -68,29 +71,75 @@ export function DataDepositClient() {
       return;
     }
 
-    const interval = window.setInterval(() => {
-      void (async () => {
-        try {
-          const status = await getDepositPullStatus(lastPullJob.jobId);
-          setLastPullJob((current) => {
-            if (!current || current.jobId !== status.jobId) {
-              return current;
-            }
+    let pollInterval: number | null = null;
+    let closed = false;
+    const eventSource = new EventSource(getDepositPullStatusStreamUrl(lastPullJob.jobId));
 
-            return {
-              ...current,
-              ...status,
-              datasetName: status.datasetName || current.datasetName,
-            };
-          });
-        } catch {
-          // Silent polling failure; next cycle will retry.
+    const startPollingFallback = () => {
+      if (pollInterval !== null) {
+        return;
+      }
+
+      pollInterval = window.setInterval(() => {
+        void (async () => {
+          try {
+            const status = await getDepositPullStatus(lastPullJob.jobId);
+            setLastPullJob((current) => {
+              if (!current || current.jobId !== status.jobId) {
+                return current;
+              }
+
+              return {
+                ...current,
+                ...status,
+                datasetName: status.datasetName || current.datasetName,
+              };
+            });
+          } catch {
+            // Silent polling failure; next cycle will retry.
+          }
+        })();
+      }, 3000);
+    };
+
+    eventSource.addEventListener('pull-status', (event) => {
+      if (closed) {
+        return;
+      }
+
+      try {
+        const status = JSON.parse((event as MessageEvent).data) as PullDepositStatusResponse;
+        setLastPullJob((current) => {
+          if (!current || current.jobId !== status.jobId) {
+            return current;
+          }
+
+          return {
+            ...current,
+            ...status,
+            datasetName: status.datasetName || current.datasetName,
+          };
+        });
+
+        if (terminalStatuses.has(String(status.status))) {
+          eventSource.close();
         }
-      })();
-    }, 3000);
+      } catch {
+        startPollingFallback();
+      }
+    });
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      startPollingFallback();
+    };
 
     return () => {
-      window.clearInterval(interval);
+      closed = true;
+      eventSource.close();
+      if (pollInterval !== null) {
+        window.clearInterval(pollInterval);
+      }
     };
   }, [lastPullJob?.jobId, lastPullJob?.status]);
 
@@ -168,6 +217,19 @@ export function DataDepositClient() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (onBackToDatasets) {
+                onBackToDatasets();
+                return;
+              }
+
+              router.push('/dashboard/datasets');
+            }}
+          >
+            Back to Datasets
+          </Button>
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}

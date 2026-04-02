@@ -172,10 +172,12 @@ model DatasetVersion {
   originalFile   FileAsset?      @relation("OriginalFile", fields: [originalFileId], references: [id], onDelete: SetNull)
   cleanedFile    FileAsset?      @relation("CleanedFile", fields: [cleanedFileId], references: [id], onDelete: SetNull)
   processingJobs ProcessingJob[]
+  dataProfile    DataProfile?
 
   @@unique([datasetId, versionNumber])
+}
 
-  model DataProfile {
+model DataProfile {
   id               String         @id @default(cuid())
   datasetVersionId String         @unique
   summaryJson      Json?
@@ -188,7 +190,6 @@ model DatasetVersion {
   updatedAt        DateTime       @updatedAt
 
   datasetVersion   DatasetVersion @relation(fields: [datasetVersionId], references: [id], onDelete: Cascade)
-}
 }
 
 model FileAsset {

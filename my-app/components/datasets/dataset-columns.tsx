@@ -112,20 +112,38 @@ export function getDatasetColumns(actions: {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => actions.onView(item)}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  actions.onView(item)
+                }}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => actions.onAnalyze(item)}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  actions.onAnalyze(item)
+                }}
+              >
                 <PlayCircle className="mr-2 h-4 w-4" />
                 Start analysis
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => actions.onDownload(item)}>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault()
+                  actions.onDownload(item)
+                }}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => actions.onDelete(item)}
+                onSelect={(event) => {
+                  event.preventDefault()
+                  actions.onDelete(item)
+                }}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />

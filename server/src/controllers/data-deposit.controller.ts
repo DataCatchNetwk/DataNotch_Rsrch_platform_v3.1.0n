@@ -1,12 +1,21 @@
 import type { Request, Response } from 'express';
 import { HttpError } from '../utils/errors.js';
 import {
+  archiveDepositDataset,
+  createDepositDatasetAccessRequest,
+  createDepositSavedView,
+  deleteDepositSavedView,
+  getDepositDatasetDownload,
+  getDepositDatasetLineage,
   getDepositPullRequestStatusDebug,
   getDepositPullRequestStatus,
+  getDatasetAuditTrail,
+  listDepositSavedViews,
   getDepositDatasetById,
   listDepositDatasets,
   previewDepositDataset,
   pullDepositDataset,
+  runDepositBulkOperation,
   setDepositFavorite,
   triggerFallbackPullByRequestId,
 } from '../services/data-deposit.service.js';
@@ -137,5 +146,142 @@ export async function triggerFallbackPull(req: Request, res: Response) {
 
 export async function debugPullStatus(req: Request, res: Response) {
   const result = await getDepositPullRequestStatusDebug(req.params.pullRequestId);
+  res.json(result);
+}
+
+export async function download(req: Request, res: Response) {
+  const result = await getDepositDatasetDownload(req.params.datasetId, req.user ? requireUser(req) : undefined);
+  res.setHeader('Content-Type', result.contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+  res.status(200).send(result.content);
+}
+
+export async function remove(req: Request, res: Response) {
+  const user = requireUser(req);
+  const result = await archiveDepositDataset(req.params.datasetId, user);
+  res.json(result);
+}
+
+export async function lineage(req: Request, res: Response) {
+  const result = await getDepositDatasetLineage(req.params.datasetId, req.user?.id);
+  res.json(result);
+}
+
+export async function createAccessRequest(req: Request, res: Response) {
+  const user = requireUser(req);
+  const result = await createDepositDatasetAccessRequest(req.params.datasetId, user, {
+    justification: typeof req.body?.justification === 'string' ? req.body.justification : undefined,
+    requestedRole: typeof req.body?.requestedRole === 'string' ? req.body.requestedRole : undefined,
+  });
+  res.status(201).json(result);
+}
+
+export async function bulkOperation(req: Request, res: Response) {
+  const user = requireUser(req);
+  const datasetIds = Array.isArray(req.body?.datasetIds)
+    ? req.body.datasetIds.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0)
+    : [];
+
+  const operation =
+    req.body?.operation === 'ARCHIVE' ||
+    req.body?.operation === 'EXPORT' ||
+    req.body?.operation === 'APPLY_GOVERNANCE_POLICY'
+      ? req.body.operation
+      : undefined;
+
+  if (!operation) {
+    throw new HttpError(400, 'operation must be one of ARCHIVE, EXPORT, APPLY_GOVERNANCE_POLICY');
+  }
+
+  const result = await runDepositBulkOperation(
+    {
+      datasetIds,
+      operation,
+      governancePolicy:
+        req.body?.governancePolicy === 'PUBLIC' ||
+        req.body?.governancePolicy === 'RESTRICTED' ||
+        req.body?.governancePolicy === 'CONTROLLED'
+          ? req.body.governancePolicy
+          : undefined,
+    },
+    user,
+  );
+
+  res.json(result);
+}
+
+export async function listSavedViews(req: Request, res: Response) {
+  const user = requireUser(req);
+  const result = await listDepositSavedViews(user);
+  res.json(result);
+}
+
+export async function createSavedView(req: Request, res: Response) {
+  const user = requireUser(req);
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+  if (!name) {
+    throw new HttpError(400, 'name is required');
+  }
+
+  const result = await createDepositSavedView(user, {
+    name,
+    filters: req.body?.filters && typeof req.body.filters === 'object' ? req.body.filters : undefined,
+    pinnedFilters: Array.isArray(req.body?.pinnedFilters)
+      ? req.body.pinnedFilters.filter((entry: unknown): entry is string => typeof entry === 'string')
+      : undefined,
+  });
+  res.status(201).json(result);
+}
+
+export async function deleteSavedView(req: Request, res: Response) {
+  const user = requireUser(req);
+  const result = await deleteDepositSavedView(user, req.params.viewId);
+  res.json(result);
+}
+
+export async function streamPullStatus(req: Request, res: Response) {
+  const user = requireUser(req);
+  const pullRequestId = req.params.pullRequestId;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  let active = true;
+
+  const sendStatus = async () => {
+    if (!active) {
+      return;
+    }
+
+    const status = await getDepositPullRequestStatus(pullRequestId, user);
+    res.write('event: pull-status\n');
+    res.write(`data: ${JSON.stringify(status)}\n\n`);
+
+    const terminalStatuses = new Set(['COMPLETED', 'FAILED', 'CANCELED']);
+    if (terminalStatuses.has(String(status.status))) {
+      active = false;
+      clearInterval(interval);
+      res.end();
+    }
+  };
+
+  await sendStatus();
+  const interval = setInterval(() => {
+    void sendStatus().catch(() => {
+      // Ignore intermittent polling errors and keep stream alive.
+    });
+  }, 1500);
+
+  req.on('close', () => {
+    active = false;
+    clearInterval(interval);
+    res.end();
+  });
+}
+
+export async function auditTrail(req: Request, res: Response) {
+  const result = await getDatasetAuditTrail(req.params.datasetId);
   res.json(result);
 }

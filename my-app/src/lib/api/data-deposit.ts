@@ -26,11 +26,15 @@ export interface DepositDatasetSummary {
   sourceName?: string | null;
   sourceUrl?: string | null;
   sizeBytes?: number | null;
+  rowCount?: number | null;
+  columnCount?: number | null;
   recordCount?: number | null;
   updatedAt: string;
   accessibility: DepositAccessibility;
   isFavorite?: boolean;
 }
+
+export type DepositDataset = DepositDatasetSummary;
 
 export interface DepositDatasetDetail extends DepositDatasetSummary {
   schema?: Array<{ name: string; type: string; nullable?: boolean }>;
@@ -43,6 +47,16 @@ export interface DepositPreviewResponse {
   dataset: DepositDatasetDetail;
   columns: string[];
   rows: Array<Record<string, unknown>>;
+  artifactMetadata?: {
+    fileCount?: number;
+    files?: Array<{
+      id?: string;
+      name?: string;
+      mimeType?: string;
+      sizeBytes?: number;
+      createdAt?: string;
+    }>;
+  };
   previewJobId?: string;
   generatedAt: string;
 }
@@ -71,6 +85,30 @@ export interface PullDepositStatusResponse {
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string | null;
+}
+
+export interface DepositLineageResponse {
+  datasetId: string;
+  nodes: Array<{
+    id: string;
+    label: string;
+    version?: number | null;
+    updatedAt?: string | null;
+    active: boolean;
+  }>;
+  edges: Array<{
+    from?: string;
+    to: string;
+    relation: 'DERIVED_FROM' | 'DECLARED_PARENT';
+  }>;
+}
+
+export interface DepositSavedView {
+  id: string;
+  name: string;
+  filters: Record<string, unknown>;
+  pinnedFilters: string[];
+  createdAt: string;
 }
 
 export async function listDepositDatasets(params?: {
@@ -114,9 +152,76 @@ export async function getDepositPullStatus(pullRequestId: string) {
   return apiRequest<PullDepositStatusResponse>(`/v1/datasets/deposit/pull-requests/${pullRequestId}`);
 }
 
+export function getDepositPullStatusStreamUrl(pullRequestId: string) {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
+  return `${base}/v1/datasets/deposit/pull-requests/${pullRequestId}/stream`;
+}
+
+export async function getDepositDatasetLineage(datasetId: string) {
+  return apiRequest<DepositLineageResponse>(`/v1/datasets/deposit/${datasetId}/lineage`);
+}
+
+export async function createDepositAccessRequest(
+  datasetId: string,
+  payload: { justification?: string; requestedRole?: string },
+) {
+  return apiRequest<{ ok: true; accessRequestId: string; status: string }>(
+    `/v1/datasets/deposit/${datasetId}/access-request`,
+    {
+      method: 'POST',
+      json: payload,
+    },
+  );
+}
+
+export async function bulkDepositOperation(payload: {
+  datasetIds: string[];
+  operation: 'ARCHIVE' | 'EXPORT' | 'APPLY_GOVERNANCE_POLICY';
+  governancePolicy?: 'PUBLIC' | 'RESTRICTED' | 'CONTROLLED';
+}) {
+  return apiRequest<{
+    ok: true;
+    operation: string;
+    affectedDatasetIds: string[];
+    exportManifest?: Array<{ datasetId: string; name: string; downloadUrl: string }>;
+  }>('/v1/datasets/deposit/bulk', {
+    method: 'POST',
+    json: payload,
+  });
+}
+
+export async function listDepositSavedViews() {
+  return apiRequest<{ items: DepositSavedView[] }>('/v1/datasets/deposit/saved-views');
+}
+
+export async function createDepositSavedView(payload: {
+  name: string;
+  filters?: Record<string, unknown>;
+  pinnedFilters?: string[];
+}) {
+  return apiRequest<{ ok: true; savedView: DepositSavedView }>('/v1/datasets/deposit/saved-views', {
+    method: 'POST',
+    json: payload,
+  });
+}
+
+export async function deleteDepositSavedView(viewId: string) {
+  return apiRequest<{ ok: true }>(`/v1/datasets/deposit/saved-views/${viewId}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function toggleFavoriteDataset(id: string, favorite: boolean) {
   return apiRequest<{ ok: true }>(`/v1/datasets/deposit/${id}/favorite`, {
     method: 'POST',
     json: { favorite },
   });
+}
+
+export async function favoriteDepositDataset(id: string) {
+  return toggleFavoriteDataset(id, true);
+}
+
+export async function unfavoriteDepositDataset(id: string) {
+  return toggleFavoriteDataset(id, false);
 }

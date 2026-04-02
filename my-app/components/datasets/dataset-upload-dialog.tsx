@@ -49,6 +49,7 @@ interface Props {
 
 export function DatasetUploadDialog({ open, onOpenChange }: Props) {
   const [file, setFile] = React.useState<File | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const uploadMutation = useUploadDataset()
 
   const form = useForm<FormValues>({
@@ -103,12 +104,20 @@ export function DatasetUploadDialog({ open, onOpenChange }: Props) {
                   <p className="text-sm text-muted-foreground">CSV, XLSX, JSON, TSV, or ZIP</p>
                 </div>
                 <Input
+                  ref={fileInputRef}
                   type="file"
                   className="hidden"
                   accept=".csv,.xlsx,.json,.tsv,.zip"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 />
-                <Button type="button" variant="outline">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    fileInputRef.current?.click()
+                  }}
+                >
                   Browse file
                 </Button>
                 {file ? (

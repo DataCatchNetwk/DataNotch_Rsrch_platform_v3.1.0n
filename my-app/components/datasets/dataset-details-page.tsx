@@ -2,20 +2,33 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Download, PlayCircle, RefreshCw } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { ArrowLeft, Download, PlayCircle, RefreshCw, ShieldCheck } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDatasetDetails } from "@/hooks/use-dataset-details"
 import { DatasetOverviewCard } from "@/components/datasets/dataset-overview-card"
 import { DatasetSchemaPreview } from "@/components/datasets/dataset-schema-preview"
 import { DatasetArtifactsPanel } from "@/components/datasets/dataset-artifacts-panel"
 import { DatasetLineageCard } from "@/components/datasets/dataset-lineage-card"
 import { DatasetAnalysisDrawer } from "@/components/datasets/dataset-analysis-drawer"
+import { DatasetQualityCard } from "@/components/datasets/dataset-quality-card"
+import { DatasetRowPreview } from "@/components/datasets/dataset-row-preview"
+import { DatasetAuditTrail } from "@/components/datasets/dataset-audit-trail"
+import { DatasetAccessInfoCard } from "@/components/datasets/dataset-access-info-card"
 
 export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [analysisOpen, setAnalysisOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    if (searchParams.get("analysis") === "1") {
+      setAnalysisOpen(true)
+    }
+  }, [searchParams])
 
   const { data, isLoading, isError, refetch, error } = useDatasetDetails(datasetId)
 
@@ -45,6 +58,7 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="space-y-2">
           <Button variant="ghost" className="w-fit px-0" onClick={() => router.push("/dashboard/datasets")}>
@@ -68,7 +82,7 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
             variant="outline"
             onClick={() =>
               window.open(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/datasets/${datasetId}/download`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/v1/datasets/deposit/${datasetId}/download`,
                 "_blank"
               )
             }
@@ -83,18 +97,88 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
         </div>
       </div>
 
+      {/* Overview */}
       <DatasetOverviewCard dataset={data} />
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-6 xl:col-span-2">
-          <DatasetSchemaPreview columns={data.schemaPreview} />
-          <DatasetArtifactsPanel datasetId={datasetId} />
-        </div>
+      {/* Tabbed detail area */}
+      <Tabs defaultValue="schema" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="schema">Schema</TabsTrigger>
+          <TabsTrigger value="preview">Data Preview</TabsTrigger>
+          <TabsTrigger value="quality">Quality</TabsTrigger>
+          <TabsTrigger value="artifacts">Artifacts</TabsTrigger>
+          <TabsTrigger value="lineage">Lineage</TabsTrigger>
+          <TabsTrigger value="access">Access &amp; Licensing</TabsTrigger>
+          <TabsTrigger value="audit">
+            <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+            Audit Trail
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-6">
+        <TabsContent value="schema">
+          <DatasetSchemaPreview columns={data.schemaPreview} />
+        </TabsContent>
+
+        <TabsContent value="preview">
+          {data.previewRows && data.previewRows.length > 0 ? (
+            <DatasetRowPreview
+              columns={data.previewColumns ?? []}
+              rows={data.previewRows}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                No preview data available for this dataset.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="quality">
+          {data.quality ? (
+            <DatasetQualityCard quality={data.quality} />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                Quality report not yet generated for this dataset.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="artifacts">
+          <DatasetArtifactsPanel datasetId={datasetId} />
+        </TabsContent>
+
+        <TabsContent value="lineage">
           <DatasetLineageCard versions={data.versions} />
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="access">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Access &amp; Licensing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DatasetAccessInfoCard dataset={data} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Audit Trail
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DatasetAuditTrail datasetId={datasetId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <DatasetAnalysisDrawer
         open={analysisOpen}
@@ -104,3 +188,4 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
     </div>
   )
 }
+

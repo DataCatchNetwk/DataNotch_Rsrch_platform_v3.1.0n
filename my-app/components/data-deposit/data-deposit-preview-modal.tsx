@@ -52,6 +52,20 @@ export function DataDepositPreviewModal({
               </div>
             </div>
 
+            <div className="rounded-xl border p-3 text-sm">
+              <div className="text-muted-foreground">File Artifacts</div>
+              <div className="mt-1 font-medium">{preview.artifactMetadata?.fileCount ?? 0} files</div>
+              {preview.artifactMetadata?.files?.length ? (
+                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  {preview.artifactMetadata.files.slice(0, 3).map((file, index) => (
+                    <div key={file.id || `${file.name || 'file'}-${index}`}>
+                      {file.name || 'file'} {file.sizeBytes ? `(${Math.round(file.sizeBytes / 1024)} KB)` : ''}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
             <ScrollArea className="h-90 rounded-xl border">
               <div className="min-w-max p-4">
                 <table className="w-full text-sm">

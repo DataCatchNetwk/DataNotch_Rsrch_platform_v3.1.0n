@@ -7,6 +7,8 @@ export const RESEARCH_QUEUES = {
   EXPORT: 'research.export',
   PUBLISH: 'research.publish',
   PULL_JOB: 'research.pull-job',
+  COHORT_BUILD: 'research.cohort-build',
+  FEATURE_MATERIALIZE: 'research.feature-materialize',
   DLQ: 'research.dlq',
 } as const;
 

@@ -18,6 +18,12 @@ import workspaceRoutes from './routes/workspaces.js';
 import researcherApplicationsRoutes from './routes/researcher-applications.js';
 import supportRoutes from './routes/support.js';
 import dataDepositRoutes from './routes/data-deposit.js';
+import cohortsRoutes from './routes/cohorts.js';
+import statisticsRoutes from './modules/statistics/statistics.module.js';
+import mlRoutes from './modules/ml/ml.module.js';
+import survivalRoutes from './modules/survival/survival.module.js';
+import genomicsRoutes from './modules/genomics/genomics.module.js';
+import experimentTrackingRoutes from './modules/experiment-tracking/experiment-tracking.module.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 export function createApp() {
@@ -53,6 +59,12 @@ export function createApp() {
   app.use('/api/support', supportRoutes);
   app.use('/api/v1/support', supportRoutes);
   app.use('/api/v1/datasets/deposit', dataDepositRoutes);
+  app.use('/api/v1/cohorts', cohortsRoutes);
+  app.use('/api/v1/statistics', statisticsRoutes);
+  app.use('/api/v1/ml', mlRoutes);
+  app.use('/api/v1/survival', survivalRoutes);
+  app.use('/api/v1/genomics', genomicsRoutes);
+  app.use('/api/v1/experiments', experimentTrackingRoutes);
 
   app.use(errorHandler);
   return app;

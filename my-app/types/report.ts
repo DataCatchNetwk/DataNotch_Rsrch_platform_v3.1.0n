@@ -1,5 +1,23 @@
 export type ReportStatus = "READY" | "PROCESSING" | "FAILED"
 export type ArtifactKind = "REPORT" | "CHART" | "CLEANED_FILE" | "MODEL_OUTPUT" | "ATTACHMENT"
+export type ReportChartType = "area" | "bar" | "line" | "pie"
+
+export interface ReportChartSeries {
+  label: string
+  dataKey: string
+  color: string
+}
+
+export interface ReportChartConfig {
+  id: string
+  title: string
+  description?: string
+  type: ReportChartType
+  /** x-axis key in each data row; omitted for pie charts */
+  xKey?: string
+  data: Array<Record<string, string | number>>
+  series: ReportChartSeries[]
+}
 
 export interface ReportArtifact {
   id: string
@@ -43,4 +61,5 @@ export interface ReportDetails {
   metrics: ReportMetric[]
   sections: ReportSection[]
   artifacts: ReportArtifact[]
+  charts?: ReportChartConfig[]
 }

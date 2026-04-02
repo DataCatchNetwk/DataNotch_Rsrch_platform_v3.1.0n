@@ -3,6 +3,9 @@
  * Manages analysis runs, preprocessing, model training, and evaluation.
  * Enums mirror server/prisma/schema.prisma exactly.
  */
+import { AnalysisRunStatus as PrismaAnalysisRunStatus, AnalysisRunType as PrismaAnalysisRunType, AnalysisAlgorithmType as PrismaAnalysisAlgorithmType, Prisma } from '@prisma/client';
+import { prisma } from '../../db/prisma.js';
+import { HttpError } from '../../utils/errors.js';
 
 // ─── High-level run categories ──────────────────────────────────────────────
 
@@ -821,23 +824,122 @@ export class AnalysisOrchestratorModule {
   }
 
   async createAnalysisRun(dto: CreateAnalysisRunDto): Promise<AnalysisRunDto> {
-    throw new Error('Not implemented');
+    const workspace = await prisma.researchWorkspace.findUnique({ where: { id: dto.researchWorkspaceId }, select: { id: true } });
+    if (!workspace) {
+      throw new HttpError(404, 'Research workspace not found');
+    }
+
+    if (dto.algorithm) {
+      const algoMeta = ALGORITHM_CATALOG[dto.algorithm];
+      if (!algoMeta) {
+        throw new HttpError(400, `Unsupported algorithm: ${dto.algorithm}`);
+      }
+      if (dto.type !== AnalysisRunType.CUSTOM && algoMeta.runType !== dto.type) {
+        throw new HttpError(400, 'Algorithm is not compatible with requested analysis run type');
+      }
+    }
+
+    const run = await prisma.analysisRun.create({
+      data: {
+        researchWorkspaceId: dto.researchWorkspaceId,
+        type: dto.type as unknown as PrismaAnalysisRunType,
+        algorithm: dto.algorithm ? (dto.algorithm as unknown as PrismaAnalysisAlgorithmType) : undefined,
+        status: PrismaAnalysisRunStatus.QUEUED,
+        configJson: dto.configJson as Prisma.InputJsonValue,
+        datasetVersionRef: dto.datasetVersionRef,
+        featureSetVersionRef: dto.featureSetVersionRef,
+      },
+    });
+
+    return {
+      id: run.id,
+      researchWorkspaceId: run.researchWorkspaceId,
+      type: run.type as unknown as AnalysisRunType,
+      algorithm: (run.algorithm as unknown as AnalysisAlgorithmType | null) ?? undefined,
+      status: run.status,
+      configJson: (run.configJson ?? {}) as Record<string, unknown>,
+      metricsJson: (run.metricsJson ?? undefined) as Record<string, unknown> | undefined,
+      artifactsJson: (run.artifactsJson ?? undefined) as Record<string, unknown> | undefined,
+      startedAt: run.startedAt ?? undefined,
+      finishedAt: run.finishedAt ?? undefined,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+    };
   }
 
   async getAnalysisRunById(id: string): Promise<AnalysisRunDto> {
-    throw new Error('Not implemented');
+    const run = await prisma.analysisRun.findUnique({ where: { id } });
+    if (!run) {
+      throw new HttpError(404, 'Analysis run not found');
+    }
+
+    return {
+      id: run.id,
+      researchWorkspaceId: run.researchWorkspaceId,
+      type: run.type as unknown as AnalysisRunType,
+      algorithm: (run.algorithm as unknown as AnalysisAlgorithmType | null) ?? undefined,
+      status: run.status,
+      configJson: (run.configJson ?? {}) as Record<string, unknown>,
+      metricsJson: (run.metricsJson ?? undefined) as Record<string, unknown> | undefined,
+      artifactsJson: (run.artifactsJson ?? undefined) as Record<string, unknown> | undefined,
+      startedAt: run.startedAt ?? undefined,
+      finishedAt: run.finishedAt ?? undefined,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+    };
   }
 
   async listAnalysisRuns(workspaceId: string): Promise<AnalysisRunDto[]> {
-    throw new Error('Not implemented');
+    const runs = await prisma.analysisRun.findMany({
+      where: { researchWorkspaceId: workspaceId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return runs.map((run) => ({
+      id: run.id,
+      researchWorkspaceId: run.researchWorkspaceId,
+      type: run.type as unknown as AnalysisRunType,
+      algorithm: (run.algorithm as unknown as AnalysisAlgorithmType | null) ?? undefined,
+      status: run.status,
+      configJson: (run.configJson ?? {}) as Record<string, unknown>,
+      metricsJson: (run.metricsJson ?? undefined) as Record<string, unknown> | undefined,
+      artifactsJson: (run.artifactsJson ?? undefined) as Record<string, unknown> | undefined,
+      startedAt: run.startedAt ?? undefined,
+      finishedAt: run.finishedAt ?? undefined,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+    }));
   }
 
   async cancelAnalysisRun(id: string): Promise<void> {
-    throw new Error('Not implemented');
+    const run = await prisma.analysisRun.findUnique({ where: { id } });
+    if (!run) {
+      throw new HttpError(404, 'Analysis run not found');
+    }
+
+    if (run.status === PrismaAnalysisRunStatus.SUCCEEDED || run.status === PrismaAnalysisRunStatus.FAILED || run.status === PrismaAnalysisRunStatus.CANCELED) {
+      throw new HttpError(409, `Analysis run cannot be canceled from status ${run.status}`);
+    }
+
+    await prisma.analysisRun.update({
+      where: { id },
+      data: {
+        status: PrismaAnalysisRunStatus.CANCELED,
+        finishedAt: new Date(),
+      },
+    });
   }
 
   async getAnalysisArtifacts(runId: string): Promise<Record<string, unknown>> {
-    throw new Error('Not implemented');
+    const run = await prisma.analysisRun.findUnique({
+      where: { id: runId },
+      select: { id: true, artifactsJson: true },
+    });
+    if (!run) {
+      throw new HttpError(404, 'Analysis run not found');
+    }
+
+    return (run.artifactsJson ?? {}) as Record<string, unknown>;
   }
 }
 

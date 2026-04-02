@@ -1,5 +1,5 @@
-import { DatasetsPageView } from "@/components/datasets/datasets-page"
+import { DatasetsFlowShell } from "@/components/datasets/datasets-flow-shell"
 
 export default function DatasetsPage() {
-  return <DatasetsPageView />
+  return <DatasetsFlowShell />
 }

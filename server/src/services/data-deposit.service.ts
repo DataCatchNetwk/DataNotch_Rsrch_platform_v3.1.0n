@@ -52,6 +52,14 @@ function toInputJsonValue(
   return value as Prisma.InputJsonValue;
 }
 
+function asObject(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
 function mapDepositDataset(dataset: any, userId?: string) {
   const favorite = Array.isArray(dataset.favorites)
     ? dataset.favorites.find((entry: { userId: string }) => entry.userId === userId)
@@ -161,14 +169,27 @@ export async function listDepositDatasets(filters: ListDepositFilters, userId?: 
 export async function getDepositDatasetById(datasetId: string, userId?: string) {
   const dataset = await prisma.dataset.findUnique({
     where: { id: datasetId },
-    include: userId
-      ? {
-          favorites: {
-            where: { userId },
-            select: { userId: true },
-          },
-        }
-      : undefined,
+    include: {
+      ...(userId
+        ? {
+            favorites: {
+              where: { userId },
+              select: { userId: true },
+            },
+          }
+        : {}),
+      fileAssets: {
+        select: {
+          id: true,
+          originalName: true,
+          mimeType: true,
+          sizeBytes: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      },
+    },
   });
 
   if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
@@ -183,12 +204,29 @@ export async function getDepositDatasetById(datasetId: string, userId?: string) 
     },
   });
 
+  const metadata = asObject(dataset.metadataJson);
+  const artifactMetadata = {
+    fileCount: dataset.fileAssets?.length ?? 0,
+    files:
+      dataset.fileAssets?.map((asset: { id: string; originalName: string; mimeType: string; sizeBytes: number; createdAt: Date }) => ({
+        id: asset.id,
+        name: asset.originalName,
+        mimeType: asset.mimeType,
+        sizeBytes: asset.sizeBytes,
+        createdAt: asset.createdAt,
+      })) ?? [],
+    metadataFiles: Array.isArray(metadata.files)
+      ? metadata.files
+      : [],
+  };
+
   return {
     ...mapDepositDataset(dataset, userId),
     schema: Array.isArray(dataset.schemaJson) ? dataset.schemaJson : [],
     license: (dataset.metadataJson as any)?.license ?? null,
     refreshCadence: (dataset.metadataJson as any)?.refreshCadence ?? null,
     provenance: (dataset.metadataJson as any)?.provenance ?? null,
+    artifactMetadata,
   };
 }
 
@@ -232,9 +270,365 @@ export async function previewDepositDataset(datasetId: string, userId?: string) 
     dataset: detailed,
     columns,
     rows,
+    artifactMetadata: (detailed as any).artifactMetadata ?? { fileCount: 0, files: [] },
     previewJobId: `preview_${datasetId}`,
     generatedAt: new Date().toISOString(),
   };
+}
+
+export async function getDepositDatasetLineage(datasetId: string, userId?: string) {
+  const dataset = await prisma.dataset.findUnique({
+    where: { id: datasetId },
+    select: {
+      id: true,
+      name: true,
+      version: true,
+      workspaceId: true,
+      metadataJson: true,
+      updatedAt: true,
+      isDepositListed: true,
+      depositStatus: true,
+    },
+  });
+
+  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+    throw new HttpError(404, 'Dataset not found in central repository');
+  }
+
+  const siblings = await prisma.dataset.findMany({
+    where: {
+      workspaceId: dataset.workspaceId,
+      name: dataset.name,
+    },
+    select: {
+      id: true,
+      name: true,
+      version: true,
+      updatedAt: true,
+    },
+    orderBy: { version: 'asc' },
+  });
+
+  const nodes: Array<{
+    id: string;
+    label: string;
+    version: number | null;
+    updatedAt: Date | null;
+    active: boolean;
+  }> = siblings.map((item) => ({
+    id: item.id,
+    label: `${item.name} v${item.version}`,
+    version: item.version,
+    updatedAt: item.updatedAt,
+    active: item.id === datasetId,
+  }));
+
+  const edges: Array<{ from?: string; to: string; relation: 'DERIVED_FROM' | 'DECLARED_PARENT' }> = siblings
+    .slice(1)
+    .map((item, index) => ({
+      from: siblings[index]?.id,
+      to: item.id,
+      relation: 'DERIVED_FROM' as const,
+    }))
+    .filter((edge) => Boolean(edge.from));
+
+  const metadata = asObject(dataset.metadataJson);
+  const declaredParents = Array.isArray(metadata.parentDatasetIds)
+    ? (metadata.parentDatasetIds as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+    : [];
+
+  declaredParents.forEach((parentId) => {
+    if (!nodes.some((node) => node.id === parentId)) {
+      nodes.push({
+        id: parentId,
+        label: `Dataset ${parentId}`,
+        version: null,
+        updatedAt: null,
+        active: false,
+      });
+    }
+
+    edges.push({
+      from: parentId,
+      to: datasetId,
+      relation: 'DECLARED_PARENT' as const,
+    });
+  });
+
+  await prisma.datasetAccessLog.create({
+    data: {
+      datasetId,
+      userId,
+      action: 'VIEW_DETAILS',
+      metadataJson: {
+        view: 'lineage',
+      },
+    },
+  });
+
+  return {
+    datasetId,
+    nodes,
+    edges,
+  };
+}
+
+export async function createDepositDatasetAccessRequest(
+  datasetId: string,
+  user: AuthUser,
+  input: { justification?: string; requestedRole?: string },
+) {
+  const dataset = await prisma.dataset.findUnique({
+    where: { id: datasetId },
+    select: {
+      id: true,
+      name: true,
+      isDepositListed: true,
+      depositStatus: true,
+    },
+  });
+
+  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+    throw new HttpError(404, 'Dataset not found in central repository');
+  }
+
+  const accessRequest = await prisma.accessRequest.create({
+    data: {
+      requesterId: user.id,
+      requestedRole: input.requestedRole?.trim() || `DATASET_ACCESS:${datasetId}`,
+      justification: input.justification?.trim() || `Access request for dataset ${dataset.name}`,
+      status: 'PENDING',
+    },
+  });
+
+  await prisma.datasetAccessLog.create({
+    data: {
+      datasetId,
+      userId: user.id,
+      action: 'VIEW_DETAILS',
+      metadataJson: {
+        accessRequestId: accessRequest.id,
+      },
+    },
+  });
+
+  return {
+    ok: true as const,
+    accessRequestId: accessRequest.id,
+    status: accessRequest.status,
+  };
+}
+
+type DepositBulkOperationInput = {
+  datasetIds: string[];
+  operation: 'ARCHIVE' | 'EXPORT' | 'APPLY_GOVERNANCE_POLICY';
+  governancePolicy?: 'PUBLIC' | 'RESTRICTED' | 'CONTROLLED';
+};
+
+export async function runDepositBulkOperation(input: DepositBulkOperationInput, user: AuthUser) {
+  if (!input.datasetIds.length) {
+    throw new HttpError(400, 'datasetIds must contain at least one dataset id');
+  }
+
+  const datasets = await prisma.dataset.findMany({
+    where: {
+      id: { in: input.datasetIds },
+      isDepositListed: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      createdById: true,
+    },
+  });
+
+  if (!datasets.length) {
+    throw new HttpError(404, 'No deposit datasets found for requested ids');
+  }
+
+  const isAdmin = Boolean(user.roles?.includes('ADMIN') || user.roles?.includes('SUPER_ADMIN'));
+  const ownerDatasetIds = new Set(datasets.filter((dataset) => dataset.createdById === user.id).map((dataset) => dataset.id));
+  const unauthorized = isAdmin ? [] : datasets.filter((dataset) => !ownerDatasetIds.has(dataset.id)).map((dataset) => dataset.id);
+
+  if (unauthorized.length) {
+    throw new HttpError(403, `Not authorized to perform bulk operation on datasets: ${unauthorized.join(', ')}`);
+  }
+
+  if (input.operation === 'ARCHIVE') {
+    await prisma.dataset.updateMany({
+      where: { id: { in: datasets.map((dataset) => dataset.id) } },
+      data: {
+        isDepositListed: false,
+        depositStatus: 'ARCHIVED',
+      },
+    });
+  }
+
+  if (input.operation === 'APPLY_GOVERNANCE_POLICY') {
+    if (!input.governancePolicy) {
+      throw new HttpError(400, 'governancePolicy is required when operation is APPLY_GOVERNANCE_POLICY');
+    }
+
+    const accessLevel =
+      input.governancePolicy === 'PUBLIC'
+        ? 'OPEN'
+        : input.governancePolicy === 'RESTRICTED'
+          ? 'RESTRICTED'
+          : 'APPROVAL_REQUIRED';
+
+    await prisma.dataset.updateMany({
+      where: { id: { in: datasets.map((dataset) => dataset.id) } },
+      data: {
+        accessLevel,
+      },
+    });
+  }
+
+  const exportManifest =
+    input.operation === 'EXPORT'
+      ? datasets.map((dataset) => ({
+          datasetId: dataset.id,
+          name: dataset.name,
+          downloadUrl: `/api/v1/datasets/deposit/${dataset.id}/download`,
+        }))
+      : undefined;
+
+  await prisma.datasetAccessLog.createMany({
+    data: datasets.map((dataset) => ({
+      datasetId: dataset.id,
+      userId: user.id,
+      action: 'VIEW_DETAILS',
+      metadataJson: {
+        bulk: true,
+        operation: input.operation,
+        governancePolicy: input.governancePolicy,
+      } as Prisma.InputJsonValue,
+    })),
+  });
+
+  return {
+    ok: true as const,
+    operation: input.operation,
+    affectedDatasetIds: datasets.map((dataset) => dataset.id),
+    exportManifest,
+  };
+}
+
+type SavedView = {
+  id: string;
+  name: string;
+  filters: Record<string, unknown>;
+  pinnedFilters: string[];
+  createdAt: string;
+};
+
+function extractSavedViews(user: { notificationPreferences: Prisma.JsonValue | null }): SavedView[] {
+  const prefs = asObject(user.notificationPreferences);
+  const datasetsPrefs = asObject(prefs.datasets as Prisma.JsonValue | null | undefined);
+  const savedViews = datasetsPrefs.savedViews;
+  if (!Array.isArray(savedViews)) {
+    return [];
+  }
+
+  return savedViews.filter((entry): entry is SavedView => {
+    if (!entry || typeof entry !== 'object') {
+      return false;
+    }
+
+    const candidate = entry as Record<string, unknown>;
+    return typeof candidate.id === 'string' && typeof candidate.name === 'string';
+  });
+}
+
+export async function listDepositSavedViews(user: AuthUser) {
+  const profile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { notificationPreferences: true },
+  });
+
+  if (!profile) {
+    throw new HttpError(404, 'User not found');
+  }
+
+  return {
+    items: extractSavedViews(profile),
+  };
+}
+
+export async function createDepositSavedView(
+  user: AuthUser,
+  payload: { name: string; filters?: Record<string, unknown>; pinnedFilters?: string[] },
+) {
+  const profile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { notificationPreferences: true },
+  });
+
+  if (!profile) {
+    throw new HttpError(404, 'User not found');
+  }
+
+  const prefs = asObject(profile.notificationPreferences);
+  const datasetsPrefs = asObject(prefs.datasets as Prisma.JsonValue | null | undefined);
+  const current = extractSavedViews(profile);
+
+  const savedView: SavedView = {
+    id: `view_${Date.now().toString(36)}`,
+    name: payload.name.trim(),
+    filters: payload.filters ?? {},
+    pinnedFilters: Array.isArray(payload.pinnedFilters) ? payload.pinnedFilters : [],
+    createdAt: new Date().toISOString(),
+  };
+
+  const next = [...current, savedView].slice(-20);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      notificationPreferences: {
+        ...prefs,
+        datasets: {
+          ...datasetsPrefs,
+          savedViews: next,
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  return {
+    ok: true as const,
+    savedView,
+  };
+}
+
+export async function deleteDepositSavedView(user: AuthUser, viewId: string) {
+  const profile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { notificationPreferences: true },
+  });
+
+  if (!profile) {
+    throw new HttpError(404, 'User not found');
+  }
+
+  const prefs = asObject(profile.notificationPreferences);
+  const datasetsPrefs = asObject(prefs.datasets as Prisma.JsonValue | null | undefined);
+  const next = extractSavedViews(profile).filter((item) => item.id !== viewId);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      notificationPreferences: {
+        ...prefs,
+        datasets: {
+          ...datasetsPrefs,
+          savedViews: next,
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  return { ok: true as const };
 }
 
 export async function setDepositFavorite(datasetId: string, user: AuthUser, favorite: boolean) {
@@ -531,3 +925,117 @@ export async function triggerFallbackPullByRequestId(pullRequestId: string) {
     message: 'Fallback pull execution triggered',
   };
 }
+
+function toCsv(rows: Array<Record<string, unknown>>) {
+  if (!rows.length) {
+    return '';
+  }
+
+  const headers = Object.keys(rows[0]);
+  const escapeCell = (value: unknown) => {
+    const raw = value == null ? '' : String(value);
+    if (raw.includes('"') || raw.includes(',') || raw.includes('\n')) {
+      return `"${raw.replace(/"/g, '""')}"`;
+    }
+    return raw;
+  };
+
+  const lines = [
+    headers.join(','),
+    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(',')),
+  ];
+
+  return lines.join('\n');
+}
+
+export async function getDepositDatasetDownload(datasetId: string, user?: AuthUser) {
+  const dataset = await prisma.dataset.findUnique({
+    where: { id: datasetId },
+    select: {
+      id: true,
+      name: true,
+      previewRowsJson: true,
+      schemaJson: true,
+      mimeType: true,
+      isDepositListed: true,
+      depositStatus: true,
+    },
+  });
+
+  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+    throw new HttpError(404, 'Dataset not found in central repository');
+  }
+
+  const rows = Array.isArray(dataset.previewRowsJson)
+    ? (dataset.previewRowsJson as Array<Record<string, unknown>>)
+    : [];
+
+  const content = toCsv(rows);
+  const baseName = dataset.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || dataset.id;
+
+  return {
+    fileName: `${baseName}.csv`,
+    contentType: 'text/csv; charset=utf-8',
+    content,
+  };
+}
+
+export async function archiveDepositDataset(datasetId: string, user: AuthUser) {
+  const dataset = await prisma.dataset.findUnique({
+    where: { id: datasetId },
+    select: { id: true, createdById: true, isDepositListed: true },
+  });
+
+  if (!dataset || !dataset.isDepositListed) {
+    throw new HttpError(404, 'Dataset not found in central repository');
+  }
+
+  const isAdmin = Boolean(user.roles?.includes('ADMIN') || user.roles?.includes('SUPER_ADMIN'));
+  const isOwner = dataset.createdById === user.id;
+
+  if (!isAdmin && !isOwner) {
+    throw new HttpError(403, 'Only the dataset owner or admin can archive this dataset');
+  }
+
+  await prisma.dataset.update({
+    where: { id: datasetId },
+    data: {
+      isDepositListed: false,
+      depositStatus: 'ARCHIVED',
+    },
+  });
+
+  return { ok: true as const };
+}
+
+function mapSeverityFromAction(action: string): 'LOW' | 'MEDIUM' | 'HIGH' {
+  if (/DELETE|REJECT|SUSPEND|FAIL|ARCHIVE/i.test(action)) return 'HIGH';
+  if (/PULL|APPROVE|UPDATE|ROLE|STATUS|REGISTER|FAVORIT/i.test(action)) return 'MEDIUM';
+  return 'LOW';
+}
+
+export async function getDatasetAuditTrail(datasetId: string) {
+  const logs = await prisma.datasetAccessLog.findMany({
+    where: { datasetId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+    include: {
+      user: {
+        select: { firstname: true, surname: true, email: true },
+      },
+    },
+  });
+
+  return {
+    events: logs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      actor: log.user
+        ? `${log.user.firstname} ${log.user.surname}`.trim() || log.user.email
+        : 'System',
+      createdAt: log.createdAt.toISOString(),
+      severity: mapSeverityFromAction(log.action),
+    })),
+  };
+}
+

@@ -1,5 +1,15 @@
 import type { AnalysisJobStatus } from '../analysis-jobs.types.js'
 
+export interface AnalysisJobQueueDto {
+  queueName: string | null
+  backendAvailable: boolean
+  waitingJobs: number
+  activeJobs: number
+  queuedMinutes: number | null
+  estimatedWaitMinutes: number | null
+  note: string
+}
+
 export interface AnalysisJobsListItemDto {
   id: string
   jobName: string
@@ -13,6 +23,8 @@ export interface AnalysisJobsListItemDto {
   ownerName: string
   artifactCount: number
   pipelineName?: string | null
+  archivedAt?: string | null
+  queue?: AnalysisJobQueueDto | null
 }
 
 export interface AnalysisJobDetailsDto extends AnalysisJobsListItemDto {
@@ -33,7 +45,23 @@ export interface RetryJobResponseDto {
   message?: string
 }
 
+export interface DuplicateJobResponseDto {
+  ok: true
+  newJobId?: string
+  message?: string
+}
+
 export interface CancelJobResponseDto {
+  ok: true
+  message?: string
+}
+
+export interface ArchiveJobResponseDto {
+  ok: true
+  message?: string
+}
+
+export interface RestoreJobResponseDto {
   ok: true
   message?: string
 }

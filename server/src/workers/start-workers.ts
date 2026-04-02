@@ -9,6 +9,8 @@ import { ReportProcessor } from './processors/report.processor.js';
 import { TrainProcessor } from './processors/train.processor.js';
 import { TransformProcessor } from './processors/transform.processor.js';
 import { PullJobProcessor } from './processors/pull-job.processor.js';
+import { CohortBuildProcessor } from './processors/cohort-build.processor.js';
+import { FeatureMaterializationProcessor } from './processors/feature-materialization.processor.js';
 import { startQueueEvents } from './queue-events.js';
 
 export async function startWorkers() {
@@ -27,6 +29,8 @@ export async function startWorkers() {
     new ExportProcessor(prisma, orchestrator).start(),
     new PublishProcessor(prisma, orchestrator).start(),
     new PullJobProcessor(prisma).start(),
+    new CohortBuildProcessor(prisma).start(),
+    new FeatureMaterializationProcessor(prisma).start(),
   ];
 
   workers.forEach((worker) => {

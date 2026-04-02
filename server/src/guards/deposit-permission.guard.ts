@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { HttpError } from '../utils/errors.js';
+import { prisma } from '../db/prisma.js';
 
 /** Deposit-specific permissions */
 export enum DepositPermission {
@@ -49,42 +50,80 @@ export function requireDepositPermission(requiredPermission: DepositPermission) 
  * In a real system, this would query the database for user roles/permissions
  */
 async function checkUserHasPermission(userId: string, permission: DepositPermission): Promise<boolean> {
-  // For now, implement a basic permission check
-  // In production, you would:
-  // 1. Query user's roles
-  // 2. Query role_permissions mapping
-  // 3. Check if any role has this permission
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      roles: {
+        select: {
+          role: {
+            select: {
+              name: true,
+              permissions: {
+                select: {
+                  permission: {
+                    select: { name: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 
-  // Default: allow all authenticated users to view and preview
-  if (permission === DepositPermission.VIEW || permission === DepositPermission.PREVIEW) {
+  if (!user) {
+    return false;
+  }
+
+  const roleNames = new Set(user.roles.map((userRole) => userRole.role.name.toUpperCase()));
+  const permissionNames = new Set(
+    user.roles.flatMap((userRole) =>
+      userRole.role.permissions.map((rolePermission) => rolePermission.permission.name)
+    )
+  );
+
+  if (roleNames.has('ADMIN') || roleNames.has('SUPER_ADMIN')) {
     return true;
   }
 
-  // Default: allow all authenticated users to favorite and pull
-  if (permission === DepositPermission.FAVORITE || permission === DepositPermission.PULL) {
+  if (permissionNames.has(permission)) {
     return true;
   }
 
-  // Only admins can publish
-  if (permission === DepositPermission.PUBLISH || permission === DepositPermission.ADMIN) {
-    // Query user roles - stub for now
-    return isAdminUser(userId);
+  const roleDerivedPermissions: Record<string, DepositPermission[]> = {
+    OWNER: [
+      DepositPermission.VIEW,
+      DepositPermission.PREVIEW,
+      DepositPermission.FAVORITE,
+      DepositPermission.PULL,
+      DepositPermission.PUBLISH,
+      DepositPermission.ADMIN,
+    ],
+    DEPOSIT_ADMIN: [
+      DepositPermission.VIEW,
+      DepositPermission.PREVIEW,
+      DepositPermission.FAVORITE,
+      DepositPermission.PULL,
+      DepositPermission.PUBLISH,
+      DepositPermission.ADMIN,
+    ],
+    RESEARCHER: [
+      DepositPermission.VIEW,
+      DepositPermission.PREVIEW,
+      DepositPermission.FAVORITE,
+      DepositPermission.PULL,
+    ],
+    VIEWER: [DepositPermission.VIEW, DepositPermission.PREVIEW],
+  };
+
+  for (const roleName of roleNames) {
+    const allowed = roleDerivedPermissions[roleName];
+    if (allowed?.includes(permission)) {
+      return true;
+    }
   }
 
-  return false;
-}
-
-/**
- * Check if user is an admin (stub implementation)
- * In production, query the database
- */
-function isAdminUser(userId: string): boolean {
-  // TODO: Query database for user roles
-  // const user = await prisma.user.findUnique({
-  //   where: { id: userId },
-  //   include: { roles: { include: { role: true } } }
-  // });
-  // return user?.roles.some(ur => ur.role.name === 'ADMIN');
   return false;
 }
 

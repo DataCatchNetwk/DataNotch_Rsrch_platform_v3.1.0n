@@ -71,21 +71,31 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ApiError,
+  archiveAnalysisJob,
+  archiveAnalysisJobsBulk,
   cancelAnalysisJob,
   cancelAnalysisJobsBulk,
+  deleteAnalysisJob,
+  deleteAnalysisJobsBulk,
+  duplicateAnalysisJob,
   getAnalysisJob,
   getAnalysisJobDownloadUrl,
   getAnalysisJobLogsDownloadUrl,
   listAnalysisJobs,
   retryAnalysisJob,
   retryAnalysisJobsBulk,
+  restoreAnalysisJob,
+  restoreAnalysisJobsBulk,
   type AnalysisJobDetails,
   type AnalysisJobsListResponse,
   type AnalysisJobsPageItem,
   type AnalysisJobStatus,
   type AnalysisJobsSortOption,
 } from "@/src/lib/api/analysis-jobs-api-client"
+import { createSupportTicket } from "@/lib/api/support"
+import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 const STATUSES: Array<AnalysisJobStatus | "ALL"> = [
   "ALL",
@@ -147,6 +157,40 @@ function isActionEnabled(status: AnalysisJobStatus, action: "open-results" | "do
   return true
 }
 
+function canArchiveJob(job: AnalysisJobsPageItem) {
+  return !job.archivedAt && (job.status === "SUCCEEDED" || job.status === "FAILED" || job.status === "CANCELLED")
+}
+
+function canDeleteJob(job: AnalysisJobsPageItem) {
+  return Boolean(job.archivedAt) && (job.status === "SUCCEEDED" || job.status === "FAILED" || job.status === "CANCELLED")
+}
+
+function canRestoreJob(job: AnalysisJobsPageItem) {
+  return Boolean(job.archivedAt)
+}
+
+function formatMinutes(value?: number | null) {
+  if (value == null) return "--"
+  if (value < 1) return `${Math.round(value * 60)} sec`
+  if (value >= 60) {
+    const hours = Math.floor(value / 60)
+    const minutes = Math.round(value % 60)
+    return `${hours}h ${minutes}m`
+  }
+  return `${Math.round(value)} min`
+}
+
+function formatQueueSummary(job: AnalysisJobsPageItem) {
+  if (!job.queue) return "--"
+  if (job.status === "RUNNING") {
+    return `${job.queue.queueName ?? "Worker"} · active`
+  }
+  if (job.status === "QUEUED") {
+    return `${job.queue.queueName ?? "Queue"} · waited ${formatMinutes(job.queue.queuedMinutes)} · ETA ${formatMinutes(job.queue.estimatedWaitMinutes)}`
+  }
+  return job.queue.queueName ?? "--"
+}
+
 function statusMeta(status: AnalysisJobStatus) {
   switch (status) {
     case "QUEUED":
@@ -164,6 +208,7 @@ function statusMeta(status: AnalysisJobStatus) {
 
 export default function AnalysisJobsPage() {
   const router = useRouter()
+  const { user } = useAuth()
 
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<AnalysisJobStatus | "ALL">("ALL")
@@ -173,6 +218,7 @@ export default function AnalysisJobsPage() {
   const [quickFilter, setQuickFilter] = useState<"ALL" | "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED">("ALL")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
+  const [showArchived, setShowArchived] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailsJobId, setDetailsJobId] = useState<string | null>(null)
@@ -204,6 +250,7 @@ export default function AnalysisJobsPage() {
         const result = await listAnalysisJobs({
           search,
           status: effectiveStatus,
+          includeArchived: showArchived,
           sortBy,
           page: 1,
           pageSize: 100,
@@ -219,7 +266,7 @@ export default function AnalysisJobsPage() {
         }
       }
     },
-    [search, effectiveStatus, sortBy]
+    [search, effectiveStatus, showArchived, sortBy]
   )
 
   const loadJobDetails = useCallback(async (jobId: string, options?: { silent?: boolean }) => {
@@ -317,6 +364,7 @@ export default function AnalysisJobsPage() {
     dataset !== "ALL" ||
     fromDate ||
     toDate ||
+    showArchived ||
     sortBy !== "NEWEST"
   )
 
@@ -367,6 +415,7 @@ export default function AnalysisJobsPage() {
     setQuickFilter("ALL")
     setFromDate("")
     setToDate("")
+    setShowArchived(false)
   }
 
   function applyQuickFilter(next: "ALL" | "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED") {
@@ -407,9 +456,9 @@ export default function AnalysisJobsPage() {
       if (detailsJobId === jobId) {
         await loadJobDetails(jobId, { silent: true })
       }
-      window.alert(result.message ?? `Retry queued for ${jobId}.`)
+      toast.success(result.message ?? `Retry queued for ${jobId}.`)
     } catch (error) {
-      window.alert(getErrorMessage(error))
+      toast.error(getErrorMessage(error))
     } finally {
       setIsActing(false)
     }
@@ -424,9 +473,140 @@ export default function AnalysisJobsPage() {
       if (detailsJobId === jobId) {
         await loadJobDetails(jobId, { silent: true })
       }
-      window.alert(result.message ?? `Cancel requested for ${jobId}.`)
+      toast.success(result.message ?? `Cancel requested for ${jobId}.`)
     } catch (error) {
-      window.alert(getErrorMessage(error))
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  async function handleDeleteJob(jobId: string) {
+    setIsActing(true)
+
+    try {
+      const result = await deleteAnalysisJob(jobId)
+      if (detailsJobId === jobId) {
+        setDetailsJobId(null)
+      }
+      await loadJobs({ silent: true })
+      toast.success(result.message ?? `Deleted ${jobId}.`)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  async function handleArchiveJob(jobId: string) {
+    setIsActing(true)
+
+    try {
+      const result = await archiveAnalysisJob(jobId)
+      if (!showArchived && detailsJobId === jobId) {
+        setDetailsJobId(null)
+      }
+      await loadJobs({ silent: true })
+      if (detailsJobId === jobId && showArchived) {
+        await loadJobDetails(jobId, { silent: true })
+      }
+      toast.success(result.message ?? `Archived ${jobId}.`)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  async function handleRestoreJob(jobId: string) {
+    setIsActing(true)
+
+    try {
+      const result = await restoreAnalysisJob(jobId)
+      await loadJobs({ silent: true })
+      if (detailsJobId === jobId) {
+        await loadJobDetails(jobId, { silent: true })
+      }
+      toast.success(result.message ?? `Restored ${jobId}.`)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  async function handleDuplicateJob(job: AnalysisJobsPageItem) {
+    setIsActing(true)
+
+    try {
+      const result = await duplicateAnalysisJob(job.id)
+      await loadJobs({ silent: true })
+      toast.success(result.message ?? `Created a duplicate job from ${job.title}.`)
+      if (result.newJobId) {
+        router.push(`/dashboard/analysis/jobs/${result.newJobId}`)
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  function handleViewJob(jobId: string) {
+    router.push(`/dashboard/analysis/jobs/${jobId}`)
+  }
+
+  function handleOpenResults(jobId: string) {
+    router.push(`/dashboard/results?jobId=${encodeURIComponent(jobId)}`)
+  }
+
+  async function handleShareJob(job: AnalysisJobsPageItem) {
+    const shareUrl = new URL(`/dashboard/analysis/jobs/${job.id}`, window.location.origin).toString()
+
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      toast.success(`Copied job link for ${job.title}.`)
+    } catch {
+      toast.error("Unable to copy the job link from this browser session.")
+    }
+  }
+
+  async function handleReportIssue(job: AnalysisJobsPageItem) {
+    if (!user?.email) {
+      toast.error("Your account details are still loading. Open Support and try again.")
+      router.push("/dashboard/support")
+      return
+    }
+
+    setIsActing(true)
+
+    try {
+      const ticket = await createSupportTicket({
+        subject: `Analysis job issue: ${job.title}`,
+        description: [
+          `Please investigate analysis job ${job.id}.`,
+          "",
+          `Status: ${job.status}`,
+          `Workspace: ${getWorkspaceLabel(job)}`,
+          `Dataset: ${job.dataset?.name ?? "N/A"}`,
+          `Template: ${job.templateName}`,
+          `Submitted: ${formatDate(job.createdAt)}`,
+          "",
+          "Requested checks:",
+          "- Review execution logs",
+          "- Confirm output packaging",
+          "- Validate retry/cancel state",
+          "- Confirm queue timing if the job stalled",
+        ].join("\n"),
+        requesterEmail: user.email,
+        requesterName: `${user.firstname} ${user.surname}`.trim(),
+        category: "TECHNICAL",
+      })
+
+      toast.success(`Support ticket ${ticket.ticketNumber} created.`)
+      router.push("/dashboard/support")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create a support ticket.")
     } finally {
       setIsActing(false)
     }
@@ -436,11 +616,64 @@ export default function AnalysisJobsPage() {
     window.open(url, "_blank", "noopener,noreferrer")
   }
 
-  async function runBulk(action: "retry" | "download" | "archive" | "delete" | "cancel") {
+  async function runBulk(action: "retry" | "download" | "archive" | "restore" | "delete" | "cancel") {
     if (selectedItems.length === 0) return
+
+    if (action === "archive") {
+      if (!window.confirm(`Archive ${selectedItems.length} selected job(s)?`)) return
+
+      setIsActing(true)
+      try {
+        const result = await archiveAnalysisJobsBulk(selectedItems.filter((job) => canArchiveJob(job)).map((job) => job.id))
+        if (!showArchived && detailsJobId && result.processedIds.includes(detailsJobId)) {
+          setDetailsJobId(null)
+        }
+        await loadJobs({ silent: true })
+        toast.success(result.message ?? `Archived ${result.processedIds.length} job(s).`)
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      } finally {
+        setIsActing(false)
+      }
+      return
+    }
 
     if (action === "delete") {
       if (!window.confirm(`Delete ${selectedItems.length} selected job(s)?`)) return
+
+      setIsActing(true)
+      try {
+        const result = await deleteAnalysisJobsBulk(selectedItems.filter((job) => canDeleteJob(job)).map((job) => job.id))
+        if (detailsJobId && result.processedIds.includes(detailsJobId)) {
+          setDetailsJobId(null)
+        }
+        await loadJobs({ silent: true })
+        toast.success(result.message ?? `Deleted ${result.processedIds.length} job(s).`)
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      } finally {
+        setIsActing(false)
+      }
+      return
+    }
+
+    if (action === "restore") {
+      if (!window.confirm(`Restore ${selectedItems.length} selected job(s)?`)) return
+
+      setIsActing(true)
+      try {
+        const result = await restoreAnalysisJobsBulk(selectedItems.filter((job) => canRestoreJob(job)).map((job) => job.id))
+        await loadJobs({ silent: true })
+        if (detailsJobId && result.processedIds.includes(detailsJobId)) {
+          await loadJobDetails(detailsJobId, { silent: true })
+        }
+        toast.success(result.message ?? `Restored ${result.processedIds.length} job(s).`)
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      } finally {
+        setIsActing(false)
+      }
+      return
     }
 
     if (action === "download") {
@@ -460,9 +693,9 @@ export default function AnalysisJobsPage() {
         if (detailsJobId) {
           await loadJobDetails(detailsJobId, { silent: true })
         }
-        window.alert(result.message ?? `Cancel requested for ${result.processedIds.length} job(s).`)
+        toast.success(result.message ?? `Cancel requested for ${result.processedIds.length} job(s).`)
       } catch (error) {
-        window.alert(getErrorMessage(error))
+        toast.error(getErrorMessage(error))
       } finally {
         setIsActing(false)
       }
@@ -479,16 +712,14 @@ export default function AnalysisJobsPage() {
         if (detailsJobId) {
           await loadJobDetails(detailsJobId, { silent: true })
         }
-        window.alert(result.message ?? `Retry queued for ${result.processedIds.length} job(s).`)
+        toast.success(result.message ?? `Retry queued for ${result.processedIds.length} job(s).`)
       } catch (error) {
-        window.alert(getErrorMessage(error))
+        toast.error(getErrorMessage(error))
       } finally {
         setIsActing(false)
       }
       return
     }
-
-    window.alert(`${action.toUpperCase()} applied to ${selectedItems.length} selected job(s).`)
   }
 
   return (
@@ -654,6 +885,10 @@ export default function AnalysisJobsPage() {
 
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" onClick={clearFilters}>Clear Filters</Button>
+          <Button variant={showArchived ? "default" : "outline"} onClick={() => setShowArchived((value) => !value)}>
+            <Trash2 />
+            {showArchived ? "Showing Archived" : "Show Archived"}
+          </Button>
           <Button variant="outline" onClick={() => setShowAdvanced((prev) => !prev)}>
             <SlidersHorizontal />
             {showAdvanced ? "Hide Advanced" : "Advanced Filters"}
@@ -673,6 +908,7 @@ export default function AnalysisJobsPage() {
             {dataset !== "ALL" ? <Badge variant="secondary" className="rounded-full">Dataset: {dataset}</Badge> : null}
             {fromDate ? <Badge variant="secondary" className="rounded-full">From: {fromDate}</Badge> : null}
             {toDate ? <Badge variant="secondary" className="rounded-full">To: {toDate}</Badge> : null}
+            {showArchived ? <Badge variant="secondary" className="rounded-full">Archived Included</Badge> : null}
             {sortBy !== "NEWEST" ? <Badge variant="secondary" className="rounded-full">Sort: {sortBy}</Badge> : null}
           </div>
         ) : null}
@@ -709,8 +945,30 @@ export default function AnalysisJobsPage() {
             <FileText />
             Export Metadata
           </Button>
-          <Button size="sm" variant="outline" onClick={() => runBulk("archive")}>Archive Selected</Button>
-          <Button size="sm" variant="destructive" onClick={() => runBulk("delete")}>Delete Selected</Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => runBulk("archive")}
+            disabled={isActing || !selectedItems.some((job) => canArchiveJob(job))}
+          >
+            Archive Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => runBulk("restore")}
+            disabled={isActing || !selectedItems.some((job) => canRestoreJob(job))}
+          >
+            Restore Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => runBulk("delete")}
+            disabled={isActing || !selectedItems.some((job) => canDeleteJob(job))}
+          >
+            Delete Selected
+          </Button>
           <Button
             size="sm"
             variant="destructive"
@@ -741,7 +999,7 @@ export default function AnalysisJobsPage() {
             <Button onClick={() => void loadJobs()}>Retry</Button>
             <Button variant="outline" onClick={() => window.location.reload()}>Refresh Page</Button>
             <Button variant="outline" asChild>
-              <Link href="/dashboard/access">Contact Support</Link>
+              <Link href="/dashboard/support">Contact Support</Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link href="/dashboard/monitoring/pipelines">View System Status</Link>
@@ -812,6 +1070,7 @@ export default function AnalysisJobsPage() {
                 <TableHead>Workspace</TableHead>
                 <TableHead>Analysis Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Queue / ETA</TableHead>
                 <TableHead>Submitted At</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead>Runtime</TableHead>
@@ -837,7 +1096,10 @@ export default function AnalysisJobsPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-slate-900">{job.title}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-slate-900">{job.title}</p>
+                          {job.archivedAt ? <Badge variant="secondary" className="rounded-full">Archived</Badge> : null}
+                        </div>
                         <p className="text-xs text-slate-500">{job.id}</p>
                       </div>
                     </TableCell>
@@ -853,6 +1115,12 @@ export default function AnalysisJobsPage() {
                         <Progress value={job.progressPercent} className="h-1.5" />
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="max-w-52">
+                        <p className="text-sm text-slate-900">{formatQueueSummary(job)}</p>
+                        {job.queue?.note ? <p className="text-xs text-slate-500">{job.queue.note}</p> : null}
+                      </div>
+                    </TableCell>
                     <TableCell>{formatDate(job.createdAt)}</TableCell>
                     <TableCell>{formatDate(lastUpdated)}</TableCell>
                     <TableCell>{formatRuntime(runtime)}</TableCell>
@@ -865,13 +1133,17 @@ export default function AnalysisJobsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuItem onClick={() => setDetailsJobId(job.id)}>
+                          <DropdownMenuItem onClick={() => handleViewJob(job.id)}>
                             <Eye className="mr-2 h-4 w-4" />
-                            View Details
+                            View Job
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDetailsJobId(job.id)}>
+                            <Search className="mr-2 h-4 w-4" />
+                            Quick View
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={!isActionEnabled(job.status, "open-results")}
-                            onClick={() => router.push("/dashboard/results")}
+                            onClick={() => handleOpenResults(job.id)}
                           >
                             <BarChart3 className="mr-2 h-4 w-4" />
                             Open Results
@@ -895,9 +1167,29 @@ export default function AnalysisJobsPage() {
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Retry Job
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.alert(`Duplicate created from ${job.title}.`)}>
+                          <DropdownMenuItem disabled={isActing} onClick={() => void handleDuplicateJob(job)}>
                             <Plus className="mr-2 h-4 w-4" />
                             Duplicate Job
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!canArchiveJob(job) || isActing}
+                            onClick={() => {
+                              if (!window.confirm(`Archive ${job.title}?`)) return
+                              void handleArchiveJob(job.id)
+                            }}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Archive Job
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!canRestoreJob(job) || isActing}
+                            onClick={() => {
+                              if (!window.confirm(`Restore ${job.title}?`)) return
+                              void handleRestoreJob(job.id)
+                            }}
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Restore Job
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={!isActionEnabled(job.status, "cancel") || isActing}
@@ -906,22 +1198,24 @@ export default function AnalysisJobsPage() {
                             {isActing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4" />}
                             Cancel Job
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.alert(`Share link copied for ${job.title}.`)}>
+                          <DropdownMenuItem onClick={() => void handleShareJob(job)}>
                             <Share2 className="mr-2 h-4 w-4" />
                             Share
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.alert(`Issue report drafted for ${job.title}.`)}>
+                          <DropdownMenuItem disabled={isActing} onClick={() => void handleReportIssue(job)}>
                             <AlertTriangle className="mr-2 h-4 w-4" />
                             Report Issue
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
+                            disabled={!canDeleteJob(job) || isActing}
                             onClick={() => {
-                              if (window.confirm(`Archive ${job.title}?`)) window.alert(`${job.title} archived.`)
+                              if (!window.confirm(`Delete ${job.title} permanently?`)) return
+                              void handleDeleteJob(job.id)
                             }}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete / Archive
+                            Delete Permanently
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -974,6 +1268,7 @@ export default function AnalysisJobsPage() {
                 </Badge>
                 <Badge variant="secondary" className="rounded-full">{detailsJob.dataset?.name ?? "No dataset"}</Badge>
                 <Badge variant="secondary" className="rounded-full">{detailsJob.templateName}</Badge>
+                {detailsJob.archivedAt ? <Badge variant="secondary" className="rounded-full">Archived</Badge> : null}
               </div>
             ) : null}
 
@@ -989,16 +1284,32 @@ export default function AnalysisJobsPage() {
               </TabsList>
 
               <TabsContent value="overview" className="mt-4">
-                <DetailGrid
-                  items={[
-                    ["Submitted", formatDate(detailsJob?.createdAt)],
-                    ["Last Updated", formatDate(detailsJob?.finishedAt ?? detailsJob?.startedAt ?? detailsJob?.createdAt)],
-                    ["Runtime", formatRuntime(detailsJob ? getRuntimeSeconds(detailsJob) : 0)],
-                    ["Owner", detailsJob?.owner?.name ?? "Unknown"],
-                    ["Dataset", detailsJob?.dataset?.name ?? "N/A"],
-                    ["Workspace", detailsJob ? getWorkspaceLabel(detailsJob) : "N/A"],
-                  ]}
-                />
+                <div className="space-y-4">
+                  <DetailGrid
+                    items={[
+                      ["Submitted", formatDate(detailsJob?.createdAt)],
+                      ["Last Updated", formatDate(detailsJob?.finishedAt ?? detailsJob?.startedAt ?? detailsJob?.createdAt)],
+                      ["Runtime", formatRuntime(detailsJob ? getRuntimeSeconds(detailsJob) : 0)],
+                      ["Owner", detailsJob?.owner?.name ?? "Unknown"],
+                      ["Dataset", detailsJob?.dataset?.name ?? "N/A"],
+                      ["Workspace", detailsJob ? getWorkspaceLabel(detailsJob) : "N/A"],
+                    ]}
+                  />
+                  <Card>
+                    <CardContent className="space-y-2 pt-6">
+                      <p className="text-sm font-medium text-slate-900">Queue & Timing</p>
+                      <DetailGrid
+                        items={[
+                          ["Queue", detailsJob?.queue?.queueName ?? "--"],
+                          ["Queued Time", formatMinutes(detailsJob?.queue?.queuedMinutes)],
+                          ["ETA", formatMinutes(detailsJob?.queue?.estimatedWaitMinutes)],
+                          ["Waiting Jobs", detailsJob?.queue ? String(detailsJob.queue.waitingJobs) : "--"],
+                        ]}
+                      />
+                      <p className="text-sm text-slate-500">{detailsJob?.queue?.note ?? "No queue note available."}</p>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="parameters" className="mt-4">
@@ -1087,6 +1398,30 @@ export default function AnalysisJobsPage() {
 
           <SheetFooter>
             <Button
+              variant="outline"
+              disabled={!detailsJobId || !detailsJob || isActing || !canArchiveJob(detailsJob)}
+              onClick={() => {
+                if (detailsJobId) {
+                  void handleArchiveJob(detailsJobId)
+                }
+              }}
+            >
+              <FileText />
+              Archive Job
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!detailsJobId || !detailsJob || isActing || !canRestoreJob(detailsJob)}
+              onClick={() => {
+                if (detailsJobId) {
+                  void handleRestoreJob(detailsJobId)
+                }
+              }}
+            >
+              <RotateCcw />
+              Restore Job
+            </Button>
+            <Button
               disabled={isActing || !(detailsJob?.status === "FAILED" || detailsJob?.status === "CANCELLED")}
               onClick={() => detailsJobId && void handleRetryJob(detailsJobId)}
             >
@@ -1105,15 +1440,23 @@ export default function AnalysisJobsPage() {
               <Square />
               Cancel Job
             </Button>
-            <Button variant="secondary" disabled={detailsJob?.status !== "SUCCEEDED"} onClick={() => router.push("/dashboard/results")}>
+            <Button variant="secondary" disabled={detailsJob?.status !== "SUCCEEDED"} onClick={() => detailsJobId && handleOpenResults(detailsJobId)}>
               <BarChart3 />
               Open Results
             </Button>
-            <Button variant="outline" disabled={detailsJob?.status !== "SUCCEEDED"} onClick={() => detailsJobId && openDownload(getAnalysisJobDownloadUrl(detailsJobId))}> 
-              <FileText />
-              Download Report
+            <Button variant="outline" disabled={!detailsJobId} onClick={() => detailsJobId && handleViewJob(detailsJobId)}>
+              <Eye />
+              View Job
             </Button>
-            <Button variant="outline" disabled={!(detailsJob?.artifactIds?.length)} onClick={() => detailsJobId && openDownload(getAnalysisJobDownloadUrl(detailsJobId))}> 
+            <Button variant="outline" disabled={detailsJob?.status !== "SUCCEEDED"} onClick={() => detailsJobId && openDownload(getAnalysisJobDownloadUrl(detailsJobId))}>
+              <FileText />
+              Download Output
+            </Button>
+            <Button variant="outline" disabled={!detailsJobId} onClick={() => detailsJobId && openDownload(getAnalysisJobLogsDownloadUrl(detailsJobId))}>
+              <FileDown />
+              Download Logs
+            </Button>
+            <Button variant="outline" disabled={!(detailsJob?.artifactIds?.length)} onClick={() => detailsJobId && openDownload(getAnalysisJobDownloadUrl(detailsJobId))}>
               <Download />
               Download Full Package
             </Button>

@@ -10,7 +10,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { DatasetStatsCards } from "@/components/datasets/dataset-stats-cards"
 import { DatasetFiltersBar } from "@/components/datasets/dataset-filters"
 import { DatasetUploadDialog } from "@/components/datasets/dataset-upload-dialog"
+import { DatasetAnalysisDrawer } from "@/components/datasets/dataset-analysis-drawer"
 import { DatasetsTable } from "@/components/datasets/datasets-table"
+import { DatasetCardView } from "@/components/datasets/dataset-card-view"
 import { getDatasetColumns } from "@/components/datasets/dataset-columns"
 import { useDatasets } from "@/hooks/use-datasets"
 import { useDeleteDataset } from "@/hooks/use-upload-dataset"
@@ -27,12 +29,16 @@ const defaultFilters: DatasetFilters = {
   pageSize: 10,
   sortBy: "createdAt",
   sortOrder: "desc",
+  viewMode: "table",
 }
 
-export function DatasetsPageView() {
+export function DatasetsPageView({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter()
   const [filters, setFilters] = React.useState<DatasetFilters>(defaultFilters)
+  const [viewMode, setViewMode] = React.useState<"table" | "grid">("table")
   const [uploadOpen, setUploadOpen] = React.useState(false)
+  const [analysisOpen, setAnalysisOpen] = React.useState(false)
+  const [analysisDatasetId, setAnalysisDatasetId] = React.useState<string | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useDatasets(filters)
   const deleteMutation = useDeleteDataset()
@@ -41,9 +47,12 @@ export function DatasetsPageView() {
     () =>
       getDatasetColumns({
         onView: (row) => router.push(`/dashboard/datasets/${row.id}`),
-        onAnalyze: (row) => router.push(`/dashboard/reports?datasetId=${row.id}`),
+        onAnalyze: (row) => {
+          setAnalysisDatasetId(row.id)
+          setAnalysisOpen(true)
+        },
         onDownload: (row) => {
-          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/datasets/${row.id}/download`, "_blank")
+          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")
         },
         onDelete: async (row) => {
           const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
@@ -76,14 +85,23 @@ export function DatasetsPageView() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className={embedded ? "space-y-6" : "space-y-6 p-6"}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Datasets</h1>
-          <p className="text-sm text-muted-foreground">
-            Upload, organize, inspect, and launch analysis workflows on research datasets.
-          </p>
-        </div>
+        {embedded ? (
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Dataset Library</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload, organize, inspect, and launch analysis workflows on research datasets.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <h1 className="text-3xl font-semibold tracking-tight">Datasets</h1>
+            <p className="text-sm text-muted-foreground">
+              Upload, organize, inspect, and launch analysis workflows on research datasets.
+            </p>
+          </div>
+        )}
 
         <Button size="lg" className="gap-2 rounded-xl" onClick={() => setUploadOpen(true)}>
           <Upload className="h-4 w-4" />
@@ -96,7 +114,9 @@ export function DatasetsPageView() {
       <DatasetFiltersBar
         filters={filters}
         onChange={setFilters}
-        onReset={() => setFilters(defaultFilters)}
+        onReset={() => { setFilters(defaultFilters); setViewMode("table") }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {isError ? (
@@ -135,6 +155,22 @@ export function DatasetsPageView() {
             </div>
           </CardContent>
         </Card>
+      ) : viewMode === "grid" ? (
+        <DatasetCardView
+          items={items}
+          onAnalyze={(row) => { setAnalysisDatasetId(row.id); setAnalysisOpen(true) }}
+          onDownload={(row) => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")}
+          onDelete={async (row) => {
+            const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
+            if (!confirmed) return
+            try {
+              await deleteMutation.mutateAsync(row.id)
+              toast.success("Dataset deleted successfully.")
+            } catch (e) {
+              toast.error((e as Error).message)
+            }
+          }}
+        />
       ) : (
         <DatasetsTable<DatasetItem>
           columns={columns}
@@ -155,6 +191,19 @@ export function DatasetsPageView() {
       )}
 
       <DatasetUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
+
+      {analysisDatasetId ? (
+        <DatasetAnalysisDrawer
+          open={analysisOpen}
+          onOpenChange={(nextOpen) => {
+            setAnalysisOpen(nextOpen)
+            if (!nextOpen) {
+              setAnalysisDatasetId(null)
+            }
+          }}
+          datasetId={analysisDatasetId}
+        />
+      ) : null}
     </div>
   )
 }

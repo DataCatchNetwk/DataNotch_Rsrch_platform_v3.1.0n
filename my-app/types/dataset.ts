@@ -28,6 +28,10 @@ export interface DatasetItem {
   createdAt: string
   updatedAt: string
   owner?: DatasetOwner | null
+  domain?: string | null
+  sourceName?: string | null
+  tags?: string[]
+  isFavorite?: boolean
 }
 
 export interface DatasetStats {
@@ -51,10 +55,14 @@ export interface DatasetFilters {
   visibility?: DatasetVisibility | "ALL"
   status?: DatasetStatus | "ALL"
   fileKind?: DatasetFileKind | "ALL"
+  domain?: string
+  source?: string
+  tags?: string
   dateFrom?: string
   dateTo?: string
   page?: number
   pageSize?: number
-  sortBy?: "name" | "createdAt" | "updatedAt" | "sizeBytes" | "status"
+  sortBy?: "name" | "createdAt" | "updatedAt" | "sizeBytes" | "status" | "popularity"
   sortOrder?: "asc" | "desc"
+  viewMode?: "table" | "grid"
 }

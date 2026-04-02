@@ -1,0 +1,78 @@
+enum DatasetSection {
+  library
+  deposit
+  workspace
+  cohort
+  operations
+  analysis
+  lineage
+  access
+  favorites
+}
+
+enum DatasetVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+  RESTRICTED
+}
+
+enum DatasetStatus {
+  READY
+  PROCESSING
+  RESTRICTED
+  ARCHIVED
+}
+
+model Dataset {
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  name              String
+  description       String
+  section           DatasetSection     @default(library)
+  visibility        DatasetVisibility  @default(PRIVATE)
+  status            DatasetStatus      @default(READY)
+  ownerId           String
+  owner             User               @relation(fields: [ownerId], references: [id])
+  recordCount       Int                @default(0)
+  fileCount         Int                @default(0)
+  sizeLabel         String             @default("0 MB")
+  tags              String[]
+  modalities        String[]
+  sampleColumns     String[]
+  governanceSummary String             @default("Standard governed access")
+  lineageVersion    String             @default("v1")
+  lineageParentId   String?
+  lineageParent     Dataset?           @relation("DatasetLineage", fields: [lineageParentId], references: [id])
+  lineageChildren   Dataset[]          @relation("DatasetLineage")
+  favorites         DatasetFavorite[]
+  workspaceLinks    WorkspaceDataset[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+}
+
+model DatasetFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  datasetId String
+  user      User     @relation(fields: [userId], references: [id])
+  dataset   Dataset  @relation(fields: [datasetId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, datasetId])
+}
+
+model WorkspaceDataset {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  sourceDatasetId String
+  linkedByUserId  String
+  name            String
+  description     String
+  visibility      DatasetVisibility
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+  sourceDataset   Dataset   @relation(fields: [sourceDatasetId], references: [id])
+  linkedByUser    User      @relation(fields: [linkedByUserId], references: [id])
+  createdAt       DateTime  @default(now())
+}

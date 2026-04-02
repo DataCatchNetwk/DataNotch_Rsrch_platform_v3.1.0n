@@ -7,6 +7,16 @@ export type AnalysisJobsSort =
   | "status:asc"
   | "updatedAt:desc"
 
+export type AnalysisJobQueueInfo = {
+  queueName: string | null
+  backendAvailable: boolean
+  waitingJobs: number
+  activeJobs: number
+  queuedMinutes: number | null
+  estimatedWaitMinutes: number | null
+  note: string
+}
+
 export type AnalysisJobListItem = {
   id: string
   jobName: string
@@ -20,6 +30,8 @@ export type AnalysisJobListItem = {
   ownerName: string
   artifactCount: number
   pipelineName?: string | null
+  archivedAt: Date | null
+  queue: AnalysisJobQueueInfo | null
 }
 
 export type AnalysisJobDetails = AnalysisJobListItem & {
