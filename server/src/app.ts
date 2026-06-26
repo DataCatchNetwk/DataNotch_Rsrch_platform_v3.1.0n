@@ -24,7 +24,12 @@ import mlRoutes from './modules/ml/ml.module.js';
 import survivalRoutes from './modules/survival/survival.module.js';
 import genomicsRoutes from './modules/genomics/genomics.module.js';
 import experimentTrackingRoutes from './modules/experiment-tracking/experiment-tracking.module.js';
+import communicationRoutes from './modules/communication/communication.module.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { requestId } from './middleware/request-id.js';
+import { rateLimit } from './middleware/rate-limit.js';
+import { securityHeaders } from './middleware/security-headers.js';
+import opsRoutes from './routes/ops.js';
 
 export function createApp() {
   const app = express();
@@ -34,7 +39,8 @@ export function createApp() {
   app.use(express.json());
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/health', (_req, res) => res.json({ status: 'ok', requestId: res.locals.requestId }));
+  app.use('/api/v1/ops', opsRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/analysis/jobs', analysisJobsRoutes);
@@ -65,6 +71,7 @@ export function createApp() {
   app.use('/api/v1/survival', survivalRoutes);
   app.use('/api/v1/genomics', genomicsRoutes);
   app.use('/api/v1/experiments', experimentTrackingRoutes);
+  app.use('/api/v1/communication', communicationRoutes);
 
   app.use(errorHandler);
   return app;

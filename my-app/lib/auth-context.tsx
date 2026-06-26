@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    apiFetch<MeResponse>('/auth/me', { token: stored })
+    apiFetch<MeResponse>('/api/v1/auth/me', { token: stored })
       .then((res) => setState({ user: res.user, token: stored, loading: false }))
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (identifier: string, password: string) => {
-    const res = await apiFetch<AuthResponse>('/auth/login', {
+    const res = await apiFetch<AuthResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: { identifier, password },
     });
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setAuth]);
 
   const register = useCallback(async (data: RegisterData) => {
-    const res = await apiFetch<AuthResponse>('/auth/register', {
+    const res = await apiFetch<AuthResponse>('/api/v1/auth/register', {
       method: 'POST',
       body: data,
     });

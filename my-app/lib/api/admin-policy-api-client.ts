@@ -48,7 +48,7 @@ export async function exportAdminAuditEventsCsv() {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
+  const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
   const url = base.endsWith('/api') ? `${base}/v1/admin-policy/audit-events/export` : `${base}/api/v1/admin-policy/audit-events/export`;
 
   const response = await fetch(url, {

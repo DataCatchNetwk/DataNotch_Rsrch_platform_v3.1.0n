@@ -12,9 +12,17 @@ import { PullJobProcessor } from './processors/pull-job.processor.js';
 import { CohortBuildProcessor } from './processors/cohort-build.processor.js';
 import { FeatureMaterializationProcessor } from './processors/feature-materialization.processor.js';
 import { startQueueEvents } from './queue-events.js';
+import { isRedisReachable } from './queue.factory.js';
+import { startPostgresLocalWorker } from './postgres-local-worker.js';
 
 export async function startWorkers() {
   await prisma.$connect();
+  const redisAvailable = await isRedisReachable();
+  if (!redisAvailable) {
+    console.warn('Starting PostgreSQL local worker runner because Redis queue backend is disabled or unavailable.');
+    return [startPostgresLocalWorker(prisma)];
+  }
+
   await startQueueEvents();
 
   const workersService = new WorkersService(prisma);

@@ -1,4 +1,4 @@
-const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
+const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
 
 const accounts = [
   {
@@ -20,7 +20,7 @@ const accounts = [
 ];
 
 async function login(account) {
-  const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ identifier: account.identifier, password: account.password }),
@@ -36,13 +36,13 @@ async function login(account) {
 }
 
 async function verifyCurrentUser(token) {
-  const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/me`, {
     headers: { authorization: `Bearer ${token}` },
   });
 
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(`/api/auth/me failed with HTTP ${response.status}: ${JSON.stringify(body)}`);
+    throw new Error(`/api/v1/auth/me failed with HTTP ${response.status}: ${JSON.stringify(body)}`);
   }
 
   return body?.user;

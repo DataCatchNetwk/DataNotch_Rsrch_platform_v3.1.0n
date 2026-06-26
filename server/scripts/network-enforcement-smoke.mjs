@@ -1,4 +1,4 @@
-const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
+const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
 
 const loginPath = process.env.NETWORK_TEST_LOGIN_PATH ?? '/api/v1/auth/login';
 const protectedPath = process.env.NETWORK_TEST_PROTECTED_PATH ?? '/api/v1/users/pending';

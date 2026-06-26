@@ -326,7 +326,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <Button type="submit" disabled={!hydrated || loading || checkingNetwork || vpnBlocked} className="h-12 w-full rounded-lg text-base">
+            <Button type="submit" disabled={hydrated ? loading || checkingNetwork || vpnBlocked : false} className="h-12 w-full rounded-lg text-base">
               {loading ? 'Signing in...' : isAdmin ? 'Admin Access' : 'Access Dashboard'}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -345,7 +345,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={!hydrated || !googleSsoEnabled || loading || !!ssoLoading || checkingNetwork || vpnBlocked}
+              disabled={hydrated ? !googleSsoEnabled || loading || !!ssoLoading || checkingNetwork || vpnBlocked : false}
               title={!googleSsoEnabled ? 'Google sign-in coming soon' : undefined}
               className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -355,7 +355,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={handleMicrosoftSignIn}
-              disabled={!hydrated || !microsoftSsoEnabled || loading || !!ssoLoading || checkingNetwork || vpnBlocked}
+              disabled={hydrated ? !microsoftSsoEnabled || loading || !!ssoLoading || checkingNetwork || vpnBlocked : false}
               title={!microsoftSsoEnabled ? 'Microsoft sign-in coming soon' : undefined}
               className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >

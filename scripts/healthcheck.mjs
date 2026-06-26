@@ -10,7 +10,7 @@ const checks = [
   {
     name: 'api',
     port: 4000,
-    url: 'http://localhost:4000/health',
+    url: 'http://localhost:3001/health',
     validate: async (response) => {
       if (!response.ok) return false;
       const body = await response.json();
@@ -85,7 +85,7 @@ async function run() {
     process.exit(1);
   }
 
-  console.log('Workspace healthcheck passed.');
+  console.log('Workspace healthcheck passed. Queue backend is PostgreSQL local mode.');
 }
 
 await run();

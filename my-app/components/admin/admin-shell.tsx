@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Activity, ArrowLeft, ClipboardList, LifeBuoy, Lock, ScrollText, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
+import { Activity, ArrowLeft, ClipboardList, LifeBuoy, Lock, ScrollText, ServerCog, Shield, ShieldCheck, SlidersHorizontal, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ const items = [
   { href: '/admin/audit', label: 'Audit Logs', icon: ScrollText },
   { href: '/admin/support', label: 'Support Center', icon: LifeBuoy },
   { href: '/admin/monitoring', label: 'System Monitoring', icon: Activity },
+  { href: '/admin/operations', label: 'Operations Center', icon: ServerCog },
 ];
 
 type AdminShellProps = {

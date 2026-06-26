@@ -256,6 +256,50 @@ enum SupportMessageAuthorType {
   SYSTEM
 }
 
+enum CommunicationRoomType {
+  DIRECT
+  GROUP
+  CHANNEL
+  CALL_ROOM
+}
+
+enum CommunicationVisibility {
+  PRIVATE
+  WORKSPACE
+  ORG
+}
+
+enum CommunicationParticipantRole {
+  OWNER
+  MODERATOR
+  MEMBER
+}
+
+enum CommunicationMessageKind {
+  TEXT
+  SYSTEM
+  FILE
+}
+
+enum CommunicationCallMode {
+  AUDIO
+  VIDEO
+}
+
+enum CommunicationCallSessionStatus {
+  WAITING
+  ACTIVE
+  ENDED
+  FAILED
+}
+
+enum CommunicationPresenceStatus {
+  ONLINE
+  AWAY
+  OFFLINE
+  IN_CALL
+}
+
 // Research Platform Enums
 enum ResearchDomain {
   HEALTH
@@ -416,6 +460,13 @@ model User {
   cohortDefinitions       CohortDefinition[] @relation("CohortDefinitionCreatedBy")
   featureSets             FeatureSet[] @relation("FeatureSetCreatedBy")
   ownedResearchWorkspaces ResearchWorkspace[] @relation("ResearchWorkspaceOwner")
+  communicationRoomsCreated CommunicationRoom[] @relation("CommunicationRoomCreatedBy")
+  communicationParticipants CommunicationParticipant[]
+  communicationMessageThreadsCreated CommunicationMessageThread[] @relation("CommunicationThreadCreatedBy")
+  communicationMessagesSent CommunicationMessage[] @relation("CommunicationMessageSender")
+  communicationCallSessionsStarted CommunicationCallSession[] @relation("CommunicationCallStartedBy")
+  communicationPresenceHeartbeats CommunicationPresenceHeartbeat[]
+  communicationAuditLogsActed CommunicationAuditLog[] @relation("CommunicationAuditActor")
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
@@ -959,6 +1010,133 @@ model Notification {
   @@index([workspaceId])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model CommunicationRoom {
+  id          String                   @id @default(cuid()) @db.VarChar(30)
+  name        String                   @db.VarChar(191)
+  slug        String?                  @db.VarChar(191)
+  type        CommunicationRoomType
+  visibility  CommunicationVisibility  @default(PRIVATE)
+  workspaceId String?                  @map("workspace_id") @db.VarChar(30)
+  createdById String                   @map("created_by_id") @db.VarChar(30)
+  createdBy   User                     @relation("CommunicationRoomCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  participants CommunicationParticipant[]
+  threads     CommunicationMessageThread[]
+  messages    CommunicationMessage[]
+  callSessions CommunicationCallSession[]
+  auditLogs   CommunicationAuditLog[]
+
+  @@index([createdById])
+  @@index([workspaceId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("communication_rooms")
+}
+
+model CommunicationParticipant {
+  id            String                         @id @default(cuid()) @db.VarChar(30)
+  roomId        String                         @map("room_id") @db.VarChar(30)
+  room          CommunicationRoom              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId        String                         @map("user_id") @db.VarChar(30)
+  user          User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          CommunicationParticipantRole   @default(MEMBER)
+  joinedAt      DateTime                       @default(now()) @map("joined_at")
+  lastSeenAt    DateTime?                      @map("last_seen_at")
+  muted         Boolean                        @default(false)
+  cameraEnabled Boolean                        @default(false) @map("camera_enabled")
+  micEnabled    Boolean                        @default(true) @map("mic_enabled")
+  isOnline      Boolean                        @default(false) @map("is_online")
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@index([role])
+  @@map("communication_participants")
+}
+
+model CommunicationMessageThread {
+  id          String                  @id @default(cuid()) @db.VarChar(30)
+  roomId      String                  @map("room_id") @db.VarChar(30)
+  room        CommunicationRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  subject     String?                 @db.VarChar(191)
+  createdById String                  @map("created_by_id") @db.VarChar(30)
+  createdBy   User                    @relation("CommunicationThreadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+  messages    CommunicationMessage[]
+
+  @@index([roomId])
+  @@map("communication_message_threads")
+}
+
+model CommunicationMessage {
+  id            String                  @id @default(cuid()) @db.VarChar(30)
+  threadId      String                  @map("thread_id") @db.VarChar(30)
+  thread        CommunicationMessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  roomId        String                  @map("room_id") @db.VarChar(30)
+  room          CommunicationRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId      String                  @map("sender_id") @db.VarChar(30)
+  sender        User                    @relation("CommunicationMessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  senderName    String                  @map("sender_name") @db.VarChar(191)
+  body          String                  @db.Text
+  kind          CommunicationMessageKind @default(TEXT)
+  attachmentUrl String?                 @map("attachment_url") @db.VarChar(500)
+  sentAt        DateTime                @default(now()) @map("sent_at")
+  editedAt      DateTime?               @map("edited_at")
+  deletedAt     DateTime?               @map("deleted_at")
+
+  @@index([roomId, sentAt])
+  @@index([senderId])
+  @@map("communication_messages")
+}
+
+model CommunicationCallSession {
+  id          String                         @id @default(cuid()) @db.VarChar(30)
+  roomId      String                         @map("room_id") @db.VarChar(30)
+  room        CommunicationRoom              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  mode        CommunicationCallMode
+  status      CommunicationCallSessionStatus @default(WAITING)
+  startedById String                         @map("started_by_id") @db.VarChar(30)
+  startedBy   User                           @relation("CommunicationCallStartedBy", fields: [startedById], references: [id], onDelete: Restrict)
+  startedAt   DateTime                       @default(now()) @map("started_at")
+  endedAt     DateTime?                      @map("ended_at")
+  signalKey   String                         @map("signal_key") @db.VarChar(191)
+
+  @@index([roomId, status])
+  @@index([startedById])
+  @@map("communication_call_sessions")
+}
+
+model CommunicationPresenceHeartbeat {
+  id              String                      @id @default(cuid()) @db.VarChar(30)
+  userId          String                      @map("user_id") @db.VarChar(30)
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socketId        String                      @map("socket_id") @db.VarChar(191)
+  status          CommunicationPresenceStatus @default(ONLINE)
+  lastHeartbeatAt DateTime                    @default(now()) @map("last_heartbeat_at")
+
+  @@unique([userId, socketId])
+  @@index([status])
+  @@map("communication_presence_heartbeats")
+}
+
+model CommunicationAuditLog {
+  id            String             @id @default(cuid()) @db.VarChar(30)
+  actorUserId   String?            @map("actor_user_id") @db.VarChar(30)
+  actorUser     User?              @relation("CommunicationAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  roomId        String?            @map("room_id") @db.VarChar(30)
+  room          CommunicationRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  callSessionId String?            @map("call_session_id") @db.VarChar(30)
+  action        String             @db.VarChar(120)
+  metadataJson  Json?              @map("metadata_json")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  @@index([actorUserId])
+  @@index([roomId])
+  @@index([createdAt])
+  @@map("communication_audit_logs")
 }
 
 model AccessRequest {

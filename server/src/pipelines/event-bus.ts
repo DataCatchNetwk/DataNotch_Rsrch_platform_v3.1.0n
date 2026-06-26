@@ -61,7 +61,7 @@ export async function publishPipelineStreamEvent(event: PipelineStreamEvent) {
       JSON.stringify(event.dataJson ?? {}),
     );
   } catch (error) {
-    console.warn('Failed to publish pipeline event to Redis stream', error);
+    console.warn('Failed to publish pipeline event to optional Redis stream', error);
   }
 }
 
@@ -91,7 +91,7 @@ function entryToObject(entry: string[]) {
 export async function tailPipelineStreamEvents(runId: string, count = 50): Promise<PipelineStreamTailEvent[]> {
   const redis = await getRedisClient();
   if (!redis) {
-    throw new Error('Redis stream backend unavailable');
+    throw new Error('PostgreSQL event stream fallback active');
   }
 
   const streamKey = env.PIPELINE_EVENT_STREAM_KEY || PIPELINE_STREAMS.EVENTS;

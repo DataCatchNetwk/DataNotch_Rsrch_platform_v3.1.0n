@@ -36,7 +36,14 @@ export function getRedisConnection() {
   return redisConnection;
 }
 
+export function isPostgresQueueMode() {
+  return env.QUEUE_BACKEND !== 'redis';
+}
+
 export async function isRedisReachable(timeoutMs = 750) {
+  if (isPostgresQueueMode() || !env.REDIS_URL) {
+    return false;
+  }
   const now = Date.now();
   if (redisReachabilityCache && now - redisReachabilityCache.checkedAt < 5000) {
     return redisReachabilityCache.reachable;
@@ -70,6 +77,10 @@ export async function isRedisReachable(timeoutMs = 750) {
 }
 
 export function getQueueRegistry() {
+  if (isPostgresQueueMode()) {
+    throw new Error('Redis queue registry is disabled because QUEUE_BACKEND=postgres.');
+  }
+
   if (!queueRegistry) {
     const connection = getRedisConnection();
     queueRegistry = Object.values(RESEARCH_QUEUES).reduce<Record<string, Queue>>((queues, queueName) => {

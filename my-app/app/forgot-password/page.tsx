@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     setResetToken(null);
     setLoading(true);
     try {
-      const result = await apiFetch<{ message: string; reset_token?: string }>('/auth/forgot-password', {
+      const result = await apiFetch<{ message: string; reset_token?: string }>('/api/v1/auth/forgot-password', {
         method: 'POST',
         body: { email },
       });
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
     setResetMessage(null);
     setLoading(true);
     try {
-      const result = await apiFetch<{ message: string }>('/auth/reset-password', {
+      const result = await apiFetch<{ message: string }>('/api/v1/auth/reset-password', {
         method: 'POST',
         body: { token, new_password: newPassword },
       });

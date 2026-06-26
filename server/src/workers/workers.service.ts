@@ -4,6 +4,17 @@ import { HttpError } from '../utils/errors.js';
 import { RESEARCH_QUEUES } from '../pipelines/queue.constants.js';
 import { getQueueRegistry, isRedisReachable } from './queue.factory.js';
 
+function resolveQueueName(stepType: PipelineStepType) {
+  if (['INGEST', 'PROFILE', 'VALIDATE'].includes(stepType)) return RESEARCH_QUEUES.INGEST;
+  if (['CLEAN', 'TRANSFORM', 'FEATURE_ENGINEERING', 'SPLIT'].includes(stepType)) return RESEARCH_QUEUES.TRANSFORM;
+  if (stepType === 'TRAIN') return RESEARCH_QUEUES.TRAIN;
+  if (['EVALUATE', 'EXPLAIN', 'CHART'].includes(stepType)) return RESEARCH_QUEUES.EVALUATE;
+  if (stepType === 'REPORT') return RESEARCH_QUEUES.REPORT;
+  if (stepType === 'EXPORT') return RESEARCH_QUEUES.EXPORT;
+  if (stepType === 'PUBLISH') return RESEARCH_QUEUES.PUBLISH;
+  return RESEARCH_QUEUES.INGEST;
+}
+
 export class WorkersService {
   private queues?: Record<string, Queue>;
 
@@ -13,10 +24,6 @@ export class WorkersService {
 
   async enqueueForStep(runId: string, stepId: string) {
     const redisAvailable = await isRedisReachable();
-    if (!redisAvailable) {
-      throw new HttpError(503, 'Queue backend unavailable in the local workspace. Pipeline history remains available from PostgreSQL.');
-    }
-
     const step = await this.prisma.pipelineStep.findUnique({
       where: { id: stepId },
       include: { pipelineRun: true },
@@ -26,7 +33,6 @@ export class WorkersService {
       throw new HttpError(500, 'Pipeline step not found');
     }
 
-    const queue = this.resolveQueue(step.type);
     const payload = {
       pipelineRunId: runId,
       pipelineStepId: stepId,
@@ -39,7 +45,28 @@ export class WorkersService {
       config: step.configJson,
     };
 
-    const brokerJob = await queue.add(`${step.type}:${step.id}`, payload, {
+    const jobName = `${step.type}:${step.id}`;
+    const queueName = resolveQueueName(step.type);
+
+    if (!redisAvailable) {
+      const workerJob = await this.prisma.workerJob.create({
+        data: {
+          pipelineRunId: runId,
+          pipelineStepId: stepId,
+          queueName,
+          jobName,
+          workerType: step.workerType ?? step.type,
+          brokerJobId: `pg:${step.id}`,
+          payloadJson: payload,
+          status: 'QUEUED',
+        },
+      });
+
+      return { id: workerJob.brokerJobId ?? workerJob.id, name: jobName, data: payload };
+    }
+
+    const queue = this.resolveQueue(step.type);
+    const brokerJob = await queue.add(jobName, payload, {
       attempts: step.maxRetries + 1,
       backoff: { type: 'exponential', delay: 3000 },
       removeOnComplete: 1000,
@@ -51,7 +78,7 @@ export class WorkersService {
         pipelineRunId: runId,
         pipelineStepId: stepId,
         queueName: queue.name,
-        jobName: `${step.type}:${step.id}`,
+        jobName,
         workerType: step.workerType ?? step.type,
         brokerJobId: brokerJob.id?.toString(),
         payloadJson: payload,
@@ -130,14 +157,7 @@ export class WorkersService {
 
   private resolveQueue(stepType: PipelineStepType) {
     const queues = this.getQueues();
-    if (['INGEST', 'PROFILE', 'VALIDATE'].includes(stepType)) return queues[RESEARCH_QUEUES.INGEST];
-    if (['CLEAN', 'TRANSFORM', 'FEATURE_ENGINEERING', 'SPLIT'].includes(stepType)) return queues[RESEARCH_QUEUES.TRANSFORM];
-    if (stepType === 'TRAIN') return queues[RESEARCH_QUEUES.TRAIN];
-    if (['EVALUATE', 'EXPLAIN', 'CHART'].includes(stepType)) return queues[RESEARCH_QUEUES.EVALUATE];
-    if (stepType === 'REPORT') return queues[RESEARCH_QUEUES.REPORT];
-    if (stepType === 'EXPORT') return queues[RESEARCH_QUEUES.EXPORT];
-    if (stepType === 'PUBLISH') return queues[RESEARCH_QUEUES.PUBLISH];
-    return queues[RESEARCH_QUEUES.INGEST];
+    return queues[resolveQueueName(stepType)];
   }
 
   private getQueues() {

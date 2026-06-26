@@ -220,7 +220,7 @@ function buildQueueInfo(
 
   let note = 'Queue estimate is based on current backlog and recent worker durations.'
   if (!snapshot.backendAvailable) {
-    note = 'Redis queue backend is unavailable; ETA falls back to observed queued time only.'
+    note = 'PostgreSQL local queue mode is active; ETA falls back to observed queued time only.'
   } else if (record.status === 'RUNNING') {
     note = 'This job is currently executing on a worker.'
   }

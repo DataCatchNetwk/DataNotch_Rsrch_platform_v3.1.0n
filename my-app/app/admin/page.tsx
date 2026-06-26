@@ -126,6 +126,13 @@ const quickCards = [
     badge: 'healthy',
     icon: Activity,
   },
+  {
+    href: '/admin/operations',
+    title: 'Operations Center',
+    desc: 'Production readiness, worker controls, health checks, and deployment guardrails.',
+    badge: 'ops',
+    icon: ServerCog,
+  },
 ];
 
 function healthBadge(health: Health) {
@@ -283,6 +290,23 @@ function AdminContent() {
     }
   }
 
+  function handleServiceAction(service: 'audio' | 'video' | 'messaging') {
+    if (service === 'audio') {
+      toast.success('Launching R-MEET audio call tools.');
+      router.push('/admin/communication?mode=audio');
+      return;
+    }
+
+    if (service === 'video') {
+      toast.success('Launching R-ZOOMA video call tools.');
+      router.push('/admin/communication?mode=video');
+      return;
+    }
+
+    toast.success('Opening messaging and text/email service.');
+    router.push('/admin/communication?mode=messaging');
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/60">
       <div className="border-b bg-white">
@@ -371,6 +395,43 @@ function AdminContent() {
                   </Link>
                 </div>
               ))}
+
+              <div className="rounded-xl border-4 border-sky-500 bg-white p-1.5 shadow-sm">
+                <div className="grid grid-cols-3 gap-1">
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      className="w-full whitespace-nowrap rounded-2xl border-4 border-amber-700 bg-white px-1 py-1 text-[1.2rem] font-extrabold leading-none tracking-tight text-indigo-700 shadow-[0_0_0.6rem_rgba(180,83,9,0.35)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_1rem_rgba(79,70,229,0.55)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-400 active:scale-[0.99]"
+                      onClick={() => handleServiceAction('audio')}
+                    >
+                      R-MEET
+                    </button>
+                    <p className="mt-0.5 text-center text-[9px] font-bold leading-tight text-slate-800">AUDIO CALL</p>
+                  </div>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      className="w-full whitespace-nowrap rounded-2xl border-4 border-black bg-white px-1 py-1 text-[1.2rem] font-extrabold leading-none tracking-tight text-rose-600 shadow-[0_0_0.6rem_rgba(0,0,0,0.28)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_1rem_rgba(244,63,94,0.55)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 active:scale-[0.99]"
+                      onClick={() => handleServiceAction('video')}
+                    >
+                      R-ZOOMA
+                    </button>
+                    <p className="mt-0.5 text-center text-[9px] font-bold leading-tight text-emerald-600">VIDEO CALL</p>
+                  </div>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      className="w-full whitespace-nowrap rounded-2xl border-4 border-rose-500 bg-white px-1 py-1 text-[0.95rem] font-extrabold leading-none tracking-tight text-fuchsia-700 shadow-[0_0_0.6rem_rgba(236,72,153,0.35)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_1rem_rgba(162,28,175,0.55)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-fuchsia-400 active:scale-[0.99]"
+                      onClick={() => handleServiceAction('messaging')}
+                    >
+                      MESSAGING
+                    </button>
+                    <p className="mt-0.5 text-center text-[8px] font-bold leading-tight text-slate-800">TEXT/EMAIL SERVICE</p>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section className="flex flex-wrap gap-2">
@@ -484,7 +545,7 @@ function AdminContent() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Operations</p>
                   <div className="mt-2.5 grid gap-3 md:grid-cols-2">
-                    {quickCards.slice(6, 8).map((item) => {
+                    {quickCards.slice(6, 9).map((item) => {
                       const Icon = item.icon;
                       return (
                         <Link key={item.title} href={item.href}>

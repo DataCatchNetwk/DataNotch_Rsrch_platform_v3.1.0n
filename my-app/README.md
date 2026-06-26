@@ -21,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 The admin monitoring page supports environment-based control over automatic WebSocket recovery:
 
 ```bash
-NEXT_PUBLIC_WS_BASE_URL=ws://localhost:4000
+NEXT_PUBLIC_WS_BASE_URL=ws://localhost:3001
 NEXT_PUBLIC_MONITORING_WS_AUTO_RECOVER=true
 NEXT_PUBLIC_MONITORING_WS_RECOVERY_THRESHOLD=3
 ```

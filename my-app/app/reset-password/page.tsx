@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
 
     setSubmitting(true);
     try {
-      await apiFetch('/auth/reset-password', {
+      await apiFetch('/api/v1/auth/reset-password', {
         method: 'POST',
         body: { token, new_password: newPassword },
       });

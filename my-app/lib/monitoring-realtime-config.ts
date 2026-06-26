@@ -17,7 +17,7 @@ function readBooleanEnv(name: string, fallback: boolean) {
   return fallback
 }
 
-const rawMonitoringApiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const rawMonitoringApiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const rawMonitoringWsBase = process.env.NEXT_PUBLIC_WS_BASE_URL ?? rawMonitoringApiBase
 
 export const monitoringApiBase = rawMonitoringApiBase.replace(/\/+$/, '')

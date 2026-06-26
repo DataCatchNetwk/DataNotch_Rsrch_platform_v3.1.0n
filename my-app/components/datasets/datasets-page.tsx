@@ -52,7 +52,7 @@ export function DatasetsPageView({ embedded = false }: { embedded?: boolean } = 
           setAnalysisOpen(true)
         },
         onDownload: (row) => {
-          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")
+          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")
         },
         onDelete: async (row) => {
           const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
@@ -159,7 +159,7 @@ export function DatasetsPageView({ embedded = false }: { embedded?: boolean } = 
         <DatasetCardView
           items={items}
           onAnalyze={(row) => { setAnalysisDatasetId(row.id); setAnalysisOpen(true) }}
-          onDownload={(row) => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")}
+          onDownload={(row) => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")}
           onDelete={async (row) => {
             const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
             if (!confirmed) return

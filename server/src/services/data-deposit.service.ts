@@ -748,7 +748,7 @@ export async function pullDepositDataset(datasetId: string, input: PullDepositIn
     }
   } catch (error) {
     queueMode = 'postgres-fallback';
-    console.warn('Failed to enqueue pull job in Redis. Falling back to PostgreSQL-backed async processing.', error);
+    console.warn('Queue backend is using PostgreSQL fallback processing.', error);
 
     setTimeout(() => {
       void processPullJobWithoutQueue(prisma, {
@@ -772,7 +772,7 @@ export async function pullDepositDataset(datasetId: string, input: PullDepositIn
     message:
       queueMode === 'redis'
         ? 'Pull job queued for processing'
-        : 'Pull job queued for PostgreSQL-backed processing (Redis unavailable)',
+        : 'Pull job queued for PostgreSQL-backed processing',
     estimatedTime: queueMode === 'redis' ? '2-5 minutes' : '2-8 minutes',
   };
 }

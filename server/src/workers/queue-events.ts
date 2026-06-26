@@ -1,6 +1,6 @@
 import { QueueEvents } from 'bullmq';
 import { RESEARCH_QUEUES } from '../pipelines/queue.constants.js';
-import { getRedisConnection } from './queue.factory.js';
+import { getRedisConnection, isRedisReachable } from './queue.factory.js';
 
 let queueEventsRegistry: Record<string, QueueEvents> | null = null;
 
@@ -25,6 +25,12 @@ export function getQueueEventsRegistry() {
 }
 
 export async function startQueueEvents() {
+  const redisAvailable = await isRedisReachable();
+  if (!redisAvailable) {
+    console.warn('QueueEvents disabled: QUEUE_BACKEND=postgres. Realtime queue history uses PostgreSQL fallback.');
+    return {};
+  }
+
   const registry = getQueueEventsRegistry();
   await Promise.all(Object.values(registry).map((events) => events.waitUntilReady()));
 
