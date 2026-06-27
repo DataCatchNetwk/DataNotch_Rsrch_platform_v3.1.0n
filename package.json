@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "pnpm --dir apps/web dev",
+    "dev:server": "pnpm --dir apps/api dev",
+    "dev:api": "pnpm --dir apps/api dev",
+    "worker": "pnpm --dir apps/api worker",
+    "queue:repair": "pnpm --dir apps/api queue:repair",
+    "healthcheck": "node scripts/healthcheck.mjs",
+    "smoke:auth": "node scripts/smoke-auth.mjs",
+    "smoke:communication": "node scripts/smoke-communication.mjs",
+    "smoke:communication:socket": "node apps/web/scripts/smoke-communication-socket.mjs",
+    "build": "pnpm --dir apps/api build && pnpm --dir apps/web build",
+    "build:web": "pnpm --dir apps/web build",
+    "build:server": "pnpm --dir apps/api build",
+    "build:api": "pnpm --dir apps/api build"
+  },
+  "dependencies": {
+    "recharts": "^3.8.1"
+  }
+}

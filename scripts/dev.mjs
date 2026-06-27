@@ -14,8 +14,9 @@ const commandRunner =
       };
 
 const commands = [
-  { name: 'server', args: ['--dir', 'server', 'dev'], port: 4000 },
-  { name: 'web', args: ['--dir', 'my-app', 'dev'], port: 3000 },
+  { name: 'api', args: ['--dir', 'apps/api', 'dev'], port: 3001 },
+  { name: 'worker', args: ['--dir', 'apps/api', 'worker'] },
+  { name: 'web', args: ['--dir', 'apps/web', 'dev'], port: 3000 },
 ];
 
 const children = new Map();
@@ -82,6 +83,11 @@ async function preflightPorts() {
   const available = [];
 
   for (const command of commands) {
+    if (!command.port) {
+      available.push(command);
+      continue;
+    }
+
     const inUse = await isPortBlocked(command.port);
     if (inUse) {
       blocked.push(command);

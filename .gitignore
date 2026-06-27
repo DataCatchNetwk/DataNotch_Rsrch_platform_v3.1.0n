@@ -1,6 +1,23 @@
 node_modules/
+.next/
+dist/
+build/
+*.tsbuildinfo
 package-lock.json
 package.json
 *.txt
+!package.json
+!structure.txt
 .env
 .env.*
+!.env.example
+
+# SDOH uploaded implementation packs and generated artifacts
+sdoh_pack*/
+sdoh_*_pack*/
+sdoh_research_intelligence_pack*/
+server/storage/sdoh-exports/
+_archive/packs/
+*.zip
+__pycache__/
+.venv/

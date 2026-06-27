@@ -1,0 +1,286 @@
+//schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  REVIEWER
+}
+
+enum AccountStatus {
+  PENDING_APPROVAL
+  APPROVED_2FA_PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum DatasetVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+  RESTRICTED
+}
+
+enum FileKind {
+  ORIGINAL
+  CLEANED
+  REPORT
+  CHART
+  ATTACHMENT
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model User {
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String?
+  fullName        String
+  institution     String?
+  department      String?
+  role            UserRole      @default(USER)
+  status          AccountStatus @default(PENDING_APPROVAL)
+  emailVerifiedAt DateTime?
+  twoFaEnabled    Boolean       @default(false)
+  twoFaSecret     String?
+  approvedAt      DateTime?
+  approvedById    String?
+  lastLoginAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  approvedBy            User?                  @relation("Approver", fields: [approvedById], references: [id])
+  approvedUsers         User[]                 @relation("Approver")
+  registration          RegistrationRequest?
+  memberships           ProjectMember[]
+  datasets              Dataset[]              @relation("DatasetOwner")
+  reports               Report[]
+  auditLogs             AuditLog[]
+  sessions              Session[]
+  accessProfiles        AccessProfile[]
+  twoFaEnrollmentTokens TwoFaEnrollmentToken[] @relation("UserTwoFaEnrollmentTokens")
+
+  @@index([role, status])
+}
+
+model RegistrationRequest {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  fullName         String
+  institution      String?
+  department       String?
+  researchInterest String?
+  requestedRole    UserRole      @default(USER)
+  justification    String?
+  status           AccountStatus @default(PENDING_APPROVAL)
+  reviewedAt       DateTime?
+  reviewedById     String?
+  reviewerNotes    String?
+  userId           String?       @unique
+  createdAt        DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model TwoFaEnrollmentToken {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation("UserTwoFaEnrollmentTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Session {
+  id             String    @id @default(cuid())
+  userId         String
+  refreshTokenId String    @unique
+  deviceName     String?
+  deviceIp       String?
+  userAgent      String?
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+}
+
+model AccessProfile {
+  id                String   @id @default(cuid())
+  userId            String
+  canUpload         Boolean  @default(true)
+  canDownload       Boolean  @default(true)
+  canAnalyze        Boolean  @default(true)
+  canGenerateReport Boolean  @default(true)
+  canShareProjects  Boolean  @default(false)
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  id              String            @id @default(cuid())
+  ownerId         String
+  title           String
+  description     String?
+  category        String?
+  tags            String[]
+  visibility      DatasetVisibility @default(PRIVATE)
+  latestVersionId String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  owner    User             @relation("DatasetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  versions DatasetVersion[]
+  projects ProjectDataset[]
+
+  @@index([ownerId, visibility])
+}
+
+model DatasetVersion {
+  id             String   @id @default(cuid())
+  datasetId      String
+  versionNumber  Int
+  originalFileId String?
+  cleanedFileId  String?
+  schemaJson     Json?
+  rowCount       Int?
+  columnCount    Int?
+  createdAt      DateTime @default(now())
+
+  dataset        Dataset         @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  originalFile   FileAsset?      @relation("OriginalFile", fields: [originalFileId], references: [id], onDelete: SetNull)
+  cleanedFile    FileAsset?      @relation("CleanedFile", fields: [cleanedFileId], references: [id], onDelete: SetNull)
+  processingJobs ProcessingJob[]
+  dataProfile    DataProfile?
+
+  @@unique([datasetId, versionNumber])
+}
+
+model DataProfile {
+  id               String         @id @default(cuid())
+  datasetVersionId String         @unique
+  summaryJson      Json?
+  missingnessJson  Json?
+  duplicatesCount  Int            @default(0)
+  outliersJson     Json?
+  columnStatsJson  Json?
+  previewRowsJson  Json?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  datasetVersion   DatasetVersion @relation(fields: [datasetVersionId], references: [id], onDelete: Cascade)
+}
+
+model FileAsset {
+  id           String   @id @default(cuid())
+  storageKey   String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  kind         FileKind
+  createdAt    DateTime @default(now())
+
+  originalForVersions DatasetVersion[] @relation("OriginalFile")
+  cleanedForVersions  DatasetVersion[] @relation("CleanedFile")
+  reports             Report[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  ownerId     String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  ProjectMember[]
+  datasets ProjectDataset[]
+  reports  Report[]
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  roleLabel String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model ProjectDataset {
+  id        String @id @default(cuid())
+  projectId String
+  datasetId String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, datasetId])
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  userId       String
+  projectId    String?
+  title        String
+  format       String
+  fileId       String?
+  sectionsJson Json?
+  createdAt    DateTime @default(now())
+
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  file    FileAsset? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+}
+
+model ProcessingJob {
+  id               String    @id @default(cuid())
+  datasetVersionId String
+  phase            String
+  status           JobStatus @default(QUEUED)
+  payload          Json?
+  result           Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  datasetVersion DatasetVersion @relation(fields: [datasetVersionId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String
+  entityType   String
+  entityId     String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action, entityType, createdAt])
+}

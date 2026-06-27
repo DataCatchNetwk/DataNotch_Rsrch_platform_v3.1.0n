@@ -9,7 +9,7 @@ const checks = [
   },
   {
     name: 'api',
-    port: 4000,
+    port: 3001,
     url: 'http://localhost:3001/health',
     validate: async (response) => {
       if (!response.ok) return false;
