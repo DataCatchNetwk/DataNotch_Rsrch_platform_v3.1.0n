@@ -30,6 +30,7 @@ import { requestId } from './middleware/request-id.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import { securityHeaders } from './middleware/security-headers.js';
 import opsRoutes from './routes/ops.js';
+import sdohRoutes from './routes/sdoh.js';
 
 export function createApp() {
   const app = express();
@@ -41,6 +42,9 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', requestId: res.locals.requestId }));
   app.use('/api/v1/ops', opsRoutes);
+  app.use('/api/sdoh', sdohRoutes);
+  app.use('/api/v1/sdoh', sdohRoutes);
+  app.use('/api/sdoh-intelligence', sdohRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/analysis/jobs', analysisJobsRoutes);

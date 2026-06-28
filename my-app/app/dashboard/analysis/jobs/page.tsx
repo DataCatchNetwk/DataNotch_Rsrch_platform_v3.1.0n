@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -167,6 +168,76 @@ function canDeleteJob(job: AnalysisJobsPageItem) {
 
 function canRestoreJob(job: AnalysisJobsPageItem) {
   return Boolean(job.archivedAt)
+}
+
+type RowAction =
+  | "open-results"
+  | "download-output"
+  | "retry"
+  | "archive"
+  | "restore"
+  | "cancel"
+  | "delete"
+
+function getJobActionDisabledReason(job: AnalysisJobsPageItem, action: RowAction) {
+  switch (action) {
+    case "open-results":
+      return job.status === "SUCCEEDED"
+        ? null
+        : "Results are available only after the job succeeds."
+    case "download-output":
+      return job.status === "SUCCEEDED"
+        ? null
+        : "Output packages are generated only after the job succeeds."
+    case "retry":
+      return job.status === "FAILED" || job.status === "CANCELLED"
+        ? null
+        : "Only failed or cancelled jobs can be retried."
+    case "archive":
+      if (job.archivedAt) return "This job is already archived."
+      if (job.status === "QUEUED" || job.status === "RUNNING") {
+        return "Cancel queued or running jobs before archiving them."
+      }
+      return canArchiveJob(job) ? null : "Only completed, failed, or cancelled jobs can be archived."
+    case "restore":
+      return canRestoreJob(job) ? null : "Only archived jobs can be restored."
+    case "cancel":
+      return isActionEnabled(job.status, "cancel") ? null : "Only queued or running jobs can be cancelled."
+    case "delete":
+      if (!job.archivedAt) return "Archive this job before permanently deleting it."
+      return canDeleteJob(job) ? null : "Only archived terminal jobs can be permanently deleted."
+  }
+}
+
+function ExplainableDropdownItem({
+  reason,
+  className,
+  children,
+  onSelect,
+}: {
+  reason?: string | null
+  className?: string
+  children: ReactNode
+  onSelect?: () => void
+}) {
+  return (
+    <DropdownMenuItem
+      aria-disabled={Boolean(reason)}
+      className={cn(reason && "opacity-55", className)}
+      title={reason ?? undefined}
+      onSelect={(event) => {
+        if (reason) {
+          event.preventDefault()
+          toast.info(reason)
+          return
+        }
+        onSelect?.()
+      }}
+    >
+      {children}
+      {reason ? <span className="ml-auto text-[10px] font-medium text-slate-400">Unavailable</span> : null}
+    </DropdownMenuItem>
+  )
 }
 
 function formatMinutes(value?: number | null) {
@@ -1141,63 +1212,63 @@ export default function AnalysisJobsPage() {
                             <Search className="mr-2 h-4 w-4" />
                             Quick View
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!isActionEnabled(job.status, "open-results")}
-                            onClick={() => handleOpenResults(job.id)}
+                          <ExplainableDropdownItem
+                            reason={getJobActionDisabledReason(job, "open-results")}
+                            onSelect={() => handleOpenResults(job.id)}
                           >
                             <BarChart3 className="mr-2 h-4 w-4" />
                             Open Results
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!isActionEnabled(job.status, "download-output")}
-                            onClick={() => openDownload(getAnalysisJobDownloadUrl(job.id))}
+                          </ExplainableDropdownItem>
+                          <ExplainableDropdownItem
+                            reason={getJobActionDisabledReason(job, "download-output")}
+                            onSelect={() => openDownload(getAnalysisJobDownloadUrl(job.id))}
                           >
                             <Download className="mr-2 h-4 w-4" />
                             Download Output
-                          </DropdownMenuItem>
+                          </ExplainableDropdownItem>
                           <DropdownMenuItem onClick={() => openDownload(getAnalysisJobLogsDownloadUrl(job.id))}>
                             <FileDown className="mr-2 h-4 w-4" />
                             Download Logs
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            disabled={!isActionEnabled(job.status, "retry")}
-                            onClick={() => void handleRetryJob(job.id)}
+                          <ExplainableDropdownItem
+                            reason={getJobActionDisabledReason(job, "retry")}
+                            onSelect={() => void handleRetryJob(job.id)}
                           >
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Retry Job
-                          </DropdownMenuItem>
+                          </ExplainableDropdownItem>
                           <DropdownMenuItem disabled={isActing} onClick={() => void handleDuplicateJob(job)}>
                             <Plus className="mr-2 h-4 w-4" />
                             Duplicate Job
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!canArchiveJob(job) || isActing}
-                            onClick={() => {
+                          <ExplainableDropdownItem
+                            reason={isActing ? "Another job action is already running." : getJobActionDisabledReason(job, "archive")}
+                            onSelect={() => {
                               if (!window.confirm(`Archive ${job.title}?`)) return
                               void handleArchiveJob(job.id)
                             }}
                           >
                             <FileText className="mr-2 h-4 w-4" />
                             Archive Job
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!canRestoreJob(job) || isActing}
-                            onClick={() => {
+                          </ExplainableDropdownItem>
+                          <ExplainableDropdownItem
+                            reason={isActing ? "Another job action is already running." : getJobActionDisabledReason(job, "restore")}
+                            onSelect={() => {
                               if (!window.confirm(`Restore ${job.title}?`)) return
                               void handleRestoreJob(job.id)
                             }}
                           >
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Restore Job
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!isActionEnabled(job.status, "cancel") || isActing}
-                            onClick={() => void handleCancelJob(job.id)}
+                          </ExplainableDropdownItem>
+                          <ExplainableDropdownItem
+                            reason={isActing ? "Another job action is already running." : getJobActionDisabledReason(job, "cancel")}
+                            onSelect={() => void handleCancelJob(job.id)}
                           >
                             {isActing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4" />}
                             Cancel Job
-                          </DropdownMenuItem>
+                          </ExplainableDropdownItem>
                           <DropdownMenuItem onClick={() => void handleShareJob(job)}>
                             <Share2 className="mr-2 h-4 w-4" />
                             Share
@@ -1206,17 +1277,17 @@ export default function AnalysisJobsPage() {
                             <AlertTriangle className="mr-2 h-4 w-4" />
                             Report Issue
                           </DropdownMenuItem>
-                          <DropdownMenuItem
+                          <ExplainableDropdownItem
                             className="text-red-600"
-                            disabled={!canDeleteJob(job) || isActing}
-                            onClick={() => {
+                            reason={isActing ? "Another job action is already running." : getJobActionDisabledReason(job, "delete")}
+                            onSelect={() => {
                               if (!window.confirm(`Delete ${job.title} permanently?`)) return
                               void handleDeleteJob(job.id)
                             }}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Permanently
-                          </DropdownMenuItem>
+                          </ExplainableDropdownItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

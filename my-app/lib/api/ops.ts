@@ -58,26 +58,26 @@ export type WorkerJobItem = {
 };
 
 export async function getOpsHealth() {
-  const { data } = await api.get('/v1/ops/health');
+  const { data } = await api.get('/api/v1/ops/health');
   return data as OpsHealth;
 }
 
 export async function getOpsSummary() {
-  const { data } = await api.get('/v1/ops/admin/summary');
+  const { data } = await api.get('/api/v1/ops/admin/summary');
   return data as OpsSummary;
 }
 
 export async function getWorkerJobs(status?: string) {
-  const { data } = await api.get('/v1/ops/admin/worker-jobs', { params: status ? { status } : undefined });
+  const { data } = await api.get('/api/v1/ops/admin/worker-jobs', { params: status ? { status } : undefined });
   return (data?.items ?? []) as WorkerJobItem[];
 }
 
 export async function retryWorkerJob(jobId: string) {
-  const { data } = await api.post(`/v1/ops/admin/worker-jobs/${jobId}/retry`);
+  const { data } = await api.post(`/api/v1/ops/admin/worker-jobs/${jobId}/retry`);
   return data as { job: WorkerJobItem };
 }
 
 export async function cancelWorkerJob(jobId: string) {
-  const { data } = await api.post(`/v1/ops/admin/worker-jobs/${jobId}/cancel`);
+  const { data } = await api.post(`/api/v1/ops/admin/worker-jobs/${jobId}/cancel`);
   return data as { job: WorkerJobItem };
 }

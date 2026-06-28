@@ -31,6 +31,8 @@ import { rateLimit } from './middleware/rate-limit.js';
 import { securityHeaders } from './middleware/security-headers.js';
 import opsRoutes from './routes/ops.js';
 import sdohRoutes from './routes/sdoh.js';
+import researchLifecycleRoutes from './routes/research-lifecycle.js';
+import databaseRoutes from './routes/database.js';
 
 export function createApp() {
   const app = express();
@@ -45,6 +47,10 @@ export function createApp() {
   app.use('/api/sdoh', sdohRoutes);
   app.use('/api/v1/sdoh', sdohRoutes);
   app.use('/api/sdoh-intelligence', sdohRoutes);
+  app.use('/api/research-lifecycle', researchLifecycleRoutes);
+  app.use('/api/v1/research-lifecycle', researchLifecycleRoutes);
+  app.use('/api/database', databaseRoutes);
+  app.use('/api/v1/database', databaseRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/analysis/jobs', analysisJobsRoutes);

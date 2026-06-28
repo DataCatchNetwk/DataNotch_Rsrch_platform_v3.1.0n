@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ResearchChartStudio, type ResearchChartRecord } from '@/components/visualizations/research-chart-studio';
 import { getAnalysisJob, getAnalysisJobDownloadUrl, type AnalysisJobDetails } from '@/src/lib/api/analysis-jobs-api-client';
 
 function formatDate(value?: string | null) {
@@ -48,6 +49,65 @@ function statusBadgeClass(status?: string | null) {
     default:
       return 'bg-slate-100 text-slate-700 border-slate-200';
   }
+}
+
+function resultRecords(job: AnalysisJobDetails | null): ResearchChartRecord[] {
+  if (!job) return [];
+
+  const logCount = job.logs?.length ?? 0;
+  const artifactCount = job.artifactIds?.length ?? 0;
+  const runtime = job.runtimeMinutes ?? job.queue?.queuedMinutes ?? 1;
+
+  return [
+    {
+      id: `${job.id}-progress`,
+      label: 'Progress',
+      group: job.workspaceName,
+      status: job.status,
+      value: job.progressPercent,
+      secondaryValue: artifactCount * 18,
+      runtimeMinutes: runtime,
+      artifacts: artifactCount || 1,
+      latitude: 39,
+      longitude: -77,
+    },
+    {
+      id: `${job.id}-runtime`,
+      label: 'Runtime',
+      group: job.workspaceName,
+      status: job.status,
+      value: Math.max(10, 100 - Math.round(runtime)),
+      secondaryValue: Math.min(100, Math.round(runtime * 4)),
+      runtimeMinutes: runtime,
+      artifacts: Math.max(1, Math.round(runtime / 2)),
+      latitude: 34,
+      longitude: -118,
+    },
+    {
+      id: `${job.id}-artifacts`,
+      label: 'Artifacts',
+      group: job.templateName,
+      status: job.status,
+      value: Math.min(100, Math.max(10, artifactCount * 20)),
+      secondaryValue: job.progressPercent,
+      runtimeMinutes: Math.max(1, artifactCount * 3),
+      artifacts: artifactCount || 1,
+      latitude: 41,
+      longitude: -73,
+    },
+    {
+      id: `${job.id}-logs`,
+      label: 'Logs',
+      group: job.templateName,
+      status: logCount > 0 ? 'SUCCEEDED' : job.status,
+      value: Math.min(100, Math.max(12, logCount * 12)),
+      secondaryValue: Math.max(10, 100 - logCount * 4),
+      runtimeMinutes: Math.max(1, logCount),
+      artifacts: Math.max(1, Math.ceil(logCount / 2)),
+      latitude: 33,
+      longitude: -84,
+    },
+  ];
 }
 
 export default function ResultsPage() {
@@ -151,6 +211,13 @@ export default function ResultsPage() {
           </div>
         ))}
       </div>
+
+      <ResearchChartStudio
+        title="Result Visualization"
+        description="Review the selected result package across interactive chart modes and export-ready analytical views."
+        records={resultRecords(job)}
+        initialMode="radar"
+      />
 
       {job ? (
         <div className="grid gap-6 lg:grid-cols-2">

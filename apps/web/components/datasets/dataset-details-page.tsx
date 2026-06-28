@@ -18,6 +18,7 @@ import { DatasetQualityCard } from "@/components/datasets/dataset-quality-card"
 import { DatasetRowPreview } from "@/components/datasets/dataset-row-preview"
 import { DatasetAuditTrail } from "@/components/datasets/dataset-audit-trail"
 import { DatasetAccessInfoCard } from "@/components/datasets/dataset-access-info-card"
+import { DatasetLifecycleWorkspace } from "@/components/datasets/dataset-lifecycle-workspace"
 
 export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
   const router = useRouter()
@@ -99,6 +100,8 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
 
       {/* Overview */}
       <DatasetOverviewCard dataset={data} />
+
+      <DatasetLifecycleWorkspace datasetId={datasetId} />
 
       {/* Tabbed detail area */}
       <Tabs defaultValue="schema" className="w-full">

@@ -4,6 +4,7 @@ import { RESEARCH_QUEUES } from '../../pipelines/queue.constants.js';
 import { PipelinesOrchestrator } from '../../pipelines/orchestrator.js';
 import { getRedisConnection } from '../queue.factory.js';
 import { BaseProcessor } from '../runtime/base.processor.js';
+import { sdohIntelligenceService } from '../../modules/sdoh/sdoh-intelligence.service.js';
 
 export class EvaluateProcessor extends BaseProcessor {
   start() {
@@ -30,9 +31,18 @@ export class EvaluateProcessor extends BaseProcessor {
         EXPLAIN: 'LOG',
         CHART: 'CHART',
       };
+      const sdohPayload = sdohIntelligenceService.pipelinePayload();
       const output = {
         storageKey: `artifacts/${job.data.pipelineRunId}/${String(job.data.stepType).toLowerCase()}.json`,
-        metrics: { accuracy: 0.91, recall: 0.87, precision: 0.9 },
+        metrics: {
+          accuracy: 0.91,
+          recall: 0.87,
+          precision: 0.9,
+          sdohReadmissionRate: sdohPayload.overview.cards.find((card) => card.label === 'Readmission rate')?.value ?? null,
+          sdohMortalityRate: sdohPayload.overview.cards.find((card) => card.label === 'Mortality rate')?.value ?? null,
+          healthEquityModules: sdohPayload.modules.length,
+        },
+        sdohClinicalOutcomesPrecisionPopulationHealth: sdohPayload,
       };
 
       await this.prisma.pipelineArtifact.create({
@@ -44,7 +54,7 @@ export class EvaluateProcessor extends BaseProcessor {
           name: `${String(job.data.stepType)} artifact`,
           storageKey: output.storageKey,
           mimeType: 'application/json',
-          metadataJson: output.metrics,
+          metadataJson: output as never,
         },
       });
 

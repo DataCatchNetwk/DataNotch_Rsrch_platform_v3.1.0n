@@ -19,6 +19,18 @@ const SOCKET_BASE =
   process.env.NEXT_PUBLIC_SOCKET_URL ??
   RAW_API_BASE.replace(/\/api(?:\/v\d+)?$/i, "").replace(/\/+$/, "");
 
+function buildApiUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (normalizedPath.startsWith("/api/")) {
+    return `${API_BASE}${normalizedPath}`;
+  }
+
+  return API_BASE.endsWith("/api")
+    ? `${API_BASE}${normalizedPath}`
+    : `${API_BASE}/api${normalizedPath}`;
+}
+
 function getStoredToken() {
   if (typeof window === "undefined") {
     return null;
@@ -81,7 +93,7 @@ export type PipelineAutoscalingRecommendation = {
 
 export function createPipelineEventStream(runId: string) {
   const token = getStoredToken();
-  const url = `${API_BASE}/pipeline-runs/${runId}/events${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  const url = buildApiUrl(`/pipeline-runs/${runId}/events${token ? `?token=${encodeURIComponent(token)}` : ""}`);
   return new EventSource(url);
 }
 

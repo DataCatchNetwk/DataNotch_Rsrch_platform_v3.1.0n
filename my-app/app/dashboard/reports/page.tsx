@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ResearchChartStudio, type ResearchChartRecord } from '@/components/visualizations/research-chart-studio';
 
 type ReportSection = 'all' | 'studies' | 'activity' | 'collaborators' | 'new-study';
 
@@ -91,6 +92,30 @@ function toRelativeDate(input: string): string {
   return `${diff} days ago`;
 }
 
+function recordsFromReports(items: ReportItem[]): ResearchChartRecord[] {
+  const sectionScore: Record<ReportItem['section'], number> = {
+    studies: 88,
+    activity: 72,
+    collaborators: 64,
+  };
+
+  return items.map((item, index) => {
+    const ageDays = Math.max(0, Math.floor((Date.now() - new Date(item.updated).getTime()) / (24 * 60 * 60 * 1000)));
+    return {
+      id: item.id,
+      label: item.title.slice(0, 26),
+      group: item.section,
+      status: item.isDraft ? 'QUEUED' : 'SUCCEEDED',
+      value: Math.max(10, sectionScore[item.section] - Math.min(40, ageDays)),
+      secondaryValue: Math.min(100, 20 + item.tags.length * 18),
+      runtimeMinutes: Math.max(1, ageDays + 2),
+      artifacts: item.tags.length,
+      latitude: 30 + index * 4,
+      longitude: -112 + index * 13,
+    };
+  });
+}
+
 export default function ReportsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -121,6 +146,8 @@ export default function ReportsPage() {
       return haystack.includes(query);
     });
   }, [activeTab, allReports, query]);
+
+  const chartRecords = useMemo(() => recordsFromReports(filteredItems), [filteredItems]);
 
   const setAllTab = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -234,6 +261,13 @@ export default function ReportsPage() {
           })}
         </div>
       </div>
+
+      <ResearchChartStudio
+        title="Report Analytics"
+        description="Analyze reports by section, freshness, tags, activity level, and research output readiness."
+        records={chartRecords}
+        initialMode="donut"
+      />
 
       {activeTab === 'new-study' ? (
         <div className="rounded-xl border border-slate-200 bg-white p-5">

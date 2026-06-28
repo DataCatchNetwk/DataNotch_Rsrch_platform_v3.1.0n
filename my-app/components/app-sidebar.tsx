@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical, LifeBuoy, LogOut } from 'lucide-react';
+import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical, LifeBuoy, LogOut, HeartPulse } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import styles from './app-sidebar.module.css';
@@ -16,6 +16,7 @@ const navItems = [
   { title: 'My Studies', url: '/dashboard/reports', icon: FolderOpenDot },
   { title: 'Datasets', url: '/dashboard/datasets', icon: Database },
   { title: 'Analysis Jobs', url: '/dashboard/analysis/jobs', icon: FlaskConical },
+  { title: 'SDOH Intelligence', url: '/dashboard/sdoh', icon: HeartPulse },
   { title: 'Workspaces', url: '/dashboard/workspaces', icon: ClipboardList },
   { title: 'Monitoring', url: '/dashboard/monitoring/pipelines', icon: Activity },
   { title: 'Requests', url: '/dashboard/requests', icon: FileUp },

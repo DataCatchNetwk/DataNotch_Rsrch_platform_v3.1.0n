@@ -14,12 +14,19 @@ import { FeatureMaterializationProcessor } from './processors/feature-materializ
 import { startQueueEvents } from './queue-events.js';
 import { isRedisReachable } from './queue.factory.js';
 import { startPostgresLocalWorker } from './postgres-local-worker.js';
+import { repairMissingWorkerJobs } from './queue-repair.js';
 
 export async function startWorkers() {
   await prisma.$connect();
   const redisAvailable = await isRedisReachable();
   if (!redisAvailable) {
     console.warn('Starting PostgreSQL local worker runner because Redis queue backend is disabled or unavailable.');
+    const repair = await repairMissingWorkerJobs(prisma);
+    if (repair.repairedRuns > 0) {
+      console.warn(
+        `Repaired ${repair.repairedRuns} queued pipeline run(s) missing worker jobs before starting PostgreSQL local worker.`,
+      );
+    }
     return [startPostgresLocalWorker(prisma)];
   }
 

@@ -83,6 +83,36 @@ enum DatasetPullStatus {
   FAILED
 }
 
+enum ResearchDatasetLifecycleStatus {
+  UPLOADED
+  PROFILED
+  VALIDATED
+  APPROVED
+  COHORT_READY
+  ANALYSIS_READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ResearchApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVIEW
+}
+
+enum ResearchArtifactFormat {
+  JSON
+  CSV
+  XLSX
+  PDF
+  DOCX
+  PPTX
+  PNG
+  SVG
+  HTML
+}
+
 enum AnalysisJobStatus {
   QUEUED
   RUNNING
@@ -938,6 +968,144 @@ model DatasetAccessLog {
   @@map("dataset_access_logs")
 }
 
+model DatasetLifecycleStatus {
+  id          String                         @id @default(cuid()) @db.VarChar(30)
+  datasetId   String                         @map("dataset_id") @db.VarChar(30)
+  status      ResearchDatasetLifecycleStatus
+  reason      String?                        @db.Text
+  metadataJson Json?                         @map("metadata_json")
+  createdById String?                        @map("created_by_id") @db.VarChar(30)
+  createdAt   DateTime                       @default(now()) @map("created_at")
+
+  @@index([datasetId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("dataset_status")
+}
+
+model DatasetVersion {
+  id          String   @id @default(cuid()) @db.VarChar(30)
+  datasetId   String   @map("dataset_id") @db.VarChar(30)
+  version     Int
+  label       String   @db.VarChar(140)
+  storagePath String?  @map("storage_path") @db.VarChar(255)
+  schemaJson  Json?    @map("schema_json")
+  changeLog   String?  @map("change_log") @db.Text
+  createdById String?  @map("created_by_id") @db.VarChar(30)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([datasetId, version])
+  @@index([datasetId])
+  @@index([createdAt])
+  @@map("dataset_versions")
+}
+
+model DatasetLineage {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  sourceDatasetId String?  @map("source_dataset_id") @db.VarChar(30)
+  targetDatasetId String   @map("target_dataset_id") @db.VarChar(30)
+  operation       String   @db.VarChar(120)
+  description     String?  @db.Text
+  transformationJson Json? @map("transformation_json")
+  createdById     String?  @map("created_by_id") @db.VarChar(30)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([sourceDatasetId])
+  @@index([targetDatasetId])
+  @@index([operation])
+  @@index([createdAt])
+  @@map("dataset_lineage")
+}
+
+model DatasetApproval {
+  id          String                 @id @default(cuid()) @db.VarChar(30)
+  datasetId   String                 @map("dataset_id") @db.VarChar(30)
+  status      ResearchApprovalStatus @default(PENDING)
+  stage       String                 @db.VarChar(120)
+  decisionById String?               @map("decision_by_id") @db.VarChar(30)
+  notes       String?                @db.Text
+  decidedAt   DateTime?              @map("decided_at")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
+  @@index([datasetId])
+  @@index([status])
+  @@index([stage])
+  @@map("dataset_approvals")
+}
+
+model AnalysisResult {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  datasetId      String   @map("dataset_id") @db.VarChar(30)
+  analysisJobId  String?  @map("analysis_job_id") @db.VarChar(30)
+  analysisType   String   @map("analysis_type") @db.VarChar(120)
+  title          String   @db.VarChar(191)
+  metricsJson    Json     @map("metrics_json")
+  parametersJson Json?    @map("parameters_json")
+  resultJson     Json?    @map("result_json")
+  createdById    String?  @map("created_by_id") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([datasetId])
+  @@index([analysisJobId])
+  @@index([analysisType])
+  @@index([createdAt])
+  @@map("analysis_results")
+}
+
+model AnalysisInterpretation {
+  id               String   @id @default(cuid()) @db.VarChar(30)
+  analysisResultId String   @map("analysis_result_id") @db.VarChar(30)
+  summary          String   @db.Text
+  evidenceJson     Json?    @map("evidence_json")
+  generatedBy      String   @default("system") @map("generated_by") @db.VarChar(80)
+  reviewedById     String?  @map("reviewed_by_id") @db.VarChar(30)
+  reviewedAt       DateTime? @map("reviewed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([analysisResultId])
+  @@index([createdAt])
+  @@map("analysis_interpretations")
+}
+
+model VisualizationOutput {
+  id               String                 @id @default(cuid()) @db.VarChar(30)
+  datasetId         String                 @map("dataset_id") @db.VarChar(30)
+  analysisResultId  String?                @map("analysis_result_id") @db.VarChar(30)
+  chartType         String                 @map("chart_type") @db.VarChar(120)
+  format            ResearchArtifactFormat @default(JSON)
+  payloadJson       Json?                  @map("payload_json")
+  storagePath       String?                @map("storage_path") @db.VarChar(255)
+  createdById       String?                @map("created_by_id") @db.VarChar(30)
+  createdAt         DateTime               @default(now()) @map("created_at")
+
+  @@index([datasetId])
+  @@index([analysisResultId])
+  @@index([chartType])
+  @@map("visualization_outputs")
+}
+
+model PublicationOutput {
+  id               String                 @id @default(cuid()) @db.VarChar(30)
+  datasetId         String                 @map("dataset_id") @db.VarChar(30)
+  analysisResultId  String?                @map("analysis_result_id") @db.VarChar(30)
+  outputType        String                 @map("output_type") @db.VarChar(120)
+  format            ResearchArtifactFormat
+  title             String                 @db.VarChar(191)
+  payloadJson       Json?                  @map("payload_json")
+  storagePath       String?                @map("storage_path") @db.VarChar(255)
+  approvalStatus    ResearchApprovalStatus @default(PENDING) @map("approval_status")
+  createdById       String?                @map("created_by_id") @db.VarChar(30)
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  @@index([datasetId])
+  @@index([analysisResultId])
+  @@index([outputType])
+  @@index([approvalStatus])
+  @@map("publication_outputs")
+}
+
 model AnalysisJob {
   id             String            @id @default(cuid()) @db.VarChar(30)
   name           String            @db.VarChar(140)
@@ -1580,4 +1748,137 @@ model GraphResearchEdge {
   @@index([fromNodeId, edgeType])
   @@index([toNodeId])
   @@map("graph_research_edges")
+}
+
+model DatabaseConnection {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  name           String   @db.VarChar(140)
+  engine         String   @db.VarChar(40)
+  host           String?  @db.VarChar(255)
+  port           Int?
+  databaseName   String   @map("database_name") @db.VarChar(140)
+  username       String?  @db.VarChar(140)
+  connectionUrl  String?  @map("connection_url") @db.Text
+  status         String   @default("active") @db.VarChar(40)
+  isDefault      Boolean  @default(false) @map("is_default")
+  createdById    String?  @map("created_by_id") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([engine])
+  @@index([isDefault])
+  @@index([createdAt])
+  @@map("database_connections")
+}
+
+model DatabaseMetadataTable {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  connectionId   String?  @map("connection_id") @db.VarChar(30)
+  schemaName     String   @map("schema_name") @db.VarChar(140)
+  tableName      String   @map("table_name") @db.VarChar(140)
+  tableType      String   @map("table_type") @db.VarChar(40)
+  columnCount    Int      @default(0) @map("column_count")
+  estimatedRows  Int      @default(0) @map("estimated_rows")
+  totalBytes     Int      @default(0) @map("total_bytes")
+  syncedAt       DateTime @default(now()) @map("synced_at")
+
+  @@unique([connectionId, schemaName, tableName])
+  @@index([schemaName])
+  @@index([tableType])
+  @@map("database_metadata_tables")
+}
+
+model DatabaseMetadataColumn {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  connectionId   String?  @map("connection_id") @db.VarChar(30)
+  schemaName     String   @map("schema_name") @db.VarChar(140)
+  tableName      String   @map("table_name") @db.VarChar(140)
+  columnName     String   @map("column_name") @db.VarChar(140)
+  dataType       String   @map("data_type") @db.VarChar(120)
+  isNullable     Boolean  @default(true) @map("is_nullable")
+  ordinalPosition Int     @map("ordinal_position")
+  columnDefault  String?  @map("column_default") @db.Text
+  syncedAt       DateTime @default(now()) @map("synced_at")
+
+  @@unique([connectionId, schemaName, tableName, columnName])
+  @@index([schemaName, tableName])
+  @@index([dataType])
+  @@map("database_metadata_columns")
+}
+
+model SavedQuery {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  name           String   @db.VarChar(140)
+  sqlText        String   @map("sql_text") @db.Text
+  connectionId   String?  @map("connection_id") @db.VarChar(30)
+  createdById    String?  @map("created_by_id") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([connectionId])
+  @@index([createdById])
+  @@map("saved_queries")
+}
+
+model QueryHistory {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  connectionId   String?  @map("connection_id") @db.VarChar(30)
+  sqlText        String   @map("sql_text") @db.Text
+  status         String   @db.VarChar(40)
+  rowCount       Int      @default(0) @map("row_count")
+  executionMs    Int      @default(0) @map("execution_ms")
+  errorMessage   String?  @map("error_message") @db.Text
+  createdById    String?  @map("created_by_id") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([connectionId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("query_history")
+}
+
+model QueryResult {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  queryHistoryId String?  @map("query_history_id") @db.VarChar(30)
+  columnsJson    Json     @map("columns_json")
+  rowsJson        Json     @map("rows_json")
+  rowCount       Int      @default(0) @map("row_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([queryHistoryId])
+  @@index([createdAt])
+  @@map("query_results")
+}
+
+model DatasetBuild {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  name           String   @db.VarChar(160)
+  sourceType     String   @map("source_type") @db.VarChar(40)
+  sourceRef      String   @map("source_ref") @db.Text
+  variablesJson  Json     @map("variables_json")
+  version        Int      @default(1)
+  status         String   @default("ANALYSIS_READY") @db.VarChar(60)
+  createdById    String?  @map("created_by_id") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([sourceType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("dataset_builds")
+}
+
+model DatabaseAuditLog {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  actorId        String?  @map("actor_id") @db.VarChar(30)
+  actorLabel     String?  @map("actor_label") @db.VarChar(180)
+  action         String   @db.VarChar(120)
+  target         String   @db.VarChar(255)
+  metadataJson   Json?    @map("metadata_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("database_audit_logs")
 }
