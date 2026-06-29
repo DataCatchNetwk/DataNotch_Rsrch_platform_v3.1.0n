@@ -60,6 +60,11 @@ function asObject(value: Prisma.JsonValue | null | undefined): Record<string, un
   return value as Record<string, unknown>;
 }
 
+function toSafeNumber(value: bigint | number | null | undefined) {
+  if (value === null || value === undefined) return value;
+  return Number(value);
+}
+
 function mapDepositDataset(dataset: any, userId?: string) {
   const favorite = Array.isArray(dataset.favorites)
     ? dataset.favorites.find((entry: { userId: string }) => entry.userId === userId)
@@ -89,7 +94,7 @@ function mapDepositDataset(dataset: any, userId?: string) {
     tags: dataset.tags,
     rowCount: dataset.recordCount,
     columnCount: dataset.columnCount,
-    sizeBytes: dataset.sizeBytes,
+    sizeBytes: toSafeNumber(dataset.sizeBytes),
     mimeType: dataset.mimeType,
     schemaJson: dataset.schemaJson,
     previewRowsJson: dataset.previewRowsJson,
@@ -208,11 +213,11 @@ export async function getDepositDatasetById(datasetId: string, userId?: string) 
   const artifactMetadata = {
     fileCount: dataset.fileAssets?.length ?? 0,
     files:
-      dataset.fileAssets?.map((asset: { id: string; originalName: string; mimeType: string; sizeBytes: number; createdAt: Date }) => ({
+      dataset.fileAssets?.map((asset: { id: string; originalName: string; mimeType: string; sizeBytes: bigint | number; createdAt: Date }) => ({
         id: asset.id,
         name: asset.originalName,
         mimeType: asset.mimeType,
-        sizeBytes: asset.sizeBytes,
+        sizeBytes: toSafeNumber(asset.sizeBytes),
         createdAt: asset.createdAt,
       })) ?? [],
     metadataFiles: Array.isArray(metadata.files)

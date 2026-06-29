@@ -1,0 +1,440 @@
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:611:18) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:611:18) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:611:18) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:492:18) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}
+{
+  requestId: undefined,
+  err: PrismaClientKnownRequestError: 
+  Invalid `prisma.$queryRawUnsafe()` invocation:
+  
+  
+  Raw query failed. Code: `42P01`. Message: `relation "sdoh_patients" does not exist`
+      at ei.handleRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:228:13)
+      at ei.handleAndLogRequestError (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+      at ei.request (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+      at async a (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\node_modules\.pnpm\@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:833:24)
+      at async <anonymous> (C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n\apps\api\src\routes\database.ts:449:20) {
+    code: 'P2010',
+    meta: {
+      code: '42P01',
+      message: 'relation "sdoh_patients" does not exist'
+    },
+    clientVersion: '6.19.3'
+  }
+}

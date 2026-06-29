@@ -37,6 +37,18 @@ function mapUserName(user: { firstname: string; surname: string }) {
   return `${user.firstname} ${user.surname}`.trim();
 }
 
+function toSafeNumber(value: bigint | number | null | undefined) {
+  if (value === null || value === undefined) return value;
+  return Number(value);
+}
+
+function serializeDataset<T extends { sizeBytes?: bigint | number | null }>(dataset: T) {
+  return {
+    ...dataset,
+    sizeBytes: toSafeNumber(dataset.sizeBytes),
+  };
+}
+
 export async function listDatasetsByWorkspace(user: AuthUser, workspaceId: string) {
   await assertWorkspaceAction(workspaceId, user, WorkspaceAction.VIEW_DATASETS);
 
@@ -51,7 +63,7 @@ export async function listDatasetsByWorkspace(user: AuthUser, workspaceId: strin
   });
 
   return datasets.map((dataset) => ({
-    ...dataset,
+    ...serializeDataset(dataset),
     createdBy: {
       id: dataset.createdBy.id,
       name: mapUserName(dataset.createdBy),
@@ -89,7 +101,7 @@ export async function createDataset(user: AuthUser, workspaceId: string, input: 
   });
 
   return {
-    ...dataset,
+    ...serializeDataset(dataset),
     createdBy: {
       id: dataset.createdBy.id,
       name: mapUserName(dataset.createdBy),
@@ -161,7 +173,7 @@ export async function uploadDatasetFile(
   }
 
   return {
-    ...dataset,
+    ...serializeDataset(dataset),
     createdBy: {
       id: dataset.createdBy.id,
       name: mapUserName(dataset.createdBy),
@@ -190,7 +202,7 @@ export async function getDatasetById(user: AuthUser, workspaceId: string, datase
   }
 
   return {
-    ...dataset,
+    ...serializeDataset(dataset),
     createdBy: {
       id: dataset.createdBy.id,
       name: mapUserName(dataset.createdBy),
