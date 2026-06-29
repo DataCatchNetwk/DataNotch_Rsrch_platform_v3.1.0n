@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "/_not-found",
-  "/login/page": "/login",
-  "/forgot-password/page": "/forgot-password",
-  "/register/page": "/register",
-  "/page": "/",
-  "/(dashboard)/dashboard/page": "/dashboard",
-  "/(dashboard)/health-data/page": "/health-data"
-}
