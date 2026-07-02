@@ -97,6 +97,9 @@ export const createDatasetSchema = z.object({
   visibility: z.nativeEnum(DatasetVisibility).optional(),
   recordCount: z.number().int().optional(),
   tags: z.array(z.string().trim()).optional(),
+  uploadKind: z.enum(['files', 'folder', 'zip', 'cloud', 'repository']).optional(),
+  sourceProvider: z.string().trim().max(120).optional(),
+  sourceLocator: z.string().trim().max(2000).optional(),
 });
 
 export const createAnalysisJobSchema = z.object({

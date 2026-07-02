@@ -1,0 +1,108 @@
+// Add or merge these models into your existing Prisma schema.
+// If you already have Workspace, Dataset, Project, AuditLog, or member/task models,
+// merge fields instead of duplicating model names.
+
+model Workspace {
+  id                String                      @id @default(cuid())
+  name              String
+  description       String?
+  ownerName         String?
+  status            String                      @default("ACTIVE")
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+  files             WorkspaceFile[]
+  datasetCandidates WorkspaceDatasetCandidate[]
+  members           WorkspaceMember[]
+  datasets          Dataset[]
+  projects          Project[]
+  tasks             WorkspaceTask[]
+  auditLogs         AuditLog[]
+}
+
+model WorkspaceFile {
+  id               String    @id @default(cuid())
+  workspaceId      String
+  parentId         String?
+  name             String
+  kind             String
+  type             String
+  size             Int
+  path             String
+  relativePath     String
+  checksum         String
+  datasetCandidate Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model WorkspaceDatasetCandidate {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  fileId          String
+  datasetId       String?
+  name            String
+  format          String
+  rowsEstimate    Int       @default(0)
+  columnsEstimate Int       @default(0)
+  confidence      Int       @default(0)
+  status          String    @default("detected")
+  createdAt       DateTime  @default(now())
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String
+  role        String
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model WorkspaceTask {
+  id          String    @id @default(cuid())
+  workspaceId String
+  title       String
+  stage       String
+  assignee    String?
+  status      String    @default("TODO")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  workspaceId String
+  title       String
+  objective   String?
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  id              String    @id @default(cuid())
+  workspaceId     String?
+  name            String
+  sourceType      String
+  status          String
+  stage           String
+  format          String?
+  rowsEstimate    Int       @default(0)
+  columnsEstimate Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id])
+}
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  workspaceId  String?
+  action       String
+  resourceType String
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  workspace    Workspace? @relation(fields: [workspaceId], references: [id])
+}

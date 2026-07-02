@@ -61,6 +61,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import WorkspaceFileExplorer from "@/app/dashboard/workspaces/WorkspaceFileExplorer";
+import { fetchWorkspaceRegistryDatasets, type WorkspaceRegistryDataset } from "@/src/lib/api/workspaceZip";
 
 type UiState = {
   editingWorkspace: boolean;
@@ -95,6 +97,7 @@ export default function WorkspaceDetailsPage() {
   const [ui, setUi] = useState<UiState>(initialUiState);
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
   const [error, setError] = useState<string | null>(null);
+  const [registryDatasets, setRegistryDatasets] = useState<WorkspaceRegistryDataset[]>([]);
 
   const [workspaceForm, setWorkspaceForm] = useState({
     name: "",
@@ -147,33 +150,56 @@ export default function WorkspaceDetailsPage() {
       const runs = await listWorkspacePipelineRuns(workspaceId);
       setPipelineRuns(runs);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load pipeline runs");
+      console.warn("Failed to load workspace pipeline runs", err);
+      setPipelineRuns([]);
     } finally {
       setPipelineLoading(false);
+    }
+  }
+
+  async function loadRegistryDatasets() {
+    try {
+      const records = await fetchWorkspaceRegistryDatasets(workspaceId);
+      setRegistryDatasets(records);
+    } catch {
+      setRegistryDatasets([]);
     }
   }
 
   async function loadWorkspace() {
     setLoading(true);
     setError(null);
+    setPipelineLoading(true);
 
     try {
-      const [data, runs] = await Promise.all([getWorkspace(workspaceId), listWorkspacePipelineRuns(workspaceId)]);
+      const data = await getWorkspace(workspaceId);
       setWorkspace(data);
-      setPipelineRuns(runs);
       setWorkspaceForm({
         name: data.name,
         description: data.description ?? "",
       });
+
+      try {
+        const runs = await listWorkspacePipelineRuns(workspaceId);
+        setPipelineRuns(runs);
+      } catch (pipelineErr) {
+        console.warn("Failed to load workspace pipeline runs", pipelineErr);
+        setPipelineRuns([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load workspace");
     } finally {
       setLoading(false);
+      setPipelineLoading(false);
     }
   }
 
   useEffect(() => {
     void loadWorkspace();
+  }, [workspaceId]);
+
+  useEffect(() => {
+    void loadRegistryDatasets();
   }, [workspaceId]);
 
   const currentRole = workspace?.currentUserRole;
@@ -509,9 +535,33 @@ export default function WorkspaceDetailsPage() {
   if (!workspace) {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
-        <Card className="mx-auto max-w-7xl rounded-2xl border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-6 text-sm text-rose-600">
-            {error || "Workspace could not be loaded."}
+        <Card className="mx-auto max-w-4xl rounded-2xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="space-y-5 p-6">
+            <div className="space-y-2">
+              <p className="text-lg font-semibold text-slate-900">Workspace could not be loaded</p>
+              <p className="text-sm leading-6 text-slate-600">
+                The selected workspace may have been archived, deleted, or created under a different account. The workspace list is still available, so you can reopen a valid workspace without restarting the application.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              {error || "Workspace could not be loaded."}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => void loadWorkspace()}
+                className="rounded-xl border-slate-200 bg-white text-slate-700"
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+              <Button asChild className="rounded-xl bg-linear-to-r from-indigo-500 to-violet-600 text-white">
+                <Link href="/dashboard/workspaces">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Workspaces
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -871,6 +921,54 @@ export default function WorkspaceDetailsPage() {
             </TabsContent>
 
             <TabsContent value="datasets" className="space-y-6">
+              <WorkspaceFileExplorer workspaceId={workspaceId} />
+
+              <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+                <CardHeader>
+                  <CardTitle>Registered Raw Datasets</CardTitle>
+                  <CardDescription>
+                    Datasets registered from extracted workspace ZIP files with lineage to Data Preparation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {registryDatasets.length === 0 ? (
+                    <p className="text-sm text-slate-500">No workspace ZIP datasets have been registered yet.</p>
+                  ) : (
+                    <div className="overflow-hidden rounded-xl border border-slate-200">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-left text-slate-600">
+                          <tr>
+                            <th className="p-3">Dataset</th>
+                            <th className="p-3">Stage</th>
+                            <th className="p-3">Version</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {registryDatasets.map((dataset) => (
+                            <tr key={dataset.id} className="border-t border-slate-100">
+                              <td className="p-3 font-medium text-slate-900">{dataset.name}</td>
+                              <td className="p-3">{dataset.stage}</td>
+                              <td className="p-3">{dataset.version}</td>
+                              <td className="p-3">{dataset.status}</td>
+                              <td className="p-3">
+                                <Link
+                                  className="text-indigo-700 hover:text-indigo-600"
+                                  href={`/dashboard/datasets?prep=profiling&datasetId=${dataset.registeredDatasetId ?? ""}`}
+                                >
+                                  Open in Data Profiling
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {ui.creatingDataset && canWorkspace(currentRole, "uploadDataset") ? (
                 <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
                   <CardHeader>

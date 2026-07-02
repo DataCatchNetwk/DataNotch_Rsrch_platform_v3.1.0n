@@ -52,6 +52,7 @@ type MeResponse = {
 };
 
 const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -60,29 +61,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setAuth = useCallback((user: AuthUser, token: string) => {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     setState({ user, token, loading: false });
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
     setState({ user: null, token: null, loading: false });
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
-    if (!stored) {
-      setState((s) => ({ ...s, loading: false }));
-      return;
+    let active = true;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const controller = new AbortController();
+
+    const clearStoredAuth = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+    };
+
+    const resolveUnauthenticated = () => {
+      if (!active) return;
+      setState({ user: null, token: null, loading: false });
+    };
+
+    let stored: string | null = null;
+    let storedUser: AuthUser | null = null;
+    try {
+      stored = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+      const rawUser = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
+      if (rawUser) {
+        storedUser = JSON.parse(rawUser) as AuthUser;
+      }
+    } catch {
+      resolveUnauthenticated();
+      return () => {
+        active = false;
+      };
     }
 
-    apiFetch<MeResponse>('/api/v1/auth/me', { token: stored })
-      .then((res) => setState({ user: res.user, token: stored, loading: false }))
+    if (!stored) {
+      resolveUnauthenticated();
+      return () => {
+        active = false;
+      };
+    }
+
+    if (storedUser) {
+      setState({ user: storedUser, token: stored, loading: false });
+    }
+
+    timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    apiFetch<MeResponse>('/api/v1/auth/me', { token: stored, signal: controller.signal })
+      .then((res) => {
+        if (!active) return;
+        setState({ user: res.user, token: stored, loading: false });
+      })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY);
-        sessionStorage.removeItem(TOKEN_KEY);
-        setState({ user: null, token: null, loading: false });
+        clearStoredAuth();
+        resolveUnauthenticated();
+      })
+      .finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
       });
+
+    return () => {
+      active = false;
+      controller.abort();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const login = useCallback(async (identifier: string, password: string) => {

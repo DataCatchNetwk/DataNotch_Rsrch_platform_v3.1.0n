@@ -32,6 +32,34 @@ enum WorkspaceStatus {
   ARCHIVED
 }
 
+enum WorkspaceArchiveStatus {
+  UPLOADED
+  SCANNED
+  EXTRACTED
+  FAILED
+}
+
+enum WorkspaceFileKind {
+  FOLDER
+  FILE
+  ARCHIVE
+}
+
+enum RegistryDatasetStage {
+  RAW
+  CLEAN
+  HARMONIZED
+  FEATURES
+}
+
+enum RegistryDatasetStatus {
+  RAW_REGISTERED
+  PROFILING_READY
+  CLEANED
+  VALIDATED
+  READY_FOR_ANALYSIS
+}
+
 enum DatasetVisibility {
   PRIVATE
   WORKSPACE
@@ -497,6 +525,7 @@ model User {
   communicationCallSessionsStarted CommunicationCallSession[] @relation("CommunicationCallStartedBy")
   communicationPresenceHeartbeats CommunicationPresenceHeartbeat[]
   communicationAuditLogsActed CommunicationAuditLog[] @relation("CommunicationAuditActor")
+  uploadedWorkspaceArchives WorkspaceArchive[] @relation("WorkspaceArchiveUploadedBy")
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
@@ -836,11 +865,109 @@ model Workspace {
   pipelineArtifacts PipelineArtifact[]
   modelRegistryEntries ModelRegistryEntry[]
   datasetPullRequests DatasetPullRequest[]
+  workspaceArchives WorkspaceArchive[]
+  workspaceFiles WorkspaceFile[]
+  datasetRegistryRecords DatasetRegistryRecord[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   @@index([ownerId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model PlatformHandoff {
+  id           String   @id @default(cuid())
+  workspaceId  String?
+  datasetId    String?
+  sourceStage  String
+  targetStage  String
+  artifactType String
+  artifactId   String
+  requestedBy  String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([sourceStage])
+  @@index([targetStage])
+  @@index([artifactId])
+  @@index([createdAt])
+}
+
+model GovernanceAuditEvent {
+  id         String   @id @default(cuid())
+  actor      String
+  action     String
+  objectId   String
+  objectType String?
+  stage      String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([action])
+  @@index([stage])
+  @@index([createdAt])
+}
+
+model GovernanceLineageEvent {
+  id           String   @id @default(cuid())
+  fromStage    String
+  toStage      String
+  sourceObject String
+  targetObject String
+  relationType String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([fromStage])
+  @@index([toStage])
+  @@index([relationType])
+  @@index([createdAt])
+}
+
+model SystemJob {
+  id          String   @id @default(cuid())
+  type        String
+  stage       String
+  status      String
+  progress    Int      @default(0)
+  artifactId  String?
+  payload     Json?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([stage])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SystemNotification {
+  id        String   @id @default(cuid())
+  userId    String?
+  title     String
+  body      String?
+  severity  String   @default("info")
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model PlatformStorageObject {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  path        String
+  objectType  String
+  sizeBytes   Int      @default(0)
+  checksum    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([objectType])
   @@index([createdAt])
 }
 
@@ -898,6 +1025,8 @@ model Dataset {
   modelRegistryEntries ModelRegistryEntry[]
   favorites    DatasetFavorite[]
   pullRequests DatasetPullRequest[]
+  sourceWorkspaceFiles WorkspaceFile[]
+  registryRecords DatasetRegistryRecord[]
   accessLogs   DatasetAccessLog[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -1759,6 +1888,17 @@ model DatabaseConnection {
   databaseName   String   @map("database_name") @db.VarChar(140)
   username       String?  @db.VarChar(140)
   connectionUrl  String?  @map("connection_url") @db.Text
+  sourceType     String?  @map("source_type") @db.VarChar(80)
+  sourceClass    String?  @map("source_class") @db.VarChar(80)
+  environment    String?  @db.VarChar(80)
+  connectionMethod String? @map("connection_method") @db.VarChar(80)
+  authMethod     String?  @map("auth_method") @db.VarChar(80)
+  securityJson   Json?    @map("security_json")
+  discoveryJson  Json?    @map("discovery_json")
+  governanceJson Json?    @map("governance_json")
+  syncJson       Json?    @map("sync_json")
+  qualityJson    Json?    @map("quality_json")
+  researchJson   Json?    @map("research_json")
   status         String   @default("active") @db.VarChar(40)
   isDefault      Boolean  @default(false) @map("is_default")
   createdById    String?  @map("created_by_id") @db.VarChar(30)
@@ -1881,4 +2021,136 @@ model DatabaseAuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("database_audit_logs")
+}
+
+model DataPreparationWorkflow {
+  id               String   @id @default(cuid()) @db.VarChar(30)
+  sourceConnectionId String @map("source_connection_id") @db.VarChar(120)
+  datasetName      String   @map("dataset_name") @db.VarChar(180)
+  queryId          String?  @map("query_id") @db.VarChar(120)
+  sqlText          String   @map("sql_text") @db.Text
+  currentStage     String   @map("current_stage") @db.VarChar(40)
+  nextStage        String   @map("next_stage") @db.VarChar(40)
+  status           String   @db.VarChar(60)
+  lastMessage      String?  @map("last_message") @db.VarChar(255)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  stageRuns        DataPreparationStageRun[]
+
+  @@index([currentStage])
+  @@index([status])
+  @@index([updatedAt])
+  @@map("data_preparation_workflows")
+}
+
+model DataPreparationStageRun {
+  id               String   @id @default(cuid()) @db.VarChar(30)
+  workflowId       String   @map("workflow_id") @db.VarChar(30)
+  stage            String   @db.VarChar(40)
+  status           String   @db.VarChar(60)
+  metricsJson      Json?    @map("metrics_json")
+  worklistJson     Json?    @map("worklist_json")
+  changedRows      Int      @default(0) @map("changed_rows")
+  changedColumns   Int      @default(0) @map("changed_columns")
+  startedAt        DateTime @default(now()) @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  workflow         DataPreparationWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("data_preparation_stage_runs")
+}
+
+model WorkspaceArchive {
+  id             String                @id @default(cuid()) @db.VarChar(30)
+  workspaceId    String                @map("workspace_id") @db.VarChar(30)
+  workspace      Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploadedById   String?               @map("uploaded_by_id") @db.VarChar(30)
+  uploadedBy     User?                 @relation("WorkspaceArchiveUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  archiveName    String                @map("archive_name") @db.VarChar(255)
+  archivePath    String                @map("archive_path") @db.Text
+  checksumSha256 String?               @map("checksum_sha256") @db.VarChar(64)
+  status         WorkspaceArchiveStatus @default(UPLOADED)
+  fileCount      Int                   @default(0) @map("file_count")
+  extractedBytes BigInt?               @map("extracted_bytes")
+  extractedAt    DateTime?             @map("extracted_at")
+  metadataJson   Json?                 @map("metadata_json")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  files          WorkspaceFile[]
+
+  @@index([workspaceId])
+  @@index([uploadedById])
+  @@index([status])
+  @@index([createdAt])
+  @@map("workspace_archives")
+}
+
+model WorkspaceFile {
+  id                String            @id @default(cuid()) @db.VarChar(30)
+  workspaceId       String            @map("workspace_id") @db.VarChar(30)
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  archiveId         String?           @map("archive_id") @db.VarChar(30)
+  archive           WorkspaceArchive? @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+  parentId          String?           @map("parent_id") @db.VarChar(30)
+  parent            WorkspaceFile?    @relation("WorkspaceFileTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children          WorkspaceFile[]   @relation("WorkspaceFileTree")
+  kind              WorkspaceFileKind
+  name              String            @db.VarChar(255)
+  relativePath      String            @map("relative_path") @db.Text
+  storagePath       String            @map("storage_path") @db.Text
+  extension         String?           @db.VarChar(20)
+  sizeBytes         BigInt            @default(0) @map("size_bytes")
+  checksumSha256    String?           @map("checksum_sha256") @db.VarChar(64)
+  isDatasetCandidate Boolean          @default(false) @map("is_dataset_candidate")
+  datasetId         String?           @map("dataset_id") @db.VarChar(30)
+  dataset           Dataset?          @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  metadataJson      Json?             @map("metadata_json")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  sourceRegistryRecords DatasetRegistryRecord[] @relation("RegistryRecordSourceWorkspaceFile")
+
+  @@index([workspaceId])
+  @@index([archiveId])
+  @@index([parentId])
+  @@index([datasetId])
+  @@index([isDatasetCandidate])
+  @@index([kind])
+  @@index([createdAt])
+  @@unique([workspaceId, relativePath])
+  @@map("workspace_files")
+}
+
+model DatasetRegistryRecord {
+  id                    String                @id @default(cuid()) @db.VarChar(30)
+  workspaceId           String                @map("workspace_id") @db.VarChar(30)
+  workspace             Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceWorkspaceFileId String?               @map("source_workspace_file_id") @db.VarChar(30)
+  sourceWorkspaceFile   WorkspaceFile?        @relation("RegistryRecordSourceWorkspaceFile", fields: [sourceWorkspaceFileId], references: [id], onDelete: SetNull)
+  registeredDatasetId   String?               @map("registered_dataset_id") @db.VarChar(30)
+  registeredDataset     Dataset?              @relation(fields: [registeredDatasetId], references: [id], onDelete: SetNull)
+  name                  String                @db.VarChar(180)
+  description           String?               @db.Text
+  stage                 RegistryDatasetStage  @default(RAW)
+  status                RegistryDatasetStatus @default(RAW_REGISTERED)
+  version               String                @default("v1.0") @db.VarChar(32)
+  records               Int                   @default(0)
+  variables             Int                   @default(0)
+  storagePath           String?               @map("storage_path") @db.Text
+  lineageJson           Json?                 @map("lineage_json")
+  metadataJson          Json?                 @map("metadata_json")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+
+  @@index([workspaceId])
+  @@index([sourceWorkspaceFileId])
+  @@index([registeredDatasetId])
+  @@index([stage])
+  @@index([status])
+  @@index([createdAt])
+  @@map("dataset_registry_records")
 }

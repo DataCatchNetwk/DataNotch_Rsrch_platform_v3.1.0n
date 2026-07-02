@@ -32,8 +32,8 @@ export function LiveLogPanel({
         <h3 className="text-sm font-semibold">Live Logs</h3>
       </header>
       <div className="max-h-96 space-y-1 overflow-auto px-3 py-2">
-        {logs.map((log) => (
-          <p key={log.id} className="font-mono text-xs">
+        {logs.map((log, index) => (
+          <p key={`${log.id ?? "log"}-${index}`} className="font-mono text-xs">
             [{log.level}] {log.message}
           </p>
         ))}

@@ -1,717 +1,1385 @@
-﻿DataNotch_Rsrch_platform_v3.1.0n - Clean Application Structure
-Generated: 2026-06-26
+DataNotch_Rsrch_platform_v3.1.0n Application Structure
+Generated: 2026-06-26 21:09:27
+Root: C:\Users\cj_wo\OneDrive\Documents\DataBaseDesign-Macarius\DataNotch_Rsrch_platform_v3.1.0n
+Excluded: node_modules, .next, dist/build, .git, venv/cache, storage/uploads, uploaded pack folders
 
-Active source lives under apps/, packages/, docs/, docker/, and scripts/.
-Legacy my-app/ and server/ folders are preserved as rollback copies and excluded from this active structure view.
-Generated pack folders are archived under _archive/packs/ and excluded from this active structure view.
-
-DataNotch_Rsrch_platform_v3.1.0n/
-|-- .github/
-|   |-- workflows/
-|   |   |-- industrial-readiness.yml
-|   |   +-- network-enforcement.yml
-|   +-- branch-protection-note.md
-|-- _archive/
-|-- apps/
-|   |-- api/
-|   |   |-- prisma/
-|   |   |   |-- migrations/
-|   |   |   |   |-- 20260329_baseline/
-|   |   |   |   |   +-- migration.sql
-|   |   |   |   |-- 20260330_admin_governance/
-|   |   |   |   |   +-- migration.sql
-|   |   |   |   |-- 20260330_admin_policy_bulk_ops/
-|   |   |   |   |   +-- migration.sql
-|   |   |   |   |-- 20260331155217_support_center/
-|   |   |   |   |   +-- migration.sql
-|   |   |   |   |-- 20260625_communication_center/
-|   |   |   |   |   +-- migration.sql
-|   |   |   |   +-- migration_lock.toml
-|   |   |   |-- schema.prisma
-|   |   |   +-- seed.ts
-|   |   |-- scripts/
-|   |   |   |-- network-enforcement-smoke.mjs
-|   |   |   +-- seed-central-deposit.mjs
-|   |   |-- src/
-|   |   |   |-- common/
-|   |   |   |   +-- upload.ts
-|   |   |   |-- config/
-|   |   |   |   +-- env.ts
-|   |   |   |-- controllers/
-|   |   |   |   |-- admin.controller.ts
-|   |   |   |   |-- admin-governance.controller.ts
-|   |   |   |   |-- admin-policy.controller.ts
-|   |   |   |   |-- auth.controller.ts
-|   |   |   |   |-- data-deposit.controller.ts
-|   |   |   |   |-- health-data.controller.ts
-|   |   |   |   |-- notifications.controller.ts
-|   |   |   |   |-- pipelines.controller.ts
-|   |   |   |   |-- researcher-application.controller.ts
-|   |   |   |   |-- support.controller.ts
-|   |   |   |   |-- users.controller.ts
-|   |   |   |   +-- workspaces.controller.ts
-|   |   |   |-- db/
-|   |   |   |   +-- prisma.ts
-|   |   |   |-- guards/
-|   |   |   |   +-- deposit-permission.guard.ts
-|   |   |   |-- middleware/
-|   |   |   |   |-- authenticate.ts
-|   |   |   |   |-- authenticate-optional.ts
-|   |   |   |   |-- authorize.ts
-|   |   |   |   |-- debug-admin-token.ts
-|   |   |   |   |-- error-handler.ts
-|   |   |   |   |-- network-access.ts
-|   |   |   |   |-- rate-limit.ts
-|   |   |   |   |-- request-id.ts
-|   |   |   |   |-- security-headers.ts
-|   |   |   |   +-- validate.ts
-|   |   |   |-- modules/
-|   |   |   |   |-- analysis-jobs/
-|   |   |   |   |   |-- dto/
-|   |   |   |   |   |   |-- analysis-job-id-param.dto.ts
-|   |   |   |   |   |   |-- analysis-job-response.dto.ts
-|   |   |   |   |   |   |-- bulk-job-action.dto.ts
-|   |   |   |   |   |   +-- list-analysis-jobs-query.dto.ts
-|   |   |   |   |   |-- analysis-jobs.controller.ts
-|   |   |   |   |   |-- analysis-jobs.mapper.ts
-|   |   |   |   |   |-- analysis-jobs.module.ts
-|   |   |   |   |   |-- analysis-jobs.service.ts
-|   |   |   |   |   |-- analysis-jobs.types.ts
-|   |   |   |   |   +-- README.md
-|   |   |   |   |-- analysis-orchestrator/
-|   |   |   |   |   +-- analysis-orchestrator.module.ts
-|   |   |   |   |-- cohorts/
-|   |   |   |   |   +-- cohorts.module.ts
-|   |   |   |   |-- communication/
-|   |   |   |   |   |-- services/
-|   |   |   |   |   |   |-- audit-log.service.ts
-|   |   |   |   |   |   |-- call-session.service.ts
-|   |   |   |   |   |   |-- communication-room.service.ts
-|   |   |   |   |   |   |-- message.service.ts
-|   |   |   |   |   |   |-- presence.service.ts
-|   |   |   |   |   |   +-- signaling.service.ts
-|   |   |   |   |   |-- communication.controller.ts
-|   |   |   |   |   |-- communication.module.ts
-|   |   |   |   |   |-- communication.store.ts
-|   |   |   |   |   +-- communication.types.ts
-|   |   |   |   |-- experiment-tracking/
-|   |   |   |   |   |-- experiment-tracking.controller.ts
-|   |   |   |   |   |-- experiment-tracking.module.ts
-|   |   |   |   |   +-- experiment-tracking.service.ts
-|   |   |   |   |-- feature-store/
-|   |   |   |   |   +-- feature-store.module.ts
-|   |   |   |   |-- genomics/
-|   |   |   |   |   |-- genomics.controller.ts
-|   |   |   |   |   |-- genomics.module.ts
-|   |   |   |   |   +-- genomics.service.ts
-|   |   |   |   |-- metrics/
-|   |   |   |   |   +-- metrics.module.ts
-|   |   |   |   |-- ml/
-|   |   |   |   |   |-- ml.controller.ts
-|   |   |   |   |   |-- ml.module.ts
-|   |   |   |   |   +-- ml.service.ts
-|   |   |   |   |-- profile/
-|   |   |   |   |   |-- dto/
-|   |   |   |   |   |   |-- change-password.dto.ts
-|   |   |   |   |   |   |-- profile-response.dto.ts
-|   |   |   |   |   |   |-- request-account-deletion.dto.ts
-|   |   |   |   |   |   |-- request-elevated-access.dto.ts
-|   |   |   |   |   |   |-- revoke-session.dto.ts
-|   |   |   |   |   |   |-- toggle-two-factor.dto.ts
-|   |   |   |   |   |   |-- update-notification-preferences.dto.ts
-|   |   |   |   |   |   +-- update-profile.dto.ts
-|   |   |   |   |   |-- profile.controller.ts
-|   |   |   |   |   |-- profile.mapper.ts
-|   |   |   |   |   |-- profile.module.ts
-|   |   |   |   |   |-- profile.service.ts
-|   |   |   |   |   |-- profile.types.ts
-|   |   |   |   |   +-- README.md
-|   |   |   |   |-- research-workspaces/
-|   |   |   |   |   +-- research-workspaces.module.ts
-|   |   |   |   |-- sdoh/
-|   |   |   |   |   |-- sdoh-governance.service.ts
-|   |   |   |   |   +-- sdoh-intelligence.service.ts
-|   |   |   |   |-- statistics/
-|   |   |   |   |   |-- statistics.controller.ts
-|   |   |   |   |   |-- statistics.module.ts
-|   |   |   |   |   +-- statistics.service.ts
-|   |   |   |   |-- survival/
-|   |   |   |   |   |-- survival.controller.ts
-|   |   |   |   |   |-- survival.module.ts
-|   |   |   |   |   +-- survival.service.ts
-|   |   |   |   |-- system-monitoring/
-|   |   |   |   |   |-- dto/
-|   |   |   |   |   |   +-- monitoring-response.dto.ts
-|   |   |   |   |   |-- system-monitoring.controller.ts
-|   |   |   |   |   |-- system-monitoring.module.ts
-|   |   |   |   |   +-- system-monitoring.service.ts
-|   |   |   |   |-- system-monitoring-realtime/
-|   |   |   |   |   |-- system-monitoring-realtime.controller.ts
-|   |   |   |   |   |-- system-monitoring-realtime.module.ts
-|   |   |   |   |   +-- system-monitoring-realtime.service.ts
-|   |   |   |   +-- research-common.ts
-|   |   |   |-- pipelines/
-|   |   |   |   |-- event-bus.ts
-|   |   |   |   |-- orchestrator.ts
-|   |   |   |   |-- pipeline.templates.ts
-|   |   |   |   |-- queue.constants.ts
-|   |   |   |   |-- schemas.ts
-|   |   |   |   |-- service.ts
-|   |   |   |   +-- stream-auth.ts
-|   |   |   |-- realtime/
-|   |   |   |   |-- communication.gateway.ts
-|   |   |   |   |-- notifications.gateway.ts
-|   |   |   |   +-- system-monitoring.realtime.ts
-|   |   |   |-- routes/
-|   |   |   |   |-- admin.ts
-|   |   |   |   |-- admin-governance.ts
-|   |   |   |   |-- admin-policy.ts
-|   |   |   |   |-- auth.ts
-|   |   |   |   |-- cohorts.ts
-|   |   |   |   |-- data-deposit.ts
-|   |   |   |   |-- health-data.ts
-|   |   |   |   |-- notifications.ts
-|   |   |   |   |-- ops.ts
-|   |   |   |   |-- pipelines.ts
-|   |   |   |   |-- researcher-applications.ts
-|   |   |   |   |-- schemas.ts
-|   |   |   |   |-- sdoh.ts
-|   |   |   |   |-- support.ts
-|   |   |   |   |-- users.ts
-|   |   |   |   +-- workspaces.ts
-|   |   |   |-- services/
-|   |   |   |   |-- admin.service.ts
-|   |   |   |   |-- admin-governance.dto.ts
-|   |   |   |   |-- admin-governance.service.ts
-|   |   |   |   |-- admin-policy.dto.ts
-|   |   |   |   |-- admin-policy.service.ts
-|   |   |   |   |-- admin-policy-ops.service.ts
-|   |   |   |   |-- audit.service.ts
-|   |   |   |   |-- auth.service.ts
-|   |   |   |   |-- automation.service.ts
-|   |   |   |   |-- dashboard.service.ts
-|   |   |   |   |-- data-deposit.service.ts
-|   |   |   |   |-- health-data.service.ts
-|   |   |   |   |-- notifications.service.ts
-|   |   |   |   |-- researcher-application.service.ts
-|   |   |   |   |-- support.service.ts
-|   |   |   |   |-- workspace-access.service.ts
-|   |   |   |   |-- workspace-analysis-jobs.service.ts
-|   |   |   |   |-- workspace-datasets.service.ts
-|   |   |   |   |-- workspace-permissions.ts
-|   |   |   |   |-- workspace-reports.service.ts
-|   |   |   |   +-- workspaces.service.ts
-|   |   |   |-- types/
-|   |   |   |   +-- express.d.ts
-|   |   |   |-- utils/
-|   |   |   |   |-- async-handler.ts
-|   |   |   |   |-- crypto.ts
-|   |   |   |   |-- errors.ts
-|   |   |   |   |-- jwt.ts
-|   |   |   |   +-- password.ts
-|   |   |   |-- workers/
-|   |   |   |   |-- processors/
-|   |   |   |   |   |-- cohort-build.processor.ts
-|   |   |   |   |   |-- evaluate.processor.ts
-|   |   |   |   |   |-- export.processor.ts
-|   |   |   |   |   |-- feature-materialization.processor.ts
-|   |   |   |   |   |-- ingest.processor.ts
-|   |   |   |   |   |-- publish.processor.ts
-|   |   |   |   |   |-- pull-job.processor.ts
-|   |   |   |   |   |-- report.processor.ts
-|   |   |   |   |   |-- train.processor.ts
-|   |   |   |   |   +-- transform.processor.ts
-|   |   |   |   |-- runtime/
-|   |   |   |   |   +-- base.processor.ts
-|   |   |   |   |-- autoscaling.service.ts
-|   |   |   |   |-- postgres-local-worker.ts
-|   |   |   |   |-- queue.factory.ts
-|   |   |   |   |-- queue-events.ts
-|   |   |   |   |-- queue-repair.ts
-|   |   |   |   |-- repair-queue.ts
-|   |   |   |   |-- start-workers.ts
-|   |   |   |   +-- workers.service.ts
-|   |   |   |-- app.ts
-|   |   |   |-- index.ts
-|   |   |   +-- worker.ts
-|   |   |-- .gitignore
-|   |   |-- backend-dev.log
-|   |   |-- docs-architecture.md
-|   |   |-- package.json
-|   |   |-- package-lock.json
-|   |   |-- README.md
-|   |   |-- tsconfig.json
-|   |   +-- upgrade-admin-role.js
-|   +-- web/
-|       |-- app/
-|       |   |-- (auth)/
-|       |   |   +-- register/
-|       |   |       +-- page.tsx
-|       |   |-- admin/
-|       |   |   |-- access/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- audit/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- communication/
-|       |   |   |   |-- [roomId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- governance/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- monitoring/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- operations/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- policy/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- registrations/
-|       |   |   |   |-- adminLanding.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- support/
-|       |   |   |   |-- [ticketId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- users/
-|       |   |   |   +-- page.tsx
-|       |   |   +-- page.tsx
-|       |   |-- api/
-|       |   |   +-- v1/
-|       |   |       |-- auth/
-|       |   |       |   +-- register-researcher-application/
-|       |   |       |       +-- route.ts
-|       |   |       +-- security/
-|       |   |           +-- network-check/
-|       |   |               +-- route.ts
-|       |   |-- auth/
-|       |   |   +-- complete-2fa/
-|       |   |       +-- page.tsx
-|       |   |-- dashboard/
-|       |   |   |-- access/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- activity/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- analysis/
-|       |   |   |   +-- jobs/
-|       |   |   |       |-- [jobId]/
-|       |   |   |       |   +-- page.tsx
-|       |   |   |       +-- page.tsx
-|       |   |   |-- collaborators/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- database/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- data-deposit/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- datasets/
-|       |   |   |   |-- [datasetId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- downloads/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- files/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- models/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- monitoring/
-|       |   |   |   +-- pipelines/
-|       |   |   |       |-- [runId]/
-|       |   |   |       |   +-- page.tsx
-|       |   |   |       +-- page.tsx
-|       |   |   |-- notifications/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- pending/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- pipelines/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- profile/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- reports/
-|       |   |   |   |-- [reportId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- requests/
-|       |   |   |   |-- [requestId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   |-- reviewer-queue/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   |-- page.tsx
-|       |   |   |   +-- request-data.ts
-|       |   |   |-- results/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- sdoh/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- settings/
-|       |   |   |   |-- sessions/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- support/
-|       |   |   |   |-- [ticketId]/
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- visualizations/
-|       |   |   |   +-- page.tsx
-|       |   |   |-- workspaces/
-|       |   |   |   |-- [workspaceId]/
-|       |   |   |   |   |-- pipelines/
-|       |   |   |   |   |   +-- [runId]/
-|       |   |   |   |   |       +-- page.tsx
-|       |   |   |   |   +-- page.tsx
-|       |   |   |   +-- page.tsx
-|       |   |   |-- layout.module.css
-|       |   |   |-- layout.tsx
-|       |   |   |-- page.module.css
-|       |   |   |-- page.tsx
-|       |   |   +-- user-landing.tsx
-|       |   |-- forgot-password/
-|       |   |   +-- page.tsx
-|       |   |-- login/
-|       |   |   |-- admin/
-|       |   |   |   +-- page.tsx
-|       |   |   +-- page.module.css
-|       |   |-- register/
-|       |   |-- reset-password/
-|       |   |   +-- page.tsx
-|       |   |-- support/
-|       |   |   +-- page.tsx
-|       |   |-- error.tsx
-|       |   |-- favicon.ico
-|       |   |-- global-error.tsx
-|       |   |-- globals.css
-|       |   |-- layout.tsx
-|       |   |-- loading.tsx
-|       |   |-- not-found.tsx
-|       |   +-- page.tsx
-|       |-- components/
-|       |   |-- admin/
-|       |   |   |-- admin-card.tsx
-|       |   |   |-- admin-shell.tsx
-|       |   |   +-- admin-states.tsx
-|       |   |-- admin-governance/
-|       |   |   |-- access-request-queue.tsx
-|       |   |   |-- audit-explorer.tsx
-|       |   |   +-- user-table.tsx
-|       |   |-- admin-monitoring/
-|       |   |   |-- alerts-strip.tsx
-|       |   |   |-- control-plane-hero.tsx
-|       |   |   |-- logs-panel.tsx
-|       |   |   |-- metrics-grid.tsx
-|       |   |   |-- monitoring-shell.tsx
-|       |   |   |-- monitoring-states.tsx
-|       |   |   |-- operations-actions-card.tsx
-|       |   |   |-- queue-inspector.tsx
-|       |   |   |-- realtime-toggle.tsx
-|       |   |   |-- service-health-section.tsx
-|       |   |   +-- trend-section.tsx
-|       |   |-- admin-policy/
-|       |   |   +-- approval-action-panel.tsx
-|       |   |-- analysis/
-|       |   |   |-- jobs-filters.tsx
-|       |   |   |-- jobs-table.tsx
-|       |   |   |-- job-status-badge.tsx
-|       |   |   |-- live-log-panel.tsx
-|       |   |   |-- stage-timeline.tsx
-|       |   |   +-- stream-status-badge.tsx
-|       |   |-- collaborators/
-|       |   |   |-- collaborator-detail-drawer.tsx
-|       |   |   |-- collaborator-filters.tsx
-|       |   |   |-- collaborators-table.tsx
-|       |   |   |-- collaborator-stats.tsx
-|       |   |   |-- global-collaborators-page.tsx
-|       |   |   |-- invite-collaborator-dialog.tsx
-|       |   |   +-- pending-invites-panel.tsx
-|       |   |-- communication/
-|       |   |   |-- audio-call-card.tsx
-|       |   |   |-- call-controls.tsx
-|       |   |   |-- communication-panel.tsx
-|       |   |   |-- compose-message.tsx
-|       |   |   |-- message-thread.tsx
-|       |   |   |-- messaging-card.tsx
-|       |   |   |-- participant-grid.tsx
-|       |   |   |-- presence-badge.tsx
-|       |   |   |-- room-sidebar.tsx
-|       |   |   +-- video-room-card.tsx
-|       |   |-- data-deposit/
-|       |   |   |-- data-deposit-client.tsx
-|       |   |   |-- data-deposit-columns.tsx
-|       |   |   |-- data-deposit-page.tsx
-|       |   |   |-- data-deposit-preview-modal.tsx
-|       |   |   +-- data-deposit-pull-modal.tsx
-|       |   |-- datasets/
-|       |   |   |-- dataset-access-info-card.tsx
-|       |   |   |-- dataset-analysis-drawer.tsx
-|       |   |   |-- dataset-artifacts-panel.tsx
-|       |   |   |-- dataset-audit-trail.tsx
-|       |   |   |-- dataset-card-view.tsx
-|       |   |   |-- dataset-columns.tsx
-|       |   |   |-- dataset-details-page.tsx
-|       |   |   |-- dataset-filters.tsx
-|       |   |   |-- dataset-lineage-card.tsx
-|       |   |   |-- dataset-overview-card.tsx
-|       |   |   |-- dataset-quality-card.tsx
-|       |   |   |-- dataset-row-preview.tsx
-|       |   |   |-- dataset-schema-preview.tsx
-|       |   |   |-- datasets-flow-shell.tsx
-|       |   |   |-- datasets-page.tsx
-|       |   |   |-- datasets-table.tsx
-|       |   |   |-- dataset-stats-cards.tsx
-|       |   |   |-- dataset-upload-dialog.tsx
-|       |   |   +-- dataset-upload-progress-dialog.tsx
-|       |   |-- layout/
-|       |   |   |-- app-sidebar.tsx
-|       |   |   +-- app-sidebar-wired-to-route-config.tsx
-|       |   |-- notifications/
-|       |   |   |-- notification-bell.tsx
-|       |   |   |-- notifications-page.tsx
-|       |   |   +-- notification-utils.ts
-|       |   |-- pipelines/
-|       |   |   |-- pipeline-log-list.tsx
-|       |   |   |-- pipeline-metrics-cards.tsx
-|       |   |   |-- pipeline-stage-graph.tsx
-|       |   |   |-- pipeline-table.tsx
-|       |   |   +-- stage-node.tsx
-|       |   |-- platform/
-|       |   |   +-- notification-badge.tsx
-|       |   |-- profile/
-|       |   |   +-- edit-profile-dialog.tsx
-|       |   |-- providers/
-|       |   |   +-- query-provider.tsx
-|       |   |-- reports/
-|       |   |   |-- artifact-viewer.tsx
-|       |   |   |-- report-charts-panel.tsx
-|       |   |   |-- report-metrics-grid.tsx
-|       |   |   +-- report-sections-panel.tsx
-|       |   |-- support/
-|       |   |   |-- my-support-tickets.tsx
-|       |   |   |-- support-request-form.tsx
-|       |   |   +-- support-ticket-detail.tsx
-|       |   |-- ui/
-|       |   |   |-- alert.tsx
-|       |   |   |-- avatar.tsx
-|       |   |   |-- badge.tsx
-|       |   |   |-- button.tsx
-|       |   |   |-- card.tsx
-|       |   |   |-- checkbox.tsx
-|       |   |   |-- dialog.tsx
-|       |   |   |-- dropdown-menu.tsx
-|       |   |   |-- form.tsx
-|       |   |   |-- input.tsx
-|       |   |   |-- label.tsx
-|       |   |   |-- progress.tsx
-|       |   |   |-- scroll-area.tsx
-|       |   |   |-- select.tsx
-|       |   |   |-- separator.tsx
-|       |   |   |-- sheet.tsx
-|       |   |   |-- sidebar.tsx
-|       |   |   |-- skeleton.tsx
-|       |   |   |-- switch.tsx
-|       |   |   |-- table.tsx
-|       |   |   |-- tabs.tsx
-|       |   |   +-- textarea.tsx
-|       |   |-- visualizations/
-|       |   |   +-- research-chart-studio.tsx
-|       |   |-- workspaces/
-|       |   |   |-- create-workspace-dialog.tsx
-|       |   |   +-- workspace-badges.tsx
-|       |   |-- app-sidebar.module.css
-|       |   |-- app-sidebar.tsx
-|       |   |-- card.tsx
-|       |   |-- command-palette.module.css
-|       |   |-- command-palette.tsx
-|       |   |-- protected-route.tsx
-|       |   |-- shell.tsx
-|       |   +-- theme-provider.tsx
-|       |-- docs/
-|       |   |-- api-endpoints.md
-|       |   |-- architecture.md
-|       |   +-- frontend-page-structure.md
-|       |-- hooks/
-|       |   |-- use-analysis-job-details.ts
-|       |   |-- use-analysis-jobs.ts
-|       |   |-- use-cancel-analysis-job.ts
-|       |   |-- use-dataset-artifacts.ts
-|       |   |-- use-dataset-details.ts
-|       |   |-- use-datasets.ts
-|       |   |-- use-job-stream.ts
-|       |   |-- use-message-thread.ts
-|       |   |-- use-monitoring-page-data.ts
-|       |   |-- use-monitoring-realtime-controller.ts
-|       |   |-- use-presence.ts
-|       |   |-- use-profile-page-data.ts
-|       |   |-- use-realtime-room.ts
-|       |   |-- use-report-details.ts
-|       |   |-- use-start-analysis.ts
-|       |   |-- use-system-monitoring-sse.ts
-|       |   |-- use-system-monitoring-websocket.ts
-|       |   |-- use-upload-dataset.ts
-|       |   +-- use-webrtc.ts
-|       |-- legacy/
-|       |   |-- apps/
-|       |   |   +-- web/
-|       |   |       |-- src/
-|       |   |       |   |-- app/
-|       |   |       |   |   |-- (dashboard)/
-|       |   |       |   |   |   |-- dashboard/
-|       |   |       |   |   |   |   |-- page.module.css
-|       |   |       |   |   |   |   +-- page.tsx
-|       |   |       |   |   |   |-- health-data/
-|       |   |       |   |   |   |   +-- page.tsx
-|       |   |       |   |   |   |-- layout.module.css
-|       |   |       |   |   |   +-- layout.tsx
-|       |   |       |   |   |-- forgot-password/
-|       |   |       |   |   |   +-- page.tsx
-|       |   |       |   |   |-- login/
-|       |   |       |   |   |   |-- page.module.css
-|       |   |       |   |   |   +-- page.tsx
-|       |   |       |   |   |-- register/
-|       |   |       |   |   |   +-- page.tsx
-|       |   |       |   |   |-- error.tsx
-|       |   |       |   |   |-- layout.tsx
-|       |   |       |   |   |-- loading.tsx
-|       |   |       |   |   |-- not-found.tsx
-|       |   |       |   |   +-- page.tsx
-|       |   |       |   |-- components/
-|       |   |       |   |   +-- ProtectedRoute.tsx
-|       |   |       |   |-- context/
-|       |   |       |   |   +-- AuthContext.tsx
-|       |   |       |   +-- lib/
-|       |   |       |       +-- auth.ts
-|       |   |       |-- AUTHENTICATION.md
-|       |   |       |-- DEVELOPMENT.md
-|       |   |       |-- next.config.js
-|       |   |       |-- next-env.d.ts
-|       |   |       |-- package.json
-|       |   |       |-- tsconfig.json
-|       |   |       +-- web.log
-|       |   +-- docs/
-|       |       +-- architecture.md
-|       |-- lib/
-|       |   |-- api/
-|       |   |   |-- admin-api-client.ts
-|       |   |   |-- admin-governance-api-client.ts
-|       |   |   |-- admin-policy-api-client.ts
-|       |   |   |-- analysis.ts
-|       |   |   |-- client.ts
-|       |   |   |-- communication.ts
-|       |   |   |-- dataset-details.ts
-|       |   |   |-- datasets.ts
-|       |   |   |-- notifications.ts
-|       |   |   |-- ops.ts
-|       |   |   |-- profile-api-client.ts
-|       |   |   |-- reports.ts
-|       |   |   |-- support.ts
-|       |   |   |-- system-monitoring-api-client.ts
-|       |   |   +-- system-monitoring-realtime-client.ts
-|       |   |-- mock/
-|       |   |   +-- collaborators.ts
-|       |   |-- socket/
-|       |   |   +-- client.ts
-|       |   |-- api.ts
-|       |   |-- auth-context.tsx
-|       |   |-- auth-service.ts
-|       |   |-- auth-storage.ts
-|       |   |-- monitoring-realtime-config.ts
-|       |   |-- utils.ts
-|       |   +-- workspace-ui-permissions.ts
-|       |-- prisma/
-|       |   +-- schema.prisma
-|       |-- public/
-|       |   |-- file.svg
-|       |   |-- globe.svg
-|       |   |-- next.svg
-|       |   |-- vercel.svg
-|       |   +-- window.svg
-|       |-- scripts/
-|       |   +-- smoke-communication-socket.mjs
-|       |-- src/
-|       |   |-- config/
-|       |   |   |-- route-guards-rbac.ts
-|       |   |   +-- route-map-and-icons.ts
-|       |   +-- lib/
-|       |       |-- api/
-|       |       |   |-- analysis-jobs-api-client.ts
-|       |       |   |-- client.ts
-|       |       |   |-- cohorts.ts
-|       |       |   |-- data-deposit.ts
-|       |       |   |-- pipelines.ts
-|       |       |   |-- platform.ts
-|       |       |   |-- profile-api-client.ts
-|       |       |   |-- requests.ts
-|       |       |   |-- sdoh.ts
-|       |       |   +-- workspaces.ts
-|       |       |-- hooks/
-|       |       |   +-- use-pipeline-socket.ts
-|       |       |-- notifications/
-|       |       |   +-- socket.ts
-|       |       |-- utils.ts
-|       |       +-- workspace-ui-permissions.ts
-|       |-- types/
-|       |   |-- analysis.ts
-|       |   |-- collaborator.ts
-|       |   |-- dataset.ts
-|       |   |-- dataset-details.ts
-|       |   |-- notification.ts
-|       |   |-- report.ts
-|       |   +-- support.ts
-|       |-- .env.example
-|       |-- .gitignore
-|       |-- AGENTS.md
-|       |-- CLAUDE.md
-|       |-- components.json
-|       |-- eslint.config.mjs
-|       |-- next.config.ts
-|       |-- next-env.d.ts
-|       |-- package.json
-|       |-- postcss.config.mjs
-|       |-- README.md
-|       |-- tsconfig.json
-|       +-- tsconfig.tsbuildinfo
-|-- docker/
-|   |-- Dockerfile.api
-|   |-- Dockerfile.web
-|   +-- nginx.conf
-|-- docs/
-|   |-- api-endpoints.md
-|   |-- architecture.md
-|   |-- deployment.md
-|   |-- frontend-page-structure.md
-|   |-- governance-and-rbac.md
-|   +-- sdoh-production-hardening.md
-|-- packages/
-|   |-- shared-config/
-|   |   +-- package.json
-|   |-- shared-types/
-|   |   +-- package.json
-|   +-- shared-ui/
-|       +-- package.json
-|-- scripts/
-|   |-- dev.mjs
-|   |-- healthcheck.mjs
-|   |-- reset-researcher-status.mjs
-|   |-- smoke-auth.mjs
-|   +-- smoke-communication.mjs
-|-- .env.example
-|-- .gitignore
-|-- admin-dashboard-upgraded.tsx
-|-- admin-styling-upgrade-spec.md
-|-- analysis-jobs-api-client.ts
-|-- analysis-jobs-button-action-spec.md
-|-- analysis-jobs-page.tsx
-|-- app-sidebar-wired-to-route-config.tsx
-|-- ARCHITECTURE_UPGRADE_LOG.md
-|-- datasrch_report.docx
-|-- DEPLOYMENT_READINESS.md
-|-- edit-profile-dialog-wired.tsx
-|-- ENTERPRISE_CHECKLIST.md
-|-- ENTERPRISE_QUICK_REFERENCE.md
-|-- ENTERPRISE_UPGRADE_GUIDE.md
-|-- IMPLEMENTATION_COMPLETE.md
-|-- login Credentisal.txt
-|-- package.json
-|-- package-lock.json
-|-- pnpm-lock.yaml
-|-- pnpm-workspace.yaml
-|-- profile-page-final.tsx
-|-- profile-page-wired.tsx
-|-- route-map-and-icons.ts
-|-- structure.txt
-|-- system-monitoring-page-realtime-wired.tsx
++-- .github
+�   +-- workflows
+�   �   +-- industrial-readiness.yml
+�   �   +-- network-enforcement.yml
+�   +-- branch-protection-note.md
++-- admin-enterprise-system
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- admin
+�   �               +-- dto
+�   �               �   +-- request-id-param.dto.ts
+�   �               �   +-- update-user-role.dto.ts
+�   �               �   +-- update-user-status.dto.ts
+�   �               �   +-- user-id-param.dto.ts
+�   �               +-- admin.controller.ts
+�   �               +-- admin.mapper.ts
+�   �               +-- admin.module.ts
+�   �               +-- admin.service.ts
+�   �               +-- admin.types.ts
+�   +-- frontend
+�   �   +-- app
+�   �   �   +-- admin
+�   �   �       +-- access
+�   �   �       �   +-- page.tsx
+�   �   �       +-- audit
+�   �   �       �   +-- page.tsx
+�   �   �       +-- monitoring
+�   �   �       �   +-- page.tsx
+�   �   �       +-- registrations
+�   �   �       �   +-- page.tsx
+�   �   �       +-- users
+�   �   �       �   +-- page.tsx
+�   �   �       +-- page.tsx
+�   �   +-- components
+�   �   �   +-- admin
+�   �   �       +-- admin-card.tsx
+�   �   �       +-- admin-shell.tsx
+�   �   �       +-- admin-states.tsx
+�   �   +-- src
+�   �       +-- lib
+�   �           +-- api
+�   �               +-- admin-api-client.ts
+�   +-- README.md
++-- admin-governance-ui-pack
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- admin-governance-ui
+�   �               +-- dto
+�   �               �   +-- bulk-role-action.dto.ts
+�   �               �   +-- bulk-suspend-action.dto.ts
+�   �               +-- README.md
+�   +-- frontend
+�   �   +-- app
+�   �   �   +-- admin-governance
+�   �   �       +-- page.tsx
+�   �   +-- components
+�   �   �   +-- admin-governance
+�   �   �       +-- access-request-queue.tsx
+�   �   �       +-- audit-explorer.tsx
+�   �   �       +-- governance-shell.tsx
+�   �   �       +-- governance-states.tsx
+�   �   �       +-- user-table.tsx
+�   �   +-- src
+�   �       +-- lib
+�   �           +-- api
+�   �               +-- admin-governance-api-client.ts
+�   +-- README.md
++-- admin-policy-bulk-ops-pack
+�   +-- backend
+�   �   +-- prisma
+�   �   �   +-- schema.additions.prisma
+�   �   +-- src
+�   �       +-- common
+�   �       �   +-- policies
+�   �       �       +-- admin-policy.service.ts
+�   �       +-- modules
+�   �           +-- admin-policy
+�   �               +-- dto
+�   �               �   +-- approval-decision.dto.ts
+�   �               �   +-- bulk-role-action.dto.ts
+�   �               �   +-- bulk-status-action.dto.ts
+�   �               �   +-- request-id-param.dto.ts
+�   �               +-- admin-policy.controller.ts
+�   �               +-- admin-policy.module.ts
+�   �               +-- admin-policy.service.ts
+�   +-- frontend
+�   �   +-- components
+�   �       +-- admin-policy
+�   �           +-- approval-action-panel.tsx
+�   +-- README.md
++-- advanced_multifaceted_research_architecture_upgrade_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- analysis-studio
+�   �           �   �   +-- page.tsx
+�   �           �   +-- cohorts
+�   �           �   �   +-- page.tsx
+�   �           �   +-- experiments
+�   �           �   �   +-- page.tsx
+�   �           �   +-- feature-store
+�   �           �   �   +-- page.tsx
+�   �           �   +-- genomics
+�   �           �   �   +-- page.tsx
+�   �           �   +-- research-workspace
+�   �           �       +-- page.tsx
+�   �           +-- components
+�   �               +-- research
+�   �                   +-- research-navigation.tsx
+�   +-- docs
+�   �   +-- 01_enterprise_architecture_spec.md
+�   �   +-- 02_capability_matrix.md
+�   �   +-- 03_rollout_plan.md
+�   �   +-- 04_shadcn_ui_page_map.md
+�   �   +-- 05_queue_worker_topology.md
+�   �   +-- 06_analysis_engine_design.md
+�   +-- infra
+�   �   +-- module-map.md
+�   +-- schemas
+�   �   +-- prisma.research-upgrade.prisma
+�   +-- server
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- analysis-orchestrator
+�   �           �   +-- analysis-orchestrator.contract.ts
+�   �           �   +-- analysis-orchestrator.module.ts
+�   �           +-- cohorts
+�   �           �   +-- cohorts.contract.ts
+�   �           �   +-- cohorts.module.ts
+�   �           +-- experiment-tracking
+�   �           �   +-- experiment-tracking.contract.ts
+�   �           �   +-- experiment-tracking.module.ts
+�   �           +-- feature-store
+�   �           �   +-- feature-store.contract.ts
+�   �           �   +-- feature-store.module.ts
+�   �           +-- genomics
+�   �           �   +-- genomics.engine.ts
+�   �           �   +-- genomics.module.ts
+�   �           +-- graph-research
+�   �           �   +-- graph-research.module.ts
+�   �           +-- metrics
+�   �           �   +-- metrics.engine.ts
+�   �           �   +-- metrics.module.ts
+�   �           +-- ml
+�   �           �   +-- ml.engine.ts
+�   �           �   +-- ml.module.ts
+�   �           +-- ontology
+�   �           �   +-- ontology.module.ts
+�   �           +-- research-workspaces
+�   �           �   +-- research-workspaces.contract.ts
+�   �           �   +-- research-workspaces.module.ts
+�   �           +-- statistics
+�   �           �   +-- statistics.engine.ts
+�   �           �   +-- statistics.module.ts
+�   �           +-- survival
+�   �               +-- survival.engine.ts
+�   �               +-- survival.module.ts
+�   +-- workers
+�   �   +-- worker-topology.md
+�   +-- README.md
++-- analysis-jobs-nestjs-backend
+�   +-- src
+�   �   +-- modules
+�   �       +-- analysis-jobs
+�   �           +-- dto
+�   �           �   +-- analysis-job-id-param.dto.ts
+�   �           �   +-- analysis-job-response.dto.ts
+�   �           �   +-- bulk-job-action.dto.ts
+�   �           �   +-- list-analysis-jobs-query.dto.ts
+�   �           +-- analysis-jobs.controller.ts
+�   �           +-- analysis-jobs.mapper.ts
+�   �           +-- analysis-jobs.module.ts
+�   �           +-- analysis-jobs.service.ts
+�   �           +-- analysis-jobs.types.ts
+�   +-- README.md
++-- central_data_deposit_fully_wired_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- (dashboard)
+�   �           �       +-- data-deposit
+�   �           �           +-- page.tsx
+�   �           +-- components
+�   �           �   +-- data-deposit
+�   �           �       +-- data-deposit-client.tsx
+�   �           �       +-- data-deposit-columns.tsx
+�   �           �       +-- data-deposit-preview-modal.tsx
+�   �           �       +-- data-deposit-pull-modal.tsx
+�   �           +-- lib
+�   �               +-- api
+�   �               �   +-- data-deposit.ts
+�   �               +-- types
+�   �                   +-- data-deposit.ts
+�   +-- docs
+�   �   +-- IMPLEMENTATION_NOTES.md
+�   +-- server
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- data-deposit
+�   �               +-- dto
+�   �               �   +-- favorite-deposit-dataset.dto.ts
+�   �               �   +-- list-deposit-datasets.dto.ts
+�   �               �   +-- pull-deposit-dataset.dto.ts
+�   �               +-- guards
+�   �               �   +-- deposit-permission.guard.ts
+�   �               +-- queue
+�   �               �   +-- data-deposit-queue.service.ts
+�   �               �   +-- preview.worker.stub.ts
+�   �               �   +-- pull.worker.stub.ts
+�   �               +-- data-deposit.controller.ts
+�   �               +-- data-deposit.module.ts
+�   �               +-- data-deposit.service.ts
+�   +-- README.md
++-- data_deposit_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- (dashboard)
+�   �           �   �   +-- data-deposit
+�   �           �   �       +-- page.tsx
+�   �           �   +-- data-deposit
+�   �           �       +-- page.tsx
+�   �           +-- components
+�   �           �   +-- data-deposit
+�   �           �       +-- data-deposit-grid.tsx
+�   �           �       +-- data-grid.tsx
+�   �           �       +-- data-preview-modal.tsx
+�   �           +-- lib
+�   �               +-- api
+�   �               �   +-- data-deposit.ts
+�   �               +-- types
+�   �                   +-- data-deposit.ts
+�   +-- docs
+�   �   +-- architecture_spec.md
+�   �   +-- IMPLEMENTATION_PLAN.md
+�   �   +-- next_steps.md
+�   +-- prisma
+�   �   +-- schema.data-deposit.prisma
+�   �   +-- schema_extension.prisma
+�   +-- server
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- data-deposit
+�   �           �   +-- dto
+�   �           �   �   +-- list-deposit-datasets.dto.ts
+�   �           �   �   +-- pull-dataset.dto.ts
+�   �           �   +-- data-deposit.controller.ts
+�   �           �   +-- data-deposit.module.ts
+�   �           �   +-- data-deposit.service.ts
+�   �           +-- ingestion
+�   �           �   +-- deposit-ingestion.service.ts
+�   �           �   +-- ingestion.service.ts
+�   �           �   +-- scheduled-connectors.md
+�   �           +-- workspace-pulls
+�   �               +-- workspace-pull.worker.ts
+�   +-- README.md
++-- dataset-page-pack
+�   +-- apps
+�   �   +-- api
+�   �   �   +-- prisma
+�   �   �   �   +-- dataset.prisma
+�   �   �   +-- src
+�   �   �       +-- modules
+�   �   �           +-- datasets
+�   �   �               +-- dto
+�   �   �               �   +-- list-datasets.dto.ts
+�   �   �               �   +-- pull-dataset.dto.ts
+�   �   �               +-- entities
+�   �   �               �   +-- dataset.response.ts
+�   �   �               +-- datasets.controller.ts
+�   �   �               +-- datasets.module.ts
+�   �   �               +-- datasets.service.ts
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- (dashboard)
+�   �           �       +-- datasets
+�   �           �           +-- page.tsx
+�   �           +-- components
+�   �           �   +-- datasets
+�   �           �       +-- dataset-filters.tsx
+�   �           �       +-- dataset-grid.tsx
+�   �           �       +-- dataset-header.tsx
+�   �           �       +-- dataset-preview-modal.tsx
+�   �           �       +-- dataset-pull-modal.tsx
+�   �           �       +-- dataset-table.tsx
+�   �           �       +-- types.ts
+�   �           +-- lib
+�   �               +-- api
+�   �                   +-- datasets.ts
+�   +-- docs
+�   �   +-- dataset-page-wiring.md
+�   +-- README.md
++-- design-full-collaborators-page
+�   +-- app
+�   �   +-- (app)
+�   �       +-- collaborators
+�   �           +-- page.tsx
+�   +-- components
+�   �   +-- collaborators
+�   �       +-- collaborator-detail-drawer.tsx
+�   �       +-- collaborator-filters.tsx
+�   �       +-- collaborators-table.tsx
+�   �       +-- collaborator-stats.tsx
+�   �       +-- global-collaborators-page.tsx
+�   �       +-- invite-collaborator-dialog.tsx
+�   �       +-- pending-invites-panel.tsx
+�   +-- lib
+�   �   +-- mock
+�   �       +-- collaborators.ts
+�   +-- types
+�   �   +-- collaborator.ts
+�   +-- README.md
++-- final_dataset_page_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- (dashboard)
+�   �           �       +-- datasets
+�   �           �           +-- page.tsx
+�   �           +-- components
+�   �           �   +-- datasets
+�   �           �       +-- dataset-card.tsx
+�   �           �       +-- dataset-filters.tsx
+�   �           �       +-- dataset-preview-modal.tsx
+�   �           �       +-- dataset-table.tsx
+�   �           �       +-- dataset-utils.ts
+�   �           �       +-- pull-dataset-modal.tsx
+�   �           +-- lib
+�   �               +-- api
+�   �               �   +-- datasets.ts
+�   �               +-- types
+�   �                   +-- dataset.ts
+�   +-- README.md
++-- final-monitoring-merged-pack
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- system-monitoring
+�   �           �   +-- system-monitoring.controller.ts
+�   �           �   +-- system-monitoring.module.ts
+�   �           �   +-- system-monitoring.service.ts
+�   �           +-- system-monitoring-realtime
+�   �               +-- system-monitoring-realtime.controller.ts
+�   �               +-- system-monitoring-realtime.gateway.ts
+�   �               +-- system-monitoring-realtime.module.ts
+�   �               +-- system-monitoring-realtime.service.ts
+�   +-- frontend
+�   �   +-- app
+�   �   �   +-- admin
+�   �   �       +-- monitoring
+�   �   �           +-- page.tsx
+�   �   +-- components
+�   �   �   +-- admin-monitoring
+�   �   �       +-- monitoring-shell.tsx
+�   �   �       +-- monitoring-states.tsx
+�   �   �       +-- realtime-toggle.tsx
+�   �   +-- src
+�   �       +-- hooks
+�   �       �   +-- use-system-monitoring-sse.ts
+�   �       �   +-- use-system-monitoring-websocket.ts
+�   �       +-- lib
+�   �           +-- api
+�   �               +-- system-monitoring-api-client.ts
+�   �               +-- system-monitoring-realtime-client.ts
+�   +-- README.md
++-- full-sidebar-final-code
+�   +-- components
+�   �   +-- layout
+�   �       +-- app-sidebar.tsx
+�   �       +-- sidebar-shell-demo.tsx
+�   +-- lib
+�   �   +-- utils.ts
+�   +-- types
+�   �   +-- sidebar.ts
+�   +-- README.md
++-- my-app
+�   +-- app
+�   �   +-- (auth)
+�   �   �   +-- register
+�   �   �       +-- page.tsx
+�   �   +-- admin
+�   �   �   +-- access
+�   �   �   �   +-- page.tsx
+�   �   �   +-- audit
+�   �   �   �   +-- page.tsx
+�   �   �   +-- communication
+�   �   �   �   +-- [roomId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- governance
+�   �   �   �   +-- page.tsx
+�   �   �   +-- monitoring
+�   �   �   �   +-- page.tsx
+�   �   �   +-- operations
+�   �   �   �   +-- page.tsx
+�   �   �   +-- policy
+�   �   �   �   +-- page.tsx
+�   �   �   +-- registrations
+�   �   �   �   +-- adminLanding.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- support
+�   �   �   �   +-- [ticketId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- users
+�   �   �   �   +-- page.tsx
+�   �   �   +-- page.tsx
+�   �   +-- api
+�   �   �   +-- v1
+�   �   �       +-- auth
+�   �   �       �   +-- register-researcher-application
+�   �   �       �       +-- route.ts
+�   �   �       +-- security
+�   �   �           +-- network-check
+�   �   �               +-- route.ts
+�   �   +-- auth
+�   �   �   +-- complete-2fa
+�   �   �       +-- page.tsx
+�   �   +-- dashboard
+�   �   �   +-- access
+�   �   �   �   +-- page.tsx
+�   �   �   +-- activity
+�   �   �   �   +-- page.tsx
+�   �   �   +-- analysis
+�   �   �   �   +-- jobs
+�   �   �   �       +-- [jobId]
+�   �   �   �       �   +-- page.tsx
+�   �   �   �       +-- page.tsx
+�   �   �   +-- collaborators
+�   �   �   �   +-- page.tsx
+�   �   �   +-- database
+�   �   �   �   +-- page.tsx
+�   �   �   +-- data-deposit
+�   �   �   �   +-- page.tsx
+�   �   �   +-- datasets
+�   �   �   �   +-- [datasetId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- downloads
+�   �   �   �   +-- page.tsx
+�   �   �   +-- files
+�   �   �   �   +-- page.tsx
+�   �   �   +-- models
+�   �   �   �   +-- page.tsx
+�   �   �   +-- monitoring
+�   �   �   �   +-- pipelines
+�   �   �   �       +-- [runId]
+�   �   �   �       �   +-- page.tsx
+�   �   �   �       +-- page.tsx
+�   �   �   +-- notifications
+�   �   �   �   +-- page.tsx
+�   �   �   +-- pending
+�   �   �   �   +-- page.tsx
+�   �   �   +-- pipelines
+�   �   �   �   +-- page.tsx
+�   �   �   +-- profile
+�   �   �   �   +-- page.tsx
+�   �   �   +-- reports
+�   �   �   �   +-- [reportId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- requests
+�   �   �   �   +-- [requestId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- reviewer-queue
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   �   +-- request-data.ts
+�   �   �   +-- results
+�   �   �   �   +-- page.tsx
+�   �   �   +-- sdoh
+�   �   �   �   +-- page.tsx
+�   �   �   +-- settings
+�   �   �   �   +-- sessions
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- support
+�   �   �   �   +-- [ticketId]
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- visualizations
+�   �   �   �   +-- page.tsx
+�   �   �   +-- workspaces
+�   �   �   �   +-- [workspaceId]
+�   �   �   �   �   +-- pipelines
+�   �   �   �   �   �   +-- [runId]
+�   �   �   �   �   �       +-- page.tsx
+�   �   �   �   �   +-- page.tsx
+�   �   �   �   +-- page.tsx
+�   �   �   +-- layout.module.css
+�   �   �   +-- layout.tsx
+�   �   �   +-- page.module.css
+�   �   �   +-- page.tsx
+�   �   �   +-- user-landing.tsx
+�   �   +-- forgot-password
+�   �   �   +-- page.tsx
+�   �   +-- login
+�   �   �   +-- admin
+�   �   �   �   +-- page.tsx
+�   �   �   +-- page.module.css
+�   �   +-- register
+�   �   +-- reset-password
+�   �   �   +-- page.tsx
+�   �   +-- support
+�   �   �   +-- page.tsx
+�   �   +-- error.tsx
+�   �   +-- favicon.ico
+�   �   +-- global-error.tsx
+�   �   +-- globals.css
+�   �   +-- layout.tsx
+�   �   +-- loading.tsx
+�   �   +-- not-found.tsx
+�   �   +-- page.tsx
+�   +-- components
+�   �   +-- admin
+�   �   �   +-- admin-card.tsx
+�   �   �   +-- admin-shell.tsx
+�   �   �   +-- admin-states.tsx
+�   �   +-- admin-governance
+�   �   �   +-- access-request-queue.tsx
+�   �   �   +-- audit-explorer.tsx
+�   �   �   +-- user-table.tsx
+�   �   +-- admin-monitoring
+�   �   �   +-- alerts-strip.tsx
+�   �   �   +-- control-plane-hero.tsx
+�   �   �   +-- logs-panel.tsx
+�   �   �   +-- metrics-grid.tsx
+�   �   �   +-- monitoring-shell.tsx
+�   �   �   +-- monitoring-states.tsx
+�   �   �   +-- operations-actions-card.tsx
+�   �   �   +-- queue-inspector.tsx
+�   �   �   +-- realtime-toggle.tsx
+�   �   �   +-- service-health-section.tsx
+�   �   �   +-- trend-section.tsx
+�   �   +-- admin-policy
+�   �   �   +-- approval-action-panel.tsx
+�   �   +-- analysis
+�   �   �   +-- jobs-filters.tsx
+�   �   �   +-- jobs-table.tsx
+�   �   �   +-- job-status-badge.tsx
+�   �   �   +-- live-log-panel.tsx
+�   �   �   +-- stage-timeline.tsx
+�   �   �   +-- stream-status-badge.tsx
+�   �   +-- collaborators
+�   �   �   +-- collaborator-detail-drawer.tsx
+�   �   �   +-- collaborator-filters.tsx
+�   �   �   +-- collaborators-table.tsx
+�   �   �   +-- collaborator-stats.tsx
+�   �   �   +-- global-collaborators-page.tsx
+�   �   �   +-- invite-collaborator-dialog.tsx
+�   �   �   +-- pending-invites-panel.tsx
+�   �   +-- communication
+�   �   �   +-- audio-call-card.tsx
+�   �   �   +-- call-controls.tsx
+�   �   �   +-- communication-panel.tsx
+�   �   �   +-- compose-message.tsx
+�   �   �   +-- message-thread.tsx
+�   �   �   +-- messaging-card.tsx
+�   �   �   +-- participant-grid.tsx
+�   �   �   +-- presence-badge.tsx
+�   �   �   +-- room-sidebar.tsx
+�   �   �   +-- video-room-card.tsx
+�   �   +-- data-deposit
+�   �   �   +-- data-deposit-client.tsx
+�   �   �   +-- data-deposit-columns.tsx
+�   �   �   +-- data-deposit-page.tsx
+�   �   �   +-- data-deposit-preview-modal.tsx
+�   �   �   +-- data-deposit-pull-modal.tsx
+�   �   +-- datasets
+�   �   �   +-- dataset-access-info-card.tsx
+�   �   �   +-- dataset-analysis-drawer.tsx
+�   �   �   +-- dataset-artifacts-panel.tsx
+�   �   �   +-- dataset-audit-trail.tsx
+�   �   �   +-- dataset-card-view.tsx
+�   �   �   +-- dataset-columns.tsx
+�   �   �   +-- dataset-details-page.tsx
+�   �   �   +-- dataset-filters.tsx
+�   �   �   +-- dataset-lineage-card.tsx
+�   �   �   +-- dataset-overview-card.tsx
+�   �   �   +-- dataset-quality-card.tsx
+�   �   �   +-- dataset-row-preview.tsx
+�   �   �   +-- dataset-schema-preview.tsx
+�   �   �   +-- datasets-flow-shell.tsx
+�   �   �   +-- datasets-page.tsx
+�   �   �   +-- datasets-table.tsx
+�   �   �   +-- dataset-stats-cards.tsx
+�   �   �   +-- dataset-upload-dialog.tsx
+�   �   �   +-- dataset-upload-progress-dialog.tsx
+�   �   +-- layout
+�   �   �   +-- app-sidebar.tsx
+�   �   �   +-- app-sidebar-wired-to-route-config.tsx
+�   �   +-- notifications
+�   �   �   +-- notification-bell.tsx
+�   �   �   +-- notifications-page.tsx
+�   �   �   +-- notification-utils.ts
+�   �   +-- pipelines
+�   �   �   +-- pipeline-log-list.tsx
+�   �   �   +-- pipeline-metrics-cards.tsx
+�   �   �   +-- pipeline-stage-graph.tsx
+�   �   �   +-- pipeline-table.tsx
+�   �   �   +-- stage-node.tsx
+�   �   +-- platform
+�   �   �   +-- notification-badge.tsx
+�   �   +-- profile
+�   �   �   +-- edit-profile-dialog.tsx
+�   �   +-- providers
+�   �   �   +-- query-provider.tsx
+�   �   +-- reports
+�   �   �   +-- artifact-viewer.tsx
+�   �   �   +-- report-charts-panel.tsx
+�   �   �   +-- report-metrics-grid.tsx
+�   �   �   +-- report-sections-panel.tsx
+�   �   +-- support
+�   �   �   +-- my-support-tickets.tsx
+�   �   �   +-- support-request-form.tsx
+�   �   �   +-- support-ticket-detail.tsx
+�   �   +-- ui
+�   �   �   +-- alert.tsx
+�   �   �   +-- avatar.tsx
+�   �   �   +-- badge.tsx
+�   �   �   +-- button.tsx
+�   �   �   +-- card.tsx
+�   �   �   +-- checkbox.tsx
+�   �   �   +-- dialog.tsx
+�   �   �   +-- dropdown-menu.tsx
+�   �   �   +-- form.tsx
+�   �   �   +-- input.tsx
+�   �   �   +-- label.tsx
+�   �   �   +-- progress.tsx
+�   �   �   +-- scroll-area.tsx
+�   �   �   +-- select.tsx
+�   �   �   +-- separator.tsx
+�   �   �   +-- sheet.tsx
+�   �   �   +-- sidebar.tsx
+�   �   �   +-- skeleton.tsx
+�   �   �   +-- switch.tsx
+�   �   �   +-- table.tsx
+�   �   �   +-- tabs.tsx
+�   �   �   +-- textarea.tsx
+�   �   +-- visualizations
+�   �   �   +-- research-chart-studio.tsx
+�   �   +-- workspaces
+�   �   �   +-- create-workspace-dialog.tsx
+�   �   �   +-- workspace-badges.tsx
+�   �   +-- app-sidebar.module.css
+�   �   +-- app-sidebar.tsx
+�   �   +-- card.tsx
+�   �   +-- command-palette.module.css
+�   �   +-- command-palette.tsx
+�   �   +-- protected-route.tsx
+�   �   +-- shell.tsx
+�   �   +-- theme-provider.tsx
+�   +-- docs
+�   �   +-- api-endpoints.md
+�   �   +-- architecture.md
+�   �   +-- frontend-page-structure.md
+�   +-- hooks
+�   �   +-- use-analysis-job-details.ts
+�   �   +-- use-analysis-jobs.ts
+�   �   +-- use-cancel-analysis-job.ts
+�   �   +-- use-dataset-artifacts.ts
+�   �   +-- use-dataset-details.ts
+�   �   +-- use-datasets.ts
+�   �   +-- use-job-stream.ts
+�   �   +-- use-message-thread.ts
+�   �   +-- use-monitoring-page-data.ts
+�   �   +-- use-monitoring-realtime-controller.ts
+�   �   +-- use-presence.ts
+�   �   +-- use-profile-page-data.ts
+�   �   +-- use-realtime-room.ts
+�   �   +-- use-report-details.ts
+�   �   +-- use-start-analysis.ts
+�   �   +-- use-system-monitoring-sse.ts
+�   �   +-- use-system-monitoring-websocket.ts
+�   �   +-- use-upload-dataset.ts
+�   �   +-- use-webrtc.ts
+�   +-- legacy
+�   �   +-- apps
+�   �   �   +-- web
+�   �   �       +-- src
+�   �   �       �   +-- app
+�   �   �       �   �   +-- (dashboard)
+�   �   �       �   �   �   +-- dashboard
+�   �   �       �   �   �   �   +-- page.module.css
+�   �   �       �   �   �   �   +-- page.tsx
+�   �   �       �   �   �   +-- health-data
+�   �   �       �   �   �   �   +-- page.tsx
+�   �   �       �   �   �   +-- layout.module.css
+�   �   �       �   �   �   +-- layout.tsx
+�   �   �       �   �   +-- forgot-password
+�   �   �       �   �   �   +-- page.tsx
+�   �   �       �   �   +-- login
+�   �   �       �   �   �   +-- page.module.css
+�   �   �       �   �   �   +-- page.tsx
+�   �   �       �   �   +-- register
+�   �   �       �   �   �   +-- page.tsx
+�   �   �       �   �   +-- error.tsx
+�   �   �       �   �   +-- layout.tsx
+�   �   �       �   �   +-- loading.tsx
+�   �   �       �   �   +-- not-found.tsx
+�   �   �       �   �   +-- page.tsx
+�   �   �       �   +-- components
+�   �   �       �   �   +-- ProtectedRoute.tsx
+�   �   �       �   +-- context
+�   �   �       �   �   +-- AuthContext.tsx
+�   �   �       �   +-- lib
+�   �   �       �       +-- auth.ts
+�   �   �       +-- .env.local
+�   �   �       +-- AUTHENTICATION.md
+�   �   �       +-- DEVELOPMENT.md
+�   �   �       +-- next.config.js
+�   �   �       +-- next-env.d.ts
+�   �   �       +-- package.json
+�   �   �       +-- tsconfig.json
+�   �   �       +-- web.log
+�   �   +-- docs
+�   �       +-- architecture.md
+�   +-- lib
+�   �   +-- api
+�   �   �   +-- admin-api-client.ts
+�   �   �   +-- admin-governance-api-client.ts
+�   �   �   +-- admin-policy-api-client.ts
+�   �   �   +-- analysis.ts
+�   �   �   +-- client.ts
+�   �   �   +-- communication.ts
+�   �   �   +-- dataset-details.ts
+�   �   �   +-- datasets.ts
+�   �   �   +-- notifications.ts
+�   �   �   +-- ops.ts
+�   �   �   +-- profile-api-client.ts
+�   �   �   +-- reports.ts
+�   �   �   +-- support.ts
+�   �   �   +-- system-monitoring-api-client.ts
+�   �   �   +-- system-monitoring-realtime-client.ts
+�   �   +-- mock
+�   �   �   +-- collaborators.ts
+�   �   +-- socket
+�   �   �   +-- client.ts
+�   �   +-- api.ts
+�   �   +-- auth-context.tsx
+�   �   +-- auth-service.ts
+�   �   +-- auth-storage.ts
+�   �   +-- monitoring-realtime-config.ts
+�   �   +-- utils.ts
+�   �   +-- workspace-ui-permissions.ts
+�   +-- prisma
+�   �   +-- schema.prisma
+�   +-- public
+�   �   +-- file.svg
+�   �   +-- globe.svg
+�   �   +-- next.svg
+�   �   +-- vercel.svg
+�   �   +-- window.svg
+�   +-- scripts
+�   �   +-- smoke-communication-socket.mjs
+�   +-- src
+�   �   +-- config
+�   �   �   +-- route-guards-rbac.ts
+�   �   �   +-- route-map-and-icons.ts
+�   �   +-- lib
+�   �       +-- api
+�   �       �   +-- analysis-jobs-api-client.ts
+�   �       �   +-- client.ts
+�   �       �   +-- cohorts.ts
+�   �       �   +-- data-deposit.ts
+�   �       �   +-- pipelines.ts
+�   �       �   +-- platform.ts
+�   �       �   +-- profile-api-client.ts
+�   �       �   +-- requests.ts
+�   �       �   +-- sdoh.ts
+�   �       �   +-- workspaces.ts
+�   �       +-- hooks
+�   �       �   +-- use-pipeline-socket.ts
+�   �       +-- notifications
+�   �       �   +-- socket.ts
+�   �       +-- utils.ts
+�   �       +-- workspace-ui-permissions.ts
+�   +-- types
+�   �   +-- analysis.ts
+�   �   +-- collaborator.ts
+�   �   +-- dataset.ts
+�   �   +-- dataset-details.ts
+�   �   +-- notification.ts
+�   �   +-- report.ts
+�   �   +-- support.ts
+�   +-- .env
+�   +-- .env.example
+�   +-- .env.local
+�   +-- .gitignore
+�   +-- AGENTS.md
+�   +-- CLAUDE.md
+�   +-- components.json
+�   +-- eslint.config.mjs
+�   +-- next.config.ts
+�   +-- next-env.d.ts
+�   +-- package.json
+�   +-- pnpm-lock.yaml
+�   +-- pnpm-workspace.yaml
+�   +-- postcss.config.mjs
+�   +-- README.md
+�   +-- tsconfig.json
+�   +-- tsconfig.tsbuildinfo
++-- next-realtime-pack
+�   +-- app
+�   �   +-- (app)
+�   �       +-- analysis
+�   �       �   +-- jobs
+�   �       �       +-- [jobId]
+�   �       �       �   +-- page.tsx
+�   �       �       +-- page.tsx
+�   �       +-- reports
+�   �           +-- [reportId]
+�   �               +-- page.tsx
+�   +-- components
+�   �   +-- analysis
+�   �   �   +-- analysis-job-details-page.tsx
+�   �   �   +-- analysis-job-filters.tsx
+�   �   �   +-- analysis-jobs-page.tsx
+�   �   �   +-- analysis-jobs-table.tsx
+�   �   �   +-- analysis-job-status-badge.tsx
+�   �   �   +-- analysis-live-log-panel.tsx
+�   �   �   +-- analysis-stage-timeline.tsx
+�   �   �   +-- analysis-stream-status.tsx
+�   �   +-- reports
+�   �       +-- report-artifact-viewer.tsx
+�   �       +-- report-details-page.tsx
+�   �       +-- report-metrics-grid.tsx
+�   �       +-- report-sections-panel.tsx
+�   +-- hooks
+�   �   +-- use-analysis-job-details.ts
+�   �   +-- use-analysis-jobs.ts
+�   �   +-- use-cancel-analysis-job.ts
+�   �   +-- use-job-stream.ts
+�   �   +-- use-report-details.ts
+�   +-- lib
+�   �   +-- api
+�   �       +-- analysis.ts
+�   �       +-- reports.ts
+�   +-- types
+�   �   +-- analysis.ts
+�   �   +-- report.ts
+�   +-- README.md
++-- notifications-pack
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- notifications
+�   �               +-- dto
+�   �               �   +-- list-notifications.dto.ts
+�   �               �   +-- update-preferences.dto.ts
+�   �               +-- notifications.controller.ts
+�   �               +-- notifications.examples.ts
+�   �               +-- notifications.gateway.ts
+�   �               +-- notifications.module.ts
+�   �               +-- notifications.service.ts
+�   +-- frontend
+�   �   +-- src
+�   �       +-- app
+�   �       �   +-- (dashboard)
+�   �       �       +-- notifications
+�   �       �           +-- page.tsx
+�   �       +-- components
+�   �       �   +-- notifications
+�   �       �       +-- notification-bell.tsx
+�   �       �       +-- notifications-page.tsx
+�   �       �       +-- notification-utils.ts
+�   �       +-- lib
+�   �       �   +-- api
+�   �       �       +-- notifications.ts
+�   �       +-- types
+�   �           +-- notification.ts
+�   +-- prisma
+�   �   +-- notification.prisma
+�   +-- README.md
++-- package-snippets
+�   +-- backend.install.txt
+�   +-- frontend.install.txt
+�   +-- server.bull-board.bootstrap.snippet.ts
++-- profile-backend-wiring
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- profile
+�   �               +-- dto
+�   �               �   +-- profile-response.dto.ts
+�   �               �   +-- update-notification-preferences.dto.ts
+�   �               �   +-- update-profile.dto.ts
+�   �               +-- profile.controller.ts
+�   �               +-- profile.mapper.ts
+�   �               +-- profile.module.ts
+�   �               +-- profile.service.ts
+�   �               +-- profile.types.ts
+�   +-- frontend
+�   �   +-- profile-api-client.ts
+�   �   +-- profile-page-wired-example.tsx
+�   +-- README.md
++-- research_pipeline_next_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- app
+�   �       �   +-- monitoring
+�   �       �       +-- pipelines
+�   �       �           +-- [pipelineId]
+�   �       �           �   +-- page.tsx
+�   �       �           +-- page.tsx
+�   �       +-- components
+�   �       �   +-- pipelines
+�   �       �   �   +-- pipeline-actions.tsx
+�   �       �   �   +-- pipeline-log-list.tsx
+�   �       �   �   +-- pipeline-metrics-cards.tsx
+�   �       �   �   +-- pipeline-stage-graph.tsx
+�   �       �   �   +-- pipeline-table.tsx
+�   �       �   �   +-- stage-node.tsx
+�   �       �   +-- ui
+�   �       �       +-- README.txt
+�   �       +-- hooks
+�   �       �   +-- use-pipeline-socket.ts
+�   �       �   +-- use-pipeline-sse.ts
+�   �       +-- lib
+�   �           +-- api
+�   �           �   +-- pipelines.ts
+�   �           +-- types
+�   �               +-- pipeline.ts
+�   +-- package-snippets
+�   �   +-- backend.install.txt
+�   �   +-- frontend.install.txt
+�   +-- server
+�   �   +-- src
+�   �       +-- queue
+�   �       �   +-- constants
+�   �       �   �   +-- pipeline.constants.ts
+�   �       �   +-- controllers
+�   �       �   �   +-- pipeline.controller.ts
+�   �       �   +-- services
+�   �       �   �   +-- pipeline-event-bus.service.ts
+�   �       �   �   +-- pipeline-orchestrator.service.ts
+�   �       �   �   +-- pipeline-socket.service.ts
+�   �       �   �   +-- pipeline-state.service.ts
+�   �       �   +-- transports
+�   �       �   �   +-- progress.gateway.ts
+�   �       �   �   +-- progress.sse.controller.ts
+�   �       �   +-- types
+�   �       �   �   +-- pipeline.types.ts
+�   �       �   +-- workers
+�   �       �   �   +-- pipeline.worker.ts
+�   �       �   +-- queue.module.ts
+�   �       +-- redis
+�   �       �   +-- redis.module.ts
+�   �       �   +-- redis.service.ts
+�   �       +-- app.module.example.ts
+�   +-- .env.example
+�   +-- README.md
++-- researcher-application-backend-pack
+�   +-- prisma
+�   �   +-- schema.researcher-application.prisma
+�   +-- src
+�   �   +-- modules
+�   �       +-- researcher-applications
+�   �           +-- dto
+�   �           �   +-- create-researcher-application.dto.ts
+�   �           �   +-- query-researcher-applications.dto.ts
+�   �           �   +-- request-more-info.dto.ts
+�   �           �   +-- review-researcher-application.dto.ts
+�   �           +-- ports
+�   �           �   +-- application-mailer.port.ts
+�   �           �   +-- application-queue.port.ts
+�   �           �   +-- file-storage.port.ts
+�   �           +-- types
+�   �           �   +-- researcher-application.types.ts
+�   �           +-- researcher-applications.controller.ts
+�   �           +-- researcher-applications.module.ts
+�   �           +-- researcher-applications.service.ts
+�   +-- README.md
++-- scripts
+�   +-- dev.mjs
+�   +-- healthcheck.mjs
+�   +-- reset-researcher-status.mjs
+�   +-- smoke-auth.mjs
+�   +-- smoke-communication.mjs
++-- server
+�   +-- prisma
+�   �   +-- migrations
+�   �   �   +-- 20260329_baseline
+�   �   �   �   +-- migration.sql
+�   �   �   +-- 20260330_admin_governance
+�   �   �   �   +-- migration.sql
+�   �   �   +-- 20260330_admin_policy_bulk_ops
+�   �   �   �   +-- migration.sql
+�   �   �   +-- 20260331155217_support_center
+�   �   �   �   +-- migration.sql
+�   �   �   +-- 20260625_communication_center
+�   �   �   �   +-- migration.sql
+�   �   �   +-- migration_lock.toml
+�   �   +-- schema.prisma
+�   �   +-- seed.ts
+�   +-- scripts
+�   �   +-- network-enforcement-smoke.mjs
+�   �   +-- seed-central-deposit.mjs
+�   +-- src
+�   �   +-- common
+�   �   �   +-- upload.ts
+�   �   +-- config
+�   �   �   +-- env.ts
+�   �   +-- controllers
+�   �   �   +-- admin.controller.ts
+�   �   �   +-- admin-governance.controller.ts
+�   �   �   +-- admin-policy.controller.ts
+�   �   �   +-- auth.controller.ts
+�   �   �   +-- data-deposit.controller.ts
+�   �   �   +-- health-data.controller.ts
+�   �   �   +-- notifications.controller.ts
+�   �   �   +-- pipelines.controller.ts
+�   �   �   +-- researcher-application.controller.ts
+�   �   �   +-- support.controller.ts
+�   �   �   +-- users.controller.ts
+�   �   �   +-- workspaces.controller.ts
+�   �   +-- db
+�   �   �   +-- prisma.ts
+�   �   +-- guards
+�   �   �   +-- deposit-permission.guard.ts
+�   �   +-- middleware
+�   �   �   +-- authenticate.ts
+�   �   �   +-- authenticate-optional.ts
+�   �   �   +-- authorize.ts
+�   �   �   +-- debug-admin-token.ts
+�   �   �   +-- error-handler.ts
+�   �   �   +-- network-access.ts
+�   �   �   +-- rate-limit.ts
+�   �   �   +-- request-id.ts
+�   �   �   +-- security-headers.ts
+�   �   �   +-- validate.ts
+�   �   +-- modules
+�   �   �   +-- analysis-jobs
+�   �   �   �   +-- dto
+�   �   �   �   �   +-- analysis-job-id-param.dto.ts
+�   �   �   �   �   +-- analysis-job-response.dto.ts
+�   �   �   �   �   +-- bulk-job-action.dto.ts
+�   �   �   �   �   +-- list-analysis-jobs-query.dto.ts
+�   �   �   �   +-- analysis-jobs.controller.ts
+�   �   �   �   +-- analysis-jobs.mapper.ts
+�   �   �   �   +-- analysis-jobs.module.ts
+�   �   �   �   +-- analysis-jobs.service.ts
+�   �   �   �   +-- analysis-jobs.types.ts
+�   �   �   �   +-- README.md
+�   �   �   +-- analysis-orchestrator
+�   �   �   �   +-- analysis-orchestrator.module.ts
+�   �   �   +-- cohorts
+�   �   �   �   +-- cohorts.module.ts
+�   �   �   +-- communication
+�   �   �   �   +-- services
+�   �   �   �   �   +-- audit-log.service.ts
+�   �   �   �   �   +-- call-session.service.ts
+�   �   �   �   �   +-- communication-room.service.ts
+�   �   �   �   �   +-- message.service.ts
+�   �   �   �   �   +-- presence.service.ts
+�   �   �   �   �   +-- signaling.service.ts
+�   �   �   �   +-- communication.controller.ts
+�   �   �   �   +-- communication.module.ts
+�   �   �   �   +-- communication.store.ts
+�   �   �   �   +-- communication.types.ts
+�   �   �   +-- experiment-tracking
+�   �   �   �   +-- experiment-tracking.controller.ts
+�   �   �   �   +-- experiment-tracking.module.ts
+�   �   �   �   +-- experiment-tracking.service.ts
+�   �   �   +-- feature-store
+�   �   �   �   +-- feature-store.module.ts
+�   �   �   +-- genomics
+�   �   �   �   +-- genomics.controller.ts
+�   �   �   �   +-- genomics.module.ts
+�   �   �   �   +-- genomics.service.ts
+�   �   �   +-- metrics
+�   �   �   �   +-- metrics.module.ts
+�   �   �   +-- ml
+�   �   �   �   +-- ml.controller.ts
+�   �   �   �   +-- ml.module.ts
+�   �   �   �   +-- ml.service.ts
+�   �   �   +-- profile
+�   �   �   �   +-- dto
+�   �   �   �   �   +-- change-password.dto.ts
+�   �   �   �   �   +-- profile-response.dto.ts
+�   �   �   �   �   +-- request-account-deletion.dto.ts
+�   �   �   �   �   +-- request-elevated-access.dto.ts
+�   �   �   �   �   +-- revoke-session.dto.ts
+�   �   �   �   �   +-- toggle-two-factor.dto.ts
+�   �   �   �   �   +-- update-notification-preferences.dto.ts
+�   �   �   �   �   +-- update-profile.dto.ts
+�   �   �   �   +-- profile.controller.ts
+�   �   �   �   +-- profile.mapper.ts
+�   �   �   �   +-- profile.module.ts
+�   �   �   �   +-- profile.service.ts
+�   �   �   �   +-- profile.types.ts
+�   �   �   �   +-- README.md
+�   �   �   +-- research-workspaces
+�   �   �   �   +-- research-workspaces.module.ts
+�   �   �   +-- sdoh
+�   �   �   �   +-- sdoh-governance.service.ts
+�   �   �   �   +-- sdoh-intelligence.service.ts
+�   �   �   +-- statistics
+�   �   �   �   +-- statistics.controller.ts
+�   �   �   �   +-- statistics.module.ts
+�   �   �   �   +-- statistics.service.ts
+�   �   �   +-- survival
+�   �   �   �   +-- survival.controller.ts
+�   �   �   �   +-- survival.module.ts
+�   �   �   �   +-- survival.service.ts
+�   �   �   +-- system-monitoring
+�   �   �   �   +-- dto
+�   �   �   �   �   +-- monitoring-response.dto.ts
+�   �   �   �   +-- system-monitoring.controller.ts
+�   �   �   �   +-- system-monitoring.module.ts
+�   �   �   �   +-- system-monitoring.service.ts
+�   �   �   +-- system-monitoring-realtime
+�   �   �   �   +-- system-monitoring-realtime.controller.ts
+�   �   �   �   +-- system-monitoring-realtime.module.ts
+�   �   �   �   +-- system-monitoring-realtime.service.ts
+�   �   �   +-- research-common.ts
+�   �   +-- pipelines
+�   �   �   +-- event-bus.ts
+�   �   �   +-- orchestrator.ts
+�   �   �   +-- pipeline.templates.ts
+�   �   �   +-- queue.constants.ts
+�   �   �   +-- schemas.ts
+�   �   �   +-- service.ts
+�   �   �   +-- stream-auth.ts
+�   �   +-- realtime
+�   �   �   +-- communication.gateway.ts
+�   �   �   +-- notifications.gateway.ts
+�   �   �   +-- system-monitoring.realtime.ts
+�   �   +-- routes
+�   �   �   +-- admin.ts
+�   �   �   +-- admin-governance.ts
+�   �   �   +-- admin-policy.ts
+�   �   �   +-- auth.ts
+�   �   �   +-- cohorts.ts
+�   �   �   +-- data-deposit.ts
+�   �   �   +-- health-data.ts
+�   �   �   +-- notifications.ts
+�   �   �   +-- ops.ts
+�   �   �   +-- pipelines.ts
+�   �   �   +-- researcher-applications.ts
+�   �   �   +-- schemas.ts
+�   �   �   +-- sdoh.ts
+�   �   �   +-- support.ts
+�   �   �   +-- users.ts
+�   �   �   +-- workspaces.ts
+�   �   +-- services
+�   �   �   +-- admin.service.ts
+�   �   �   +-- admin-governance.dto.ts
+�   �   �   +-- admin-governance.service.ts
+�   �   �   +-- admin-policy.dto.ts
+�   �   �   +-- admin-policy.service.ts
+�   �   �   +-- admin-policy-ops.service.ts
+�   �   �   +-- audit.service.ts
+�   �   �   +-- auth.service.ts
+�   �   �   +-- automation.service.ts
+�   �   �   +-- dashboard.service.ts
+�   �   �   +-- data-deposit.service.ts
+�   �   �   +-- health-data.service.ts
+�   �   �   +-- notifications.service.ts
+�   �   �   +-- researcher-application.service.ts
+�   �   �   +-- support.service.ts
+�   �   �   +-- workspace-access.service.ts
+�   �   �   +-- workspace-analysis-jobs.service.ts
+�   �   �   +-- workspace-datasets.service.ts
+�   �   �   +-- workspace-permissions.ts
+�   �   �   +-- workspace-reports.service.ts
+�   �   �   +-- workspaces.service.ts
+�   �   +-- types
+�   �   �   +-- express.d.ts
+�   �   +-- utils
+�   �   �   +-- async-handler.ts
+�   �   �   +-- crypto.ts
+�   �   �   +-- errors.ts
+�   �   �   +-- jwt.ts
+�   �   �   +-- password.ts
+�   �   +-- workers
+�   �   �   +-- processors
+�   �   �   �   +-- cohort-build.processor.ts
+�   �   �   �   +-- evaluate.processor.ts
+�   �   �   �   +-- export.processor.ts
+�   �   �   �   +-- feature-materialization.processor.ts
+�   �   �   �   +-- ingest.processor.ts
+�   �   �   �   +-- publish.processor.ts
+�   �   �   �   +-- pull-job.processor.ts
+�   �   �   �   +-- report.processor.ts
+�   �   �   �   +-- train.processor.ts
+�   �   �   �   +-- transform.processor.ts
+�   �   �   +-- runtime
+�   �   �   �   +-- base.processor.ts
+�   �   �   +-- autoscaling.service.ts
+�   �   �   +-- postgres-local-worker.ts
+�   �   �   +-- queue.factory.ts
+�   �   �   +-- queue-events.ts
+�   �   �   +-- queue-repair.ts
+�   �   �   +-- repair-queue.ts
+�   �   �   +-- start-workers.ts
+�   �   �   +-- workers.service.ts
+�   �   +-- app.ts
+�   �   +-- index.ts
+�   �   +-- worker.ts
+�   +-- .env
+�   +-- .gitignore
+�   +-- backend-dev.log
+�   +-- docs-architecture.md
+�   +-- package.json
+�   +-- package-lock.json
+�   +-- README.md
+�   +-- tsconfig.json
+�   +-- upgrade-admin-role.js
++-- support_center_code_pack
+�   +-- apps
+�   �   +-- web
+�   �       +-- src
+�   �           +-- app
+�   �           �   +-- (admin)
+�   �           �   �   +-- admin
+�   �           �   �       +-- support
+�   �           �   �           +-- [ticketId]
+�   �           �   �           �   +-- page.tsx
+�   �           �   �           +-- page.tsx
+�   �           �   +-- (public)
+�   �           �       +-- support
+�   �           �           +-- page.tsx
+�   �           +-- components
+�   �           �   +-- support
+�   �           �       +-- support-ai-panel.tsx
+�   �           �       +-- support-center-header.tsx
+�   �           �       +-- support-request-form.tsx
+�   �           �       +-- support-sla-badge.tsx
+�   �           �       +-- support-ticket-detail.tsx
+�   �           �       +-- support-ticket-kanban.tsx
+�   �           �       +-- support-ticket-table.tsx
+�   �           +-- lib
+�   �               +-- api
+�   �               �   +-- support.ts
+�   �               +-- types
+�   �                   +-- support.ts
+�   +-- server
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- support
+�   �               +-- dto
+�   �               �   +-- add-support-reply.dto.ts
+�   �               �   +-- assign-support-ticket.dto.ts
+�   �               �   +-- create-support-ticket.dto.ts
+�   �               �   +-- update-support-ticket.dto.ts
+�   �               +-- support.controller.ts
+�   �               +-- support.module.ts
+�   �               +-- support.service.ts
+�   �               +-- support-ai.service.ts
+�   +-- admin-sidebar-snippet.tsx
+�   +-- login-page-snippet.tsx
+�   +-- prisma-support-snippet.prisma
+�   +-- README.md
++-- system-monitoring-realtime-pack
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- system-monitoring-realtime
+�   �               +-- system-monitoring-realtime.controller.ts
+�   �               +-- system-monitoring-realtime.gateway.ts
+�   �               +-- system-monitoring-realtime.module.ts
+�   �               +-- system-monitoring-realtime.service.ts
+�   +-- frontend
+�   �   +-- components
+�   �   �   +-- admin-monitoring
+�   �   �       +-- realtime-toggle.tsx
+�   �   +-- src
+�   �       +-- hooks
+�   �       �   +-- use-system-monitoring-sse.ts
+�   �       �   +-- use-system-monitoring-websocket.ts
+�   �       +-- lib
+�   �           +-- api
+�   �               +-- system-monitoring-realtime-client.ts
+�   +-- README.md
++-- system-monitoring-upgrade-pack
+�   +-- backend
+�   �   +-- src
+�   �       +-- modules
+�   �           +-- system-monitoring
+�   �               +-- dto
+�   �               �   +-- monitoring-response.dto.ts
+�   �               +-- system-monitoring.controller.ts
+�   �               +-- system-monitoring.module.ts
+�   �               +-- system-monitoring.service.ts
+�   +-- frontend
+�   �   +-- app
+�   �   �   +-- admin
+�   �   �       +-- monitoring
+�   �   �           +-- page.tsx
+�   �   +-- components
+�   �   �   +-- admin-monitoring
+�   �   �       +-- monitoring-shell.tsx
+�   �   �       +-- monitoring-states.tsx
+�   �   +-- src
+�   �       +-- lib
+�   �           +-- api
+�   �               +-- system-monitoring-api-client.ts
+�   +-- README.md
++-- .env.example
++-- .gitignore
++-- admin-dashboard-upgraded.tsx
++-- admin-styling-upgrade-spec.md
++-- analysis-jobs-api-client.ts
++-- analysis-jobs-button-action-spec.md
++-- analysis-jobs-page.tsx
++-- app-sidebar-wired-to-route-config.tsx
++-- ARCHITECTURE_UPGRADE_LOG.md
++-- datasrch_report.docx
++-- DEPLOYMENT_READINESS.md
++-- edit-profile-dialog-wired.tsx
++-- ENTERPRISE_CHECKLIST.md
++-- ENTERPRISE_QUICK_REFERENCE.md
++-- ENTERPRISE_UPGRADE_GUIDE.md
++-- IMPLEMENTATION_COMPLETE.md
++-- login Credentisal.txt
++-- package.json
++-- package-lock.json
++-- profile-page-final.tsx
++-- profile-page-wired.tsx
++-- route-map-and-icons.ts
++-- structure.txt
++-- system-monitoring-page-realtime-wired.tsx
 +-- user_manual.docx
+
+================================================================================
+User workflow
+1. Register / Login
+   ↓
+2. Create or join a workspace
+   ↓
+3. Upload or pull datasets
+   ↓
+4. Build a cohort
+   ↓
+5. Run analysis
+   ↓
+6. View charts, tables, and results
+   ↓
+7. Export report or publication files
+   ↓
+8. Share with collaborators / reviewers
+
+==================================================================================
+Example use case
+
+A researcher studying SDOH and diabetes would:
+
+Create workspace: SDOH Diabetes Study
+Upload dataset: sdoh_diabetes.csv
+Select variables:
+  - income
+  - education
+  - food insecurity
+  - insurance status
+  - diabetes outcome
+
+Run:
+  - descriptive statistics
+  - logistic regression
+  - random forest
+  - SHAP explainability
+  - causal policy simulation
+
+Generate:
+  - Table 1
+  - regression table
+  - visual charts
+  - publication summary
+  - downloadable PDF/Excel/CSV report
+
+
+==================================================================================

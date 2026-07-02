@@ -1,8 +1,18 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { BrainCircuit, Cpu, BookOpen, TrendingUp } from 'lucide-react';
+import { ResearchLifecycleStagePage } from '@/components/research/research-lifecycle-stage-page';
+import { getLifecyclePageFromSearch } from '@/src/config/research-lifecycle-pages';
 
 export default function ModelsPage() {
+  const searchParams = useSearchParams();
+  const lifecyclePage = getLifecyclePageFromSearch(searchParams);
+
+  if (lifecyclePage) {
+    return <ResearchLifecycleStagePage config={lifecyclePage} />;
+  }
+
   return (
     <div className="space-y-8 p-6">
       <div>

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
+import type { Prisma } from '@prisma/client';
 import { env } from '../config/env.js';
 import { prisma } from '../db/prisma.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -193,6 +194,12 @@ function formatSql(sql: string) {
 function quoteIdent(value: string) {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) throw new Error('Invalid schema or table identifier.');
   return `"${value.replace(/"/g, '""')}"`;
+}
+
+function toRecord(value: unknown) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Prisma.InputJsonValue)
+    : undefined;
 }
 
 function tableRef(schema: string, table: string) {
@@ -395,20 +402,166 @@ router.post(
   }),
 );
 
+router.get(
+  '/connections',
+  asyncHandler(async (_req, res) => {
+    const rows = await prisma.databaseConnection.findMany({
+      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
+      select: {
+        id: true,
+        name: true,
+        engine: true,
+        host: true,
+        port: true,
+        databaseName: true,
+        username: true,
+        sourceType: true,
+        sourceClass: true,
+        environment: true,
+        connectionMethod: true,
+        authMethod: true,
+        securityJson: true,
+        discoveryJson: true,
+        governanceJson: true,
+        syncJson: true,
+        qualityJson: true,
+        researchJson: true,
+        status: true,
+        isDefault: true,
+        createdAt: true,
+      },
+    });
+
+    res.json(
+      rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        engine: row.engine,
+        host: row.host,
+        port: row.port,
+        database: row.databaseName,
+        username: row.username,
+        sourceType: row.sourceType,
+        sourceClass: row.sourceClass,
+        environment: row.environment,
+        connectionMethod: row.connectionMethod,
+        authMethod: row.authMethod,
+        security: row.securityJson,
+        discovery: row.discoveryJson,
+        governance: row.governanceJson,
+        sync: row.syncJson,
+        quality: row.qualityJson,
+        research: row.researchJson,
+        status: row.status,
+        isDefault: row.isDefault,
+        createdAt: row.createdAt.toISOString(),
+      })),
+    );
+  }),
+);
+
 router.post(
   '/connections',
   asyncHandler(async (req, res) => {
-    const id = `connection-${randomUUID()}`;
-    audit(req, 'SAVE_CONNECTION', String(req.body?.name ?? id));
+    const name = String(req.body?.name ?? '').trim() || 'Saved PostgreSQL Connection';
+    const engine = String(req.body?.engine ?? 'PostgreSQL').trim() || 'PostgreSQL';
+    const host = req.body?.host ? String(req.body.host).trim() : null;
+    const databaseName =
+      String(req.body?.databaseName ?? req.body?.database ?? '').trim() || 'health_data';
+    const username = req.body?.username ? String(req.body.username).trim() : null;
+    const connectionUrl = req.body?.connectionUrl ? String(req.body.connectionUrl).trim() : null;
+    const isDefault = Boolean(req.body?.isDefault);
+    const sourceType = req.body?.sourceType ? String(req.body.sourceType).trim() : null;
+    const sourceClass = req.body?.sourceClass ? String(req.body.sourceClass).trim() : null;
+    const environment = req.body?.environment ? String(req.body.environment).trim() : null;
+    const connectionMethod = req.body?.connectionMethod
+      ? String(req.body.connectionMethod).trim()
+      : null;
+    const authMethod = req.body?.authMethod ? String(req.body.authMethod).trim() : null;
+    const securityJson = toRecord(req.body?.security);
+    const discoveryJson = toRecord(req.body?.discovery);
+    const governanceJson = toRecord(req.body?.governance);
+    const syncJson = toRecord(req.body?.sync);
+    const qualityJson = toRecord(req.body?.quality);
+    const researchJson = toRecord(req.body?.research);
+    const parsedPort = Number(req.body?.port);
+    const port = Number.isFinite(parsedPort) && parsedPort > 0 ? Math.round(parsedPort) : null;
+
+    if (isDefault) {
+      await prisma.databaseConnection.updateMany({ data: { isDefault: false } });
+    }
+
+    const created = await prisma.databaseConnection.create({
+      data: {
+        name,
+        engine,
+        host,
+        port,
+        databaseName,
+        username,
+        connectionUrl,
+        sourceType,
+        sourceClass,
+        environment,
+        connectionMethod,
+        authMethod,
+        securityJson,
+        discoveryJson,
+        governanceJson,
+        syncJson,
+        qualityJson,
+        researchJson,
+        status: 'saved',
+        isDefault,
+      },
+      select: {
+        id: true,
+        name: true,
+        engine: true,
+        host: true,
+        port: true,
+        databaseName: true,
+        username: true,
+        sourceType: true,
+        sourceClass: true,
+        environment: true,
+        connectionMethod: true,
+        authMethod: true,
+        securityJson: true,
+        discoveryJson: true,
+        governanceJson: true,
+        syncJson: true,
+        qualityJson: true,
+        researchJson: true,
+        status: true,
+        isDefault: true,
+        createdAt: true,
+      },
+    });
+
+    audit(req, 'SAVE_CONNECTION', created.name);
     res.status(201).json({
-      id,
-      name: req.body?.name ?? 'Saved PostgreSQL Connection',
-      engine: req.body?.engine ?? 'PostgreSQL',
-      host: req.body?.host ?? 'localhost',
-      database: req.body?.database ?? 'health_data',
-      status: 'Saved',
-      isDefault: false,
-      createdAt: new Date().toISOString(),
+      id: created.id,
+      name: created.name,
+      engine: created.engine,
+      host: created.host,
+      port: created.port,
+      database: created.databaseName,
+      username: created.username,
+      sourceType: created.sourceType,
+      sourceClass: created.sourceClass,
+      environment: created.environment,
+      connectionMethod: created.connectionMethod,
+      authMethod: created.authMethod,
+      security: created.securityJson,
+      discovery: created.discoveryJson,
+      governance: created.governanceJson,
+      sync: created.syncJson,
+      quality: created.qualityJson,
+      research: created.researchJson,
+      status: created.status,
+      isDefault: created.isDefault,
+      createdAt: created.createdAt.toISOString(),
     });
   }),
 );

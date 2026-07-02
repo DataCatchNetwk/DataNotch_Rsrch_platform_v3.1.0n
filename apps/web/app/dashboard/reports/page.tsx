@@ -3,6 +3,8 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ResearchChartStudio, type ResearchChartRecord } from '@/components/visualizations/research-chart-studio';
+import { ResearchLifecycleStagePage } from '@/components/research/research-lifecycle-stage-page';
+import { getLifecyclePageFromSearch } from '@/src/config/research-lifecycle-pages';
 
 type ReportSection = 'all' | 'studies' | 'activity' | 'collaborators' | 'new-study';
 
@@ -120,6 +122,7 @@ export default function ReportsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const lifecyclePage = getLifecyclePageFromSearch(searchParams);
   const [draftReports, setDraftReports] = useState<ReportItem[]>([]);
   const [newStudyTitle, setNewStudyTitle] = useState('');
   const [newStudyOwner, setNewStudyOwner] = useState('');
@@ -148,6 +151,10 @@ export default function ReportsPage() {
   }, [activeTab, allReports, query]);
 
   const chartRecords = useMemo(() => recordsFromReports(filteredItems), [filteredItems]);
+
+  if (lifecyclePage) {
+    return <ResearchLifecycleStagePage config={lifecyclePage} />;
+  }
 
   const setAllTab = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -259,6 +266,45 @@ export default function ReportsPage() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+        <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Report Builder Contract</h3>
+          <p className="mt-1 text-sm text-slate-500">Standardized lifecycle contract from analysis results into report and publication artifacts.</p>
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Input Contract</p>
+              <p className="mt-1 text-sm text-blue-950">Result metrics, chart specs, interpretation, cohort metadata, and study context.</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Output Contract</p>
+              <p className="mt-1 text-sm text-emerald-950">Structured reports, appendix artifacts, publication evidence, and governed distribution status.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Report Delivery Modules</h3>
+          <p className="mt-1 text-sm text-slate-500">Unified modules aligned with Outputs and available from current platform routes.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {[
+              ['Study Reports', '/dashboard/reports?tab=studies'],
+              ['Activity Reports', '/dashboard/reports?tab=activity'],
+              ['Collaborator Reports', '/dashboard/reports?tab=collaborators'],
+              ['Results Workspace', '/dashboard/results'],
+            ].map(([label, href]) => (
+              <button
+                key={String(label)}
+                type="button"
+                onClick={() => router.push(String(href))}
+                className="rounded-xl border bg-white px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:border-violet-300 hover:bg-violet-50"
+              >
+                {String(label)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

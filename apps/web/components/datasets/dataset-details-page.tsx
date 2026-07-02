@@ -83,7 +83,7 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
             variant="outline"
             onClick={() =>
               window.open(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/api"}/v1/datasets/deposit/${datasetId}/download`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api"}/v1/datasets/deposit/${datasetId}/download`,
                 "_blank"
               )
             }

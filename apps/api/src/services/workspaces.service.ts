@@ -25,8 +25,24 @@ type UpdateWorkspaceMemberRoleInput = {
   role: 'OWNER' | 'ADMIN' | 'RESEARCHER' | 'VIEWER';
 };
 
-function mapUserName(user: { firstname: string; surname: string }) {
-  return `${user.firstname} ${user.surname}`.trim();
+function mapUserName(user: { firstname?: string | null; surname?: string | null; email?: string | null }) {
+  return `${user.firstname ?? ''} ${user.surname ?? ''}`.trim() || user.email || 'Unknown User';
+}
+
+function mapUserSummary(user?: { id?: string | null; firstname?: string | null; surname?: string | null; email?: string | null } | null) {
+  if (!user) {
+    return {
+      id: null,
+      name: 'Unknown User',
+      email: '',
+    };
+  }
+
+  return {
+    id: user.id ?? null,
+    name: mapUserName(user),
+    email: user.email ?? '',
+  };
 }
 
 function defaultInclude() {
@@ -171,27 +187,15 @@ export async function getWorkspaceById(user: AuthUser, workspaceId: string) {
     ...serialized,
     datasets: workspace.datasets.map((dataset) => ({
       ...dataset,
-      createdBy: {
-        id: dataset.createdBy.id,
-        name: mapUserName(dataset.createdBy),
-        email: dataset.createdBy.email,
-      },
+      createdBy: mapUserSummary(dataset.createdBy),
     })),
     analysisJobs: workspace.analysisJobs.map((job) => ({
       ...job,
-      createdBy: {
-        id: job.createdBy.id,
-        name: mapUserName(job.createdBy),
-        email: job.createdBy.email,
-      },
+      createdBy: mapUserSummary(job.createdBy),
     })),
     reports: workspace.reports.map((report) => ({
       ...report,
-      createdBy: {
-        id: report.createdBy.id,
-        name: mapUserName(report.createdBy),
-        email: report.createdBy.email,
-      },
+      createdBy: mapUserSummary(report.createdBy),
     })),
   };
 }

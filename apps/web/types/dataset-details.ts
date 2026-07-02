@@ -55,7 +55,19 @@ export interface DatasetDetails {
   description?: string | null
   visibility: "PRIVATE" | "TEAM" | "PUBLIC" | "RESTRICTED"
   status: "QUEUED" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED"
-  fileKind: "CSV" | "XLSX" | "JSON" | "TSV" | "ZIP"
+  fileKind:
+    | "CSV"
+    | "XLSX"
+    | "JSON"
+    | "TSV"
+    | "TXT"
+    | "XML"
+    | "PARQUET"
+    | "ZIP"
+    | "PDF"
+    | "FHIR"
+    | "GEOJSON"
+    | "IMAGING"
   sizeBytes: number
   rowsCount?: number | null
   columnsCount?: number | null

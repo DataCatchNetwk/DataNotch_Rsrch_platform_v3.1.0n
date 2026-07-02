@@ -57,13 +57,28 @@ async function resolveWorkspaceId() {
   return workspaceId
 }
 
+export async function listUploadWorkspaces(): Promise<Array<{ id: string; name: string }>> {
+  const { data } = await api.get("/v1/workspaces/mine")
+  const workspaces = Array.isArray(data?.workspaces) ? data.workspaces : []
+  return workspaces
+    .map((workspace: { id?: unknown; name?: unknown }) => ({
+      id: typeof workspace.id === "string" ? workspace.id : "",
+      name: typeof workspace.name === "string" ? workspace.name : "Workspace",
+    }))
+    .filter((workspace: { id: string }) => workspace.id.length > 0)
+}
+
 type DepositDatasetApiItem = {
   id: string
   name: string
   description?: string | null
-  visibility?: "PRIVATE" | "TEAM" | "PUBLIC" | "RESTRICTED"
+  workspaceId?: string | null
+  workspace?: { id?: unknown; name?: unknown } | null
+  visibility?: "PRIVATE" | "TEAM" | "WORKSPACE" | "PUBLIC" | "RESTRICTED"
   depositStatus?: "DRAFT" | "AVAILABLE" | "ARCHIVED"
+  storagePath?: string | null
   mimeType?: string | null
+  sourceName?: string | null
   sizeBytes?: number | null
   rowCount?: number | null
   recordCount?: number | null
@@ -81,6 +96,13 @@ type WorkspaceDatasetApiItem = Omit<DepositDatasetApiItem, "visibility"> & {
 
 function mapFileKind(mimeType?: string | null): DatasetFileKind {
   const value = (mimeType || "").toLowerCase()
+  if (value.includes("fhir")) return "FHIR"
+  if (value.includes("geojson")) return "GEOJSON"
+  if (value.includes("xml")) return "XML"
+  if (value.includes("parquet")) return "PARQUET"
+  if (value.includes("pdf")) return "PDF"
+  if (value.includes("text") || value.includes("plain")) return "TXT"
+  if (value.includes("nifti") || value.includes("dicom") || value.includes("image/nii")) return "IMAGING"
   if (value.includes("csv")) return "CSV"
   if (value.includes("json")) return "JSON"
   if (value.includes("excel") || value.includes("spreadsheet") || value.includes("xlsx")) return "XLSX"
@@ -89,13 +111,45 @@ function mapFileKind(mimeType?: string | null): DatasetFileKind {
   return "CSV"
 }
 
-function mapStatus(depositStatus?: DepositDatasetApiItem["depositStatus"]): DatasetItem["status"] {
-  if (depositStatus === "AVAILABLE") return "READY"
+function mapStatus(item: Pick<DepositDatasetApiItem, "depositStatus" | "storagePath" | "sizeBytes" | "sourceName">): DatasetItem["status"] {
+  const hasStoredUpload = Boolean(item.storagePath) || Boolean(item.sizeBytes && item.sizeBytes > 0) || /upload/i.test(item.sourceName ?? "")
+  if (item.depositStatus === "AVAILABLE" || (item.depositStatus === "DRAFT" && hasStoredUpload)) return "READY"
   return "QUEUED"
+}
+
+function mapDatasetVisibility(visibility?: DepositDatasetApiItem["visibility"]): DatasetItem["visibility"] {
+  return visibility === "WORKSPACE" ? "TEAM" : visibility ?? "PUBLIC"
 }
 
 function mapUploadVisibility(visibility: "PRIVATE" | "TEAM" | "PUBLIC" | "RESTRICTED") {
   return visibility === "TEAM" ? "WORKSPACE" : visibility
+}
+
+const LAST_DATASET_WORKSPACE_KEY = "datanotch:last-dataset-workspace-id"
+
+export function getSavedDatasetWorkspaceId() {
+  if (typeof window === "undefined") return null
+  return window.localStorage.getItem(LAST_DATASET_WORKSPACE_KEY)
+}
+
+export function saveDatasetWorkspaceId(workspaceId: string) {
+  if (typeof window === "undefined") return
+  window.localStorage.setItem(LAST_DATASET_WORKSPACE_KEY, workspaceId)
+}
+
+export type DatasetUploadKind = "files" | "folder" | "zip" | "cloud" | "repository"
+
+export type UploadDatasetPayload = {
+  file?: File
+  files?: File[]
+  relativePaths?: string[]
+  uploadKind?: DatasetUploadKind
+  name: string
+  description?: string
+  visibility: "PRIVATE" | "TEAM" | "PUBLIC" | "RESTRICTED"
+  workspaceId?: string
+  sourceProvider?: string
+  sourceLocator?: string
 }
 
 function mapDataset(item: DepositDatasetApiItem): DatasetItem {
@@ -109,8 +163,18 @@ function mapDataset(item: DepositDatasetApiItem): DatasetItem {
     id: item.id,
     name: item.name,
     description: item.description ?? null,
-    visibility: item.visibility ?? "PUBLIC",
-    status: mapStatus(item.depositStatus),
+    workspaceId: item.workspaceId ?? null,
+    workspace:
+      item.workspace && typeof item.workspace.id === "string"
+        ? {
+            id: item.workspace.id,
+            name: typeof item.workspace.name === "string" ? item.workspace.name : "Workspace",
+          }
+        : item.workspaceId
+          ? { id: item.workspaceId, name: "Workspace" }
+          : null,
+    visibility: mapDatasetVisibility(item.visibility),
+    status: mapStatus(raw),
     fileKind: mapFileKind(item.mimeType),
     sizeBytes: item.sizeBytes ?? 0,
     rowsCount: item.rowCount ?? item.recordCount ?? null,
@@ -142,19 +206,33 @@ function mapWorkspaceDataset(item: WorkspaceDatasetApiItem): DatasetItem {
 async function fetchWorkspaceDatasets() {
   try {
     const mine = await api.get("/v1/workspaces/mine")
-    const workspaceIds: string[] = Array.isArray(mine.data?.workspaces)
+    const workspaces: Array<{ id: string; name: string }> = Array.isArray(mine.data?.workspaces)
       ? mine.data.workspaces
-          .map((workspace: { id?: unknown }) => workspace.id)
-          .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
+          .map((workspace: { id?: unknown; name?: unknown }) => ({
+            id: typeof workspace.id === "string" ? workspace.id : "",
+            name: typeof workspace.name === "string" ? workspace.name : "Workspace",
+          }))
+          .filter((workspace: { id: string }) => workspace.id.length > 0)
       : []
 
     const responses = await Promise.all(
-      workspaceIds.map((workspaceId) => api.get(`/v1/workspaces/${workspaceId}/datasets`))
+      workspaces.map((workspace) =>
+        api.get(`/v1/workspaces/${workspace.id}/datasets`).then((response) => ({
+          response,
+          workspace,
+        }))
+      )
     )
 
-    return responses.flatMap((response) =>
+    return responses.flatMap(({ response, workspace }) =>
       Array.isArray(response.data?.datasets)
-        ? response.data.datasets.map((item: WorkspaceDatasetApiItem) => mapWorkspaceDataset(item))
+        ? response.data.datasets.map((item: WorkspaceDatasetApiItem) =>
+            mapWorkspaceDataset({
+              ...item,
+              workspaceId: workspace.id,
+              workspace,
+            })
+          )
         : []
     )
   } catch {
@@ -217,7 +295,7 @@ export async function fetchDatasets(filters: DatasetFilters): Promise<DatasetsRe
 
   const depositItems: DatasetItem[] = Array.isArray(data?.items) ? data.items.map(mapDataset) : []
   const byId = new Map<string, DatasetItem>()
-  ;[...workspaceItems, ...depositItems].forEach((item) => byId.set(item.id, item))
+  ;[...depositItems, ...workspaceItems].forEach((item) => byId.set(item.id, item))
 
   const page = Number(filters.page ?? 1)
   const pageSize = Number(filters.pageSize ?? 10)
@@ -242,7 +320,7 @@ export async function fetchDatasetStats(): Promise<DatasetStats> {
 
   const depositItems: DatasetItem[] = Array.isArray(data?.items) ? data.items.map(mapDataset) : []
   const byId = new Map<string, DatasetItem>()
-  ;[...workspaceItems, ...depositItems].forEach((item) => byId.set(item.id, item))
+  ;[...depositItems, ...workspaceItems].forEach((item) => byId.set(item.id, item))
   const items = Array.from(byId.values())
 
   return {
@@ -255,13 +333,54 @@ export async function fetchDatasetStats(): Promise<DatasetStats> {
   }
 }
 
-export async function uploadDataset(payload: {
-  file: File
-  name: string
-  description?: string
-  visibility: "PRIVATE" | "TEAM" | "PUBLIC" | "RESTRICTED"
-}) {
-  const workspaceId = await resolveWorkspaceId()
+export async function uploadDataset(payload: UploadDatasetPayload) {
+  const workspaceId = payload.workspaceId || (await resolveWorkspaceId())
+  saveDatasetWorkspaceId(workspaceId)
+
+  if (payload.uploadKind === "cloud" || payload.uploadKind === "repository") {
+    const { data } = await api.post(`/v1/workspaces/${workspaceId}/datasets`, {
+      name: payload.name,
+      description:
+        payload.description ||
+        `${payload.uploadKind === "cloud" ? "Cloud import" : "Repository import"} from ${payload.sourceProvider ?? "external source"}: ${payload.sourceLocator ?? "pending sync"}`,
+      visibility: mapUploadVisibility(payload.visibility),
+      uploadKind: payload.uploadKind,
+      sourceProvider: payload.sourceProvider,
+      sourceLocator: payload.sourceLocator,
+      tags: [
+        payload.uploadKind === "cloud" ? "cloud-import" : "repository-import",
+        payload.sourceProvider?.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      ].filter(Boolean),
+    })
+    return (data?.dataset ?? data) as DatasetItem
+  }
+
+  if (payload.files?.length) {
+    const formData = new FormData()
+    payload.files.forEach((file) => formData.append("files", file))
+    formData.append("relativePaths", JSON.stringify(payload.relativePaths ?? payload.files.map((file) => file.name)))
+    formData.append("uploadKind", payload.uploadKind ?? "files")
+    formData.append("name", payload.name)
+    if (payload.description) formData.append("description", payload.description)
+    formData.append("visibility", mapUploadVisibility(payload.visibility))
+    formData.append("autoRunPipeline", "false")
+
+    try {
+      const { data } = await api.post(`/v1/workspaces/${workspaceId}/datasets/upload-bundle`, formData)
+      return (data?.dataset ?? data) as DatasetItem
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error
+      }
+
+      const { data } = await api.post(`/workspaces/${workspaceId}/datasets/upload-bundle`, formData)
+      return (data?.dataset ?? data) as DatasetItem
+    }
+  }
+
+  if (!payload.file) {
+    throw new Error("Please choose at least one dataset file")
+  }
 
   const formData = new FormData()
   formData.append("file", payload.file)
@@ -269,6 +388,7 @@ export async function uploadDataset(payload: {
   if (payload.description) formData.append("description", payload.description)
   formData.append("visibility", mapUploadVisibility(payload.visibility))
   formData.append("autoRunPipeline", "false")
+  formData.append("uploadKind", payload.uploadKind ?? (payload.file.name.toLowerCase().endsWith(".zip") ? "zip" : "files"))
 
   try {
     const { data } = await api.post(`/v1/workspaces/${workspaceId}/datasets/upload`, formData)
@@ -284,6 +404,7 @@ export async function uploadDataset(payload: {
     if (payload.description) retryFormData.append("description", payload.description)
     retryFormData.append("visibility", mapUploadVisibility(payload.visibility))
     retryFormData.append("autoRunPipeline", "false")
+    retryFormData.append("uploadKind", payload.uploadKind ?? (payload.file.name.toLowerCase().endsWith(".zip") ? "zip" : "files"))
 
     const { data } = await api.post(`/workspaces/${workspaceId}/datasets/upload`, retryFormData)
     return (data?.dataset ?? data) as DatasetItem

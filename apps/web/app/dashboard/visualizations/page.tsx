@@ -6,6 +6,7 @@ import { AreaChart, BarChart3, DatabaseZap, PieChart, TrendingUp } from 'lucide-
 import { ResearchChartStudio, type ResearchChartRecord } from '@/components/visualizations/research-chart-studio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { listAnalysisJobs, type AnalysisJobsPageItem } from '@/src/lib/api/analysis-jobs-api-client';
 
 function recordsFromJobs(jobs: AnalysisJobsPageItem[]): ResearchChartRecord[] {
@@ -81,6 +82,39 @@ export default function VisualizationsPage() {
             <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+        <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Visualization Contract</h2>
+          <p className="mt-1 text-sm text-slate-500">Unified chart lifecycle contract from analytics outputs into publication and presentation visuals.</p>
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Input Contract</p>
+              <p className="mt-1 text-sm text-blue-950">Analysis metrics, model artifacts, cohort slices, geospatial fields, and explainability signals.</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Output Contract</p>
+              <p className="mt-1 text-sm text-emerald-950">Figure-ready visuals, dashboard tiles, and exportable chart payloads with lineage context.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Visualization Delivery Modules</h2>
+          <p className="mt-1 text-sm text-slate-500">Use these routes to keep visual outputs consistent with Reports and Downloads.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/dashboard/results">Results Workspace</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/dashboard/reports">Reports</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/dashboard/downloads">Downloads</Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
       <ResearchChartStudio

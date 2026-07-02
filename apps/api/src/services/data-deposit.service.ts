@@ -1,5 +1,7 @@
 import { prisma } from '../db/prisma.js';
 import { Prisma } from '@prisma/client';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { HttpError } from '../utils/errors.js';
 import { assertWorkspaceAction } from './workspace-access.service.js';
 import { WorkspaceAction } from './workspace-permissions.js';
@@ -95,12 +97,20 @@ function mapDepositDataset(dataset: any, userId?: string) {
     rowCount: dataset.recordCount,
     columnCount: dataset.columnCount,
     sizeBytes: toSafeNumber(dataset.sizeBytes),
+    storagePath: dataset.storagePath,
     mimeType: dataset.mimeType,
     schemaJson: dataset.schemaJson,
     previewRowsJson: dataset.previewRowsJson,
     metadataJson: dataset.metadataJson,
     publishedAt: dataset.publishedAt,
     updatedAt: dataset.updatedAt,
+    workspaceId: dataset.workspaceId ?? null,
+    workspace: dataset.workspace
+      ? {
+          id: dataset.workspace.id,
+          name: dataset.workspace.name,
+        }
+      : null,
     isFavorite: Boolean(favorite),
   };
 }
@@ -144,14 +154,19 @@ export async function listDepositDatasets(filters: ListDepositFilters, userId?: 
   const [datasets, total] = await prisma.$transaction([
     prisma.dataset.findMany({
       where,
-      include: userId
-        ? {
-            favorites: {
-              where: { userId },
-              select: { userId: true },
-            },
-          }
-        : undefined,
+      include: {
+        workspace: {
+          select: { id: true, name: true },
+        },
+        ...(userId
+          ? {
+              favorites: {
+                where: { userId },
+                select: { userId: true },
+              },
+            }
+          : {}),
+      },
       orderBy: [{ isFeatured: 'desc' }, { publishedAt: 'desc' }, { updatedAt: 'desc' }],
       skip,
       take,
@@ -194,10 +209,13 @@ export async function getDepositDatasetById(datasetId: string, userId?: string) 
         orderBy: { createdAt: 'desc' },
         take: 10,
       },
+      workspace: {
+        select: { id: true, name: true },
+      },
     },
   });
 
-  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+  if (!dataset || !dataset.isDepositListed) {
     throw new HttpError(404, 'Dataset not found in central repository');
   }
 
@@ -296,7 +314,7 @@ export async function getDepositDatasetLineage(datasetId: string, userId?: strin
     },
   });
 
-  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+  if (!dataset || !dataset.isDepositListed) {
     throw new HttpError(404, 'Dataset not found in central repository');
   }
 
@@ -393,7 +411,7 @@ export async function createDepositDatasetAccessRequest(
     },
   });
 
-  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+  if (!dataset || !dataset.isDepositListed) {
     throw new HttpError(404, 'Dataset not found in central repository');
   }
 
@@ -931,26 +949,73 @@ export async function triggerFallbackPullByRequestId(pullRequestId: string) {
   };
 }
 
-function toCsv(rows: Array<Record<string, unknown>>) {
-  if (!rows.length) {
-    return '';
+function extractUploadedFileName(value: string | null | undefined) {
+  if (!value) {
+    return null;
   }
 
-  const headers = Object.keys(rows[0]);
-  const escapeCell = (value: unknown) => {
-    const raw = value == null ? '' : String(value);
-    if (raw.includes('"') || raw.includes(',') || raw.includes('\n')) {
-      return `"${raw.replace(/"/g, '""')}"`;
-    }
-    return raw;
-  };
+  try {
+    const url = new URL(value);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const uploadsIndex = parts.lastIndexOf('uploads');
+    const fileName = uploadsIndex >= 0 ? parts[uploadsIndex + 1] : (parts.at(-1) ?? null);
+    return fileName ? decodeURIComponent(fileName) : null;
+  } catch {
+    const normalized = value.replace(/\\/g, '/');
+    const parts = normalized.split('/').filter(Boolean);
+    const uploadsIndex = parts.lastIndexOf('uploads');
+    const fileName = uploadsIndex >= 0 ? parts[uploadsIndex + 1] : path.basename(value);
+    return fileName ? decodeURIComponent(fileName) : null;
+  }
+}
 
-  const lines = [
-    headers.join(','),
-    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(',')),
+function getUploadSearchDirectories() {
+  const cwd = process.cwd();
+  const configuredDirs = (process.env.DATASET_DOWNLOAD_UPLOAD_DIRS ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => path.resolve(cwd, entry));
+
+  // Keep legacy roots during migration so old records still resolve if files were moved.
+  const defaultDirs = [
+    path.resolve(cwd, 'uploads'),
+    path.resolve(cwd, 'apps', 'api', 'uploads'),
+    path.resolve(cwd, 'server', 'uploads'),
+    path.resolve(cwd, '..', 'uploads'),
+    path.resolve(cwd, '..', 'server', 'uploads'),
   ];
 
-  return lines.join('\n');
+  const allDirs = [...configuredDirs, ...defaultDirs];
+  return Array.from(new Set(allDirs));
+}
+
+function resolveStoredUploadPath(...candidates: Array<string | null | undefined>) {
+  const uploadDirs = getUploadSearchDirectories();
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+
+    if (!/^https?:\/\//i.test(candidate) && existsSync(candidate)) {
+      return candidate;
+    }
+
+    const fileName = extractUploadedFileName(candidate);
+    if (!fileName) {
+      continue;
+    }
+
+    for (const uploadDir of uploadDirs) {
+      const candidatePath = path.join(uploadDir, fileName);
+      if (existsSync(candidatePath)) {
+        return candidatePath;
+      }
+    }
+  }
+
+  return null;
 }
 
 export async function getDepositDatasetDownload(datasetId: string, user?: AuthUser) {
@@ -959,29 +1024,50 @@ export async function getDepositDatasetDownload(datasetId: string, user?: AuthUs
     select: {
       id: true,
       name: true,
+      storagePath: true,
       previewRowsJson: true,
       schemaJson: true,
       mimeType: true,
       isDepositListed: true,
       depositStatus: true,
+      fileAssets: {
+        select: {
+          originalName: true,
+          mimeType: true,
+          storagePath: true,
+          publicUrl: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
     },
   });
 
-  if (!dataset || !dataset.isDepositListed || dataset.depositStatus !== 'AVAILABLE') {
+  if (!dataset || !dataset.isDepositListed) {
     throw new HttpError(404, 'Dataset not found in central repository');
   }
 
-  const rows = Array.isArray(dataset.previewRowsJson)
-    ? (dataset.previewRowsJson as Array<Record<string, unknown>>)
-    : [];
+  const fileAsset = dataset.fileAssets[0];
+  const storedUploadPath = resolveStoredUploadPath(
+    fileAsset?.storagePath,
+    fileAsset?.publicUrl,
+    dataset.storagePath,
+  );
 
-  const content = toCsv(rows);
-  const baseName = dataset.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || dataset.id;
+  if (!storedUploadPath) {
+    throw new HttpError(
+      410,
+      'Original dataset file is unavailable on this server. Please re-upload the dataset or contact an administrator.',
+    );
+  }
 
   return {
-    fileName: `${baseName}.csv`,
-    contentType: 'text/csv; charset=utf-8',
-    content,
+    fileName:
+      fileAsset?.originalName ||
+      extractUploadedFileName(dataset.storagePath) ||
+      `${dataset.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || dataset.id}`,
+    contentType: fileAsset?.mimeType || dataset.mimeType || 'application/octet-stream',
+    filePath: storedUploadPath,
   };
 }
 

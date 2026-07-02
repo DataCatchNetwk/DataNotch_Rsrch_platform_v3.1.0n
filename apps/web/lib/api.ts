@@ -6,6 +6,7 @@ type RequestOptions = {
   body?: unknown;
   token?: string;
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 };
 
 export async function apiFetch<T = unknown>(path: string, opts: RequestOptions = {}): Promise<T> {
@@ -35,6 +36,7 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
       method: opts.method ?? 'GET',
       headers,
       body,
+      signal: opts.signal,
     });
   } catch (error) {
     const message =

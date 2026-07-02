@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -25,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DatasetsPageView } from "@/components/datasets/datasets-page"
 import { DataDepositClient } from "@/components/data-deposit/data-deposit-client"
+import { getSavedDatasetWorkspaceId, saveDatasetWorkspaceId } from "@/lib/api/datasets"
 import {
   createPipelineRun,
   getMyWorkspaces,
@@ -61,6 +63,15 @@ type DatasetFlowKey =
   | "lineage"
   | "governance"
   | "favorites"
+
+function pickPreferredWorkspace(workspaces: Workspace[]) {
+  const savedWorkspaceId = getSavedDatasetWorkspaceId()
+  return (
+    workspaces.find((workspace) => workspace.id === savedWorkspaceId) ??
+    workspaces.find((workspace) => workspace.name.toLowerCase().includes("sdoh")) ??
+    workspaces[0]
+  )
+}
 
 const FLOW_ITEMS: Array<{
   key: DatasetFlowKey
@@ -417,8 +428,10 @@ function CohortBuilderPanel({ onBack }: { onBack?: () => void } = {}) {
         const data = await getMyWorkspaces()
         if (!mounted) return
         setWorkspaces(data)
-        if (data.length) {
-          setWorkspaceId(data[0].id)
+        const preferredWorkspace = pickPreferredWorkspace(data)
+        if (preferredWorkspace) {
+          setWorkspaceId(preferredWorkspace.id)
+          saveDatasetWorkspaceId(preferredWorkspace.id)
         }
       } catch (error) {
         toast.error((error as Error).message || "Failed to load workspaces")
@@ -477,7 +490,10 @@ function CohortBuilderPanel({ onBack }: { onBack?: () => void } = {}) {
               aria-label="Select workspace for cohort creation"
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={workspaceId}
-              onChange={(event) => setWorkspaceId(event.target.value)}
+              onChange={(event) => {
+                setWorkspaceId(event.target.value)
+                saveDatasetWorkspaceId(event.target.value)
+              }}
             >
               {workspaces.map((workspace) => (
                 <option key={workspace.id} value={workspace.id}>{workspace.name}</option>
@@ -751,9 +767,11 @@ function DataOperationsPanel({ onBack }: { onBack?: () => void } = {}) {
         const data = await getMyWorkspaces()
         if (!mounted) return
         setWorkspaces(data)
-        if (data.length) {
-          setWorkspaceId(data[0].id)
-          await loadRuns(data[0].id)
+        const preferredWorkspace = pickPreferredWorkspace(data)
+        if (preferredWorkspace) {
+          setWorkspaceId(preferredWorkspace.id)
+          saveDatasetWorkspaceId(preferredWorkspace.id)
+          await loadRuns(preferredWorkspace.id)
         }
       } catch (error) {
         toast.error((error as Error).message || "Failed to load workspaces")
@@ -831,6 +849,7 @@ function DataOperationsPanel({ onBack }: { onBack?: () => void } = {}) {
               onChange={async (event) => {
                 const nextWorkspaceId = event.target.value
                 setWorkspaceId(nextWorkspaceId)
+                saveDatasetWorkspaceId(nextWorkspaceId)
                 await loadRuns(nextWorkspaceId)
               }}
             >
@@ -1011,7 +1030,11 @@ function AnalysisLauncherPanel({ onBack }: { onBack?: () => void } = {}) {
         ])
         if (!mounted) return
         setWorkspaces(wsList)
-        if (wsList.length) setWorkspaceId(wsList[0].id)
+        const preferredWorkspace = pickPreferredWorkspace(wsList)
+        if (preferredWorkspace) {
+          setWorkspaceId(preferredWorkspace.id)
+          saveDatasetWorkspaceId(preferredWorkspace.id)
+        }
         setDepositDatasets(catalog.items)
         if (catalog.items.length) setSelectedDatasetId(catalog.items[0].id)
       } catch (error) {
@@ -1045,7 +1068,10 @@ function AnalysisLauncherPanel({ onBack }: { onBack?: () => void } = {}) {
                 aria-label="Select workspace for analysis"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={workspaceId}
-                onChange={(e) => setWorkspaceId(e.target.value)}
+                onChange={(e) => {
+                  setWorkspaceId(e.target.value)
+                  saveDatasetWorkspaceId(e.target.value)
+                }}
               >
                 {workspaces.map((ws) => (
                   <option key={ws.id} value={ws.id}>{ws.name}</option>
@@ -1723,6 +1749,36 @@ export function DatasetsFlowShell() {
           Unified datasets flow covering library, catalog, workspace assets, cohort workflows, operations, analysis, lineage, governance, and favorites.
         </p>
       </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Data Management Unique Views</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Lifecycle-focused dataset ownership views from registry through lineage and catalog.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Dataset Registry", href: "/dashboard/datasets?view=registry" },
+              { label: "Raw Datasets", href: "/dashboard/datasets?view=raw" },
+              { label: "Clean Datasets", href: "/dashboard/datasets?view=clean" },
+              { label: "Harmonized Datasets", href: "/dashboard/datasets?view=harmonized" },
+              { label: "Feature Sets", href: "/dashboard/datasets?view=features" },
+              { label: "Dataset Lineage", href: "/dashboard/datasets?view=lineage" },
+              { label: "Data Catalog", href: "/dashboard/datasets?view=catalog" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-lg border px-3 py-2 text-sm text-foreground transition hover:bg-muted/40"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {FLOW_ITEMS.map((item) => {

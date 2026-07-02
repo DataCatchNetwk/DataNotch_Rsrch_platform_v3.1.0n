@@ -7,7 +7,19 @@ export type DatasetStatus =
   | "READY"
   | "FAILED"
 
-export type DatasetFileKind = "CSV" | "XLSX" | "JSON" | "TSV" | "ZIP"
+export type DatasetFileKind =
+  | "CSV"
+  | "XLSX"
+  | "JSON"
+  | "TSV"
+  | "TXT"
+  | "XML"
+  | "PARQUET"
+  | "ZIP"
+  | "PDF"
+  | "FHIR"
+  | "GEOJSON"
+  | "IMAGING"
 
 export interface DatasetOwner {
   id: string
@@ -19,6 +31,11 @@ export interface DatasetItem {
   id: string
   name: string
   description?: string | null
+  workspaceId?: string | null
+  workspace?: {
+    id: string
+    name: string
+  } | null
   visibility: DatasetVisibility
   status: DatasetStatus
   fileKind: DatasetFileKind

@@ -223,3 +223,13 @@ API running on http://0.0.0.0:3001
 [0mGET /api/notifications/unread-count [32m200[0m 74.511 ms - 12[0m
 [0mGET /api/notifications?limit=8 [32m200[0m 20.433 ms - 8840[0m
 [0mGET /api/v1/database/overview [32m200[0m 5523.916 ms - 222944[0m
+[0mGET /api/v1/auth/me [36m304[0m 78.873 ms - -[0m
+[0mGET /api/notifications/unread-count [32m200[0m 42.702 ms - 12[0m
+[0mGET /api/notifications?limit=8 [32m200[0m 12.703 ms - 8840[0m
+[0mGET /api/notifications/unread-count [32m200[0m 25.950 ms - 12[0m
+[0mGET /api/notifications?limit=8 [32m200[0m 18.067 ms - 8840[0m
+[0mGET /api/v1/database/overview [32m200[0m 2339.279 ms - 222943[0m
+[0mGET /api/v1/database/overview [32m200[0m 1764.082 ms - 222943[0m
+[0mGET /api/v1/database/overview [32m200[0m 2071.220 ms - 222943[0m
+[0mGET /api/v1/database/overview [32m200[0m 2342.543 ms - 222943[0m
+ ELIFECYCLE  Command failed with exit code 1073807364.

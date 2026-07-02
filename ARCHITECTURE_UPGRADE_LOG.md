@@ -6,6 +6,33 @@ Successfully upgraded the data lake application to a comprehensive multi-faceted
 
 ## Completed Tasks
 
+### Communication Log Update (As-Is Intake)
+
+Source folder:
+
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack`
+
+Pack scope captured as-is (no content transforms):
+
+- Frontend admin communication page + API client
+- Backend communication routes/service/types/websocket module
+- Prisma communication schema fragment
+- Flow documentation and install wiring notes
+
+Exact file inventory logged:
+
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/README.md`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/docs/FLOW.md`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/web/app/admin/communication/page.tsx`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/web/lib/communication-api.ts`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/api/src/modules/communication/communication.routes.ts`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/api/src/modules/communication/communication.service.ts`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/api/src/modules/communication/communication.types.ts`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/api/src/modules/communication/communication.ws.ts`
+- `admin_communication_center_full_stack_pack/admin_communication_center_full_stack_pack/apps/api/prisma/communication.prisma`
+
+Status: Logged as provided by source pack; pending selective merge into runtime app modules.
+
 ### 1. Prisma Schema Expansion (Research Platform Models)
 
 Location: `server/prisma/schema.prisma`

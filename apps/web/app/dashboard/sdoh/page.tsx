@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Activity,
   BarChart3,
@@ -27,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResearchChartStudio, type ResearchChartRecord } from '@/components/visualizations/research-chart-studio';
+import { ResearchLifecycleStagePage } from '@/components/research/research-lifecycle-stage-page';
 import {
   getSdohAnalyticsModules,
   getSdohDashboardModules,
@@ -58,6 +60,7 @@ import {
   type RunSdohStudioAnalysisPayload,
   type SdohStudioAnalysisResult,
 } from '@/src/lib/api/sdoh-analytics';
+import { getLifecyclePageFromSearch } from '@/src/config/research-lifecycle-pages';
 
 type WorkflowTab = 'data' | 'cohort' | 'analytics' | 'visualization' | 'causal' | 'copilot' | 'publication' | 'export';
 
@@ -70,6 +73,17 @@ const workflowTabs: Array<{ value: WorkflowTab; label: string; subtitle: string 
   { value: 'copilot', label: '6 Copilot', subtitle: 'Natural language research' },
   { value: 'publication', label: '7 Publication', subtitle: 'Tables and manuscript' },
   { value: 'export', label: 'Export', subtitle: 'Files, approval, audit' },
+];
+
+const researchStudioDesignModules: Array<{ title: string; description: string; tab: WorkflowTab }> = [
+  { title: 'Research Questions', description: 'Turn prepared datasets into testable and structured hypotheses.', tab: 'data' },
+  { title: 'Study Design', description: 'Define cohort strategy, study type, and inference constraints.', tab: 'cohort' },
+  { title: 'Cohort Builder', description: 'Set inclusion and exclusion logic with immediate preview.', tab: 'cohort' },
+  { title: 'Variable Selection', description: 'Choose outcomes, exposures, covariates, and confounders.', tab: 'analytics' },
+  { title: 'Protocol Builder', description: 'Document methods, criteria, and approval-ready protocol notes.', tab: 'publication' },
+  { title: 'Experiment Setup', description: 'Compose analysis payloads and method recommendations.', tab: 'analytics' },
+  { title: 'Research Workspace', description: 'Coordinate questions, cohorts, protocols, and outputs.', tab: 'visualization' },
+  { title: 'Collaboration Tools', description: 'Assign reviews and track team handoffs.', tab: 'copilot' },
 ];
 
 const visualizationTypes = [
@@ -536,6 +550,7 @@ function ResultsWorkspace({ result }: { result: SdohStudioAnalysisResult | SdohA
 }
 
 export default function SdohIntelligencePage() {
+  const searchParams = useSearchParams();
   const [overview, setOverview] = useState<SdohOverview | null>(null);
   const [summary, setSummary] = useState<SdohDashboardSummary | null>(null);
   const [dashboardModules, setDashboardModules] = useState<SdohDashboardModule[]>([]);
@@ -558,6 +573,7 @@ export default function SdohIntelligencePage() {
   const [publicationBusy, setPublicationBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lifecyclePage = getLifecyclePageFromSearch(searchParams);
 
   const load = () => {
     setLoading(true);
@@ -719,6 +735,10 @@ export default function SdohIntelligencePage() {
       .finally(() => setPublicationBusy(null));
   };
 
+  if (lifecyclePage) {
+    return <ResearchLifecycleStagePage config={lifecyclePage} />;
+  }
+
   return (
     <div className="space-y-6 p-6">
       <div className="rounded-3xl border bg-white p-6 shadow-sm">
@@ -803,6 +823,48 @@ export default function SdohIntelligencePage() {
               <InlineStat label="Analyses Running" value={5} />
               <InlineStat label="Approvals Pending" value={7} />
               <InlineStat label="Exports Generated" value={124} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Research Design Launcher</CardTitle>
+            <CardDescription>Pack-aligned module map for Research Questions, Study Design, Cohort, Variables, Protocol, and Experiment handoff.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            {researchStudioDesignModules.map((module) => (
+              <button
+                key={module.title}
+                type="button"
+                onClick={() => {
+                  setActiveTab(module.tab);
+                  setStudioNotice(`${module.title} opened in ${module.tab} stage.`);
+                }}
+                className="rounded-2xl border bg-white p-4 text-left transition hover:border-blue-300 hover:bg-blue-50"
+              >
+                <p className="font-semibold text-slate-950">{module.title}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-600">{module.description}</p>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Handoff Contracts</CardTitle>
+            <CardDescription>Explicit boundary from Data Preparation into Research Studio and outbound to Analytics & AI.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Inbound</p>
+              <p className="mt-2 text-sm text-blue-950">Prepared dataset intake creates workspace context, suggested questions, variable dictionary, and cohort templates.</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Outbound</p>
+              <p className="mt-2 text-sm text-emerald-950">Experiment handoff sends study design, cohort definition, predictors, outcomes, and protocol notes to Analytics & AI jobs.</p>
             </div>
           </CardContent>
         </Card>

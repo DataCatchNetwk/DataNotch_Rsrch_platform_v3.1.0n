@@ -10,12 +10,22 @@ function iconFor(status: AnalysisJobStage["status"]) {
   return <Circle className="h-4 w-4 text-muted-foreground" />
 }
 
-export function StageTimeline({ stages }: { stages: AnalysisJobStage[] }) {
+export function StageTimeline({ stages }: { stages?: AnalysisJobStage[] | null }) {
+  const safeStages = Array.isArray(stages) ? stages : []
+
+  if (!safeStages.length) {
+    return (
+      <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+        Stage timeline will appear when this analysis job reports pipeline stage metadata.
+      </div>
+    )
+  }
+
   return (
     <ol className="space-y-3">
-      {stages.map((stage) => (
+      {safeStages.map((stage, index) => (
         <li
-          key={stage.key}
+          key={stage.key ?? `${stage.label}-${index}`}
           className={cn(
             "rounded-lg border p-3",
             stage.status === "RUNNING" && "border-blue-200 bg-blue-50/50",

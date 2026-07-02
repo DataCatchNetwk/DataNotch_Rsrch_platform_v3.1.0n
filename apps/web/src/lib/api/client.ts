@@ -1,7 +1,7 @@
 const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001";
+  "http://127.0.0.1:3001";
 
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 const TOKEN_KEY = "auth_token";
@@ -16,7 +16,7 @@ function getStoredToken() {
   }
 
   try {
-    return window.localStorage.getItem(TOKEN_KEY);
+    return window.localStorage.getItem(TOKEN_KEY) ?? window.sessionStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }

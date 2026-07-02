@@ -20,6 +20,7 @@ export type BuiltNavItem = {
   href: string;
   iconKey: RouteKey;
   badge?: BadgeValue;
+  children?: BuiltNavItem[];
 };
 
 export type BuiltNavSection = {
@@ -48,6 +49,13 @@ export function canAccessRoute(routeKey: RouteKey, userRoles: readonly string[])
     if (item) {
       return hasRequiredRole(normalized, item.roles);
     }
+
+    const child = section.items
+      .flatMap((entry) => entry.children ?? [])
+      .find((entry) => entry.key === routeKey);
+    if (child) {
+      return hasRequiredRole(normalized, child.roles);
+    }
   }
 
   return true;
@@ -69,19 +77,23 @@ export function buildSidebarSections(
   badgeOverrides: BadgeOverrides = {}
 ): BuiltNavSection[] {
   const normalized = normalizeRoles(userRoles);
+  const buildItem = (item: NavSection["items"][number]): BuiltNavItem => ({
+    key: item.key,
+    title: item.title,
+    href: item.href ?? Routes[item.key],
+    iconKey: item.iconKey ?? item.key,
+    badge: badgeOverrides[item.key] ?? item.badgeDefault,
+    children: item.children
+      ?.filter((child) => hasRequiredRole(normalized, child.roles))
+      .map(buildItem),
+  });
 
   return (NavConfig as NavSection[])
     .map((section) => ({
       title: section.title,
       items: section.items
         .filter((item) => hasRequiredRole(normalized, item.roles))
-        .map((item) => ({
-          key: item.key,
-          title: item.title,
-          href: Routes[item.key],
-          iconKey: item.key,
-          badge: badgeOverrides[item.key] ?? item.badgeDefault,
-        })),
+        .map(buildItem),
     }))
     .filter((section) => section.items.length > 0);
 }

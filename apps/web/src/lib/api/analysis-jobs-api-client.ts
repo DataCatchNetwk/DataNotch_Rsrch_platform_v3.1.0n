@@ -1,7 +1,7 @@
 const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001"
+  "http://127.0.0.1:3001"
 
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "")
 const TOKEN_KEY = "auth_token"
@@ -188,9 +188,26 @@ function getStoredToken() {
   }
 
   try {
-    return window.localStorage.getItem(TOKEN_KEY)
+    return window.localStorage.getItem(TOKEN_KEY) ?? window.sessionStorage.getItem(TOKEN_KEY)
   } catch {
     return null
+  }
+}
+
+function clearStoredAuth() {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  try {
+    window.localStorage.removeItem("auth_token")
+    window.localStorage.removeItem("refresh_token")
+    window.localStorage.removeItem("auth_user")
+    window.sessionStorage.removeItem("auth_token")
+    window.sessionStorage.removeItem("refresh_token")
+    window.sessionStorage.removeItem("auth_user")
+  } catch {
+    // Storage can be unavailable in hardened browser contexts.
   }
 }
 
@@ -267,6 +284,10 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
         : typeof payload === "string" && payload.trim().length > 0
           ? payload
           : `Request failed (${response.status})`
+
+    if (response.status === 401) {
+      clearStoredAuth()
+    }
 
     throw new ApiError(message, response.status, payload, path)
   }

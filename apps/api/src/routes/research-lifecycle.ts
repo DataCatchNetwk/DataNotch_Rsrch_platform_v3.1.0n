@@ -45,10 +45,31 @@ function normalizeSchema(schemaJson: unknown): Array<{ name: string; type: strin
   return normalizeSchema(columns);
 }
 
+function metadataRecord(metadataJson: unknown): Record<string, unknown> {
+  return metadataJson && typeof metadataJson === 'object' && !Array.isArray(metadataJson)
+    ? (metadataJson as Record<string, unknown>)
+    : {};
+}
+
+function dataPreparationRecord(metadataJson: unknown): Record<string, unknown> {
+  const metadata = metadataRecord(metadataJson);
+  return metadata.dataPreparation && typeof metadata.dataPreparation === 'object' && !Array.isArray(metadata.dataPreparation)
+    ? (metadata.dataPreparation as Record<string, unknown>)
+    : {};
+}
+
+function preparationProfile(metadataJson: unknown): Record<string, unknown> {
+  const preparation = dataPreparationRecord(metadataJson);
+  return preparation.profile && typeof preparation.profile === 'object' && !Array.isArray(preparation.profile)
+    ? (preparation.profile as Record<string, unknown>)
+    : {};
+}
+
 function getLifecycleStatus(dataset: {
   depositStatus: string;
   schemaJson: unknown;
   previewRowsJson: unknown;
+  metadataJson: unknown;
   recordCount: number | null;
   columnCount: number | null;
   publishedAt: Date | null;
@@ -64,6 +85,10 @@ function getLifecycleStatus(dataset: {
   }
 
   if (dataset.analysisJobs.some((job) => ['QUEUED', 'RUNNING', 'SUCCEEDED'].includes(job.status))) {
+    return 'ANALYSIS_READY';
+  }
+
+  if (metadataRecord(dataset.metadataJson).cleaningStatus === 'ANALYSIS_READY') {
     return 'ANALYSIS_READY';
   }
 
@@ -169,6 +194,9 @@ router.get(
     }
 
     const schema = normalizeSchema(dataset.schemaJson);
+    const metadata = metadataRecord(dataset.metadataJson);
+    const preparation = dataPreparationRecord(dataset.metadataJson);
+    const prepProfile = preparationProfile(dataset.metadataJson);
     const latestJob = dataset.analysisJobs[0] ?? null;
     const status = getLifecycleStatus(dataset);
     const variables = schema.map((column) => column.name);
@@ -186,7 +214,9 @@ router.get(
         workspace: dataset.workspace?.name ?? null,
         records: dataset.recordCount ?? 0,
         variables: dataset.columnCount ?? schema.length,
-        missingness: Number((dataset.metadataJson as Record<string, unknown> | null)?.missingnessRate ?? 0),
+        missingness: Number(prepProfile.missingRate ?? metadata.missingnessRate ?? 0),
+        qualityScore: Number(prepProfile.qualityScore ?? metadata.dataQualityScore ?? 0),
+        cleaningStatus: String(metadata.cleaningStatus ?? preparation.status ?? 'REVIEW_REQUIRED'),
         lastUpdated: dataset.updatedAt,
         sourceName: dataset.sourceName,
         domain: dataset.domain,
@@ -201,13 +231,19 @@ router.get(
         { key: 'upload', title: 'Dataset Upload', status: 'ready', detail: dataset.storagePath ? 'File asset linked' : 'Metadata-only record' },
         { key: 'sources', title: 'Database Sources', status: dataset.sourceName ? 'ready' : 'pending', detail: dataset.sourceName ?? 'No source connected' },
         { key: 'library', title: 'File Library', status: dataset.storagePath ? 'ready' : 'pending', detail: dataset.mimeType ?? 'No file type' },
-        { key: 'dictionary', title: 'Data Dictionary', status: schema.length ? 'ready' : 'pending', detail: `${schema.length} fields profiled` },
-        { key: 'variables', title: 'Variable Explorer', status: variables.length ? 'ready' : 'pending', detail: variables.slice(0, 4).join(', ') || 'No variables yet' },
-        { key: 'quality', title: 'Data Quality', status: 'ready', detail: 'Completeness, duplicates, invalid rows, and missingness checks' },
+        { key: 'profiling', title: 'Data Profiling', status: schema.length || preparation.profile ? 'ready' : 'pending', detail: `${schema.length} fields profiled; quality score ${Number(prepProfile.qualityScore ?? 0) || 'pending'}` },
+        { key: 'cleaning', title: 'Data Cleaning Hub', status: preparation.cleaningLog ? 'ready' : 'pending', detail: Array.isArray(preparation.cleaningLog) ? `${preparation.cleaningLog.length} cleaning checks generated` : 'Cleaning checks pending' },
+        { key: 'wrangling', title: 'Data Wrangling Builder', status: Array.isArray(preparation.variableMapping) ? 'ready' : 'pending', detail: Array.isArray(preparation.variableMapping) ? `${preparation.variableMapping.length} variables mapped` : 'Variable mapping pending' },
+        { key: 'analysisReady', title: 'Analysis-Ready Dataset', status: metadata.cleaningStatus === 'ANALYSIS_READY' ? 'ready' : 'pending', detail: String(metadata.cleaningStatus ?? 'Review required') },
+        { key: 'questionBuilder', title: 'Research Question Builder', status: Array.isArray(metadata.researchQuestionBuilder) ? 'ready' : 'pending', detail: Array.isArray(metadata.researchQuestionBuilder) ? String(metadata.researchQuestionBuilder[0] ?? 'Questions ready') : 'Questions pending' },
+        { key: 'hypothesisSelector', title: 'Hypothesis Test Selector', status: Array.isArray(metadata.hypothesisSelector) ? 'ready' : 'pending', detail: Array.isArray(metadata.hypothesisSelector) ? String(metadata.hypothesisSelector[0] ?? 'Hypothesis suggestions ready') : 'Hypothesis suggestions pending' },
+        { key: 'visualizationSelector', title: 'Visualization Selector', status: Array.isArray(metadata.visualizationSelector) ? 'ready' : 'pending', detail: Array.isArray(metadata.visualizationSelector) ? String(metadata.visualizationSelector[0] ?? 'Visualizations ready') : 'Visualization routing pending' },
+        { key: 'publicationCharts', title: 'Publication Charts', status: Array.isArray(metadata.publicationCharts) ? 'ready' : 'pending', detail: Array.isArray(metadata.publicationCharts) ? String(metadata.publicationCharts.join(', ')) : 'Publication chart routing pending' },
         { key: 'lineage', title: 'Data Lineage', status: dataset.pipelineRuns.length ? 'ready' : 'pending', detail: `${dataset.pipelineRuns.length} recent pipeline runs` },
         { key: 'versions', title: 'Dataset Versions', status: 'ready', detail: `v${dataset.version}` },
         { key: 'approval', title: 'Dataset Approval', status: dataset.depositStatus === 'AVAILABLE' ? 'ready' : 'pending', detail: dataset.depositStatus },
       ],
+      dataPreparation: preparation,
       analyticsBuilder: {
         steps: [
           { step: 1, title: 'Dataset', value: dataset.name },

@@ -1,9 +1,18 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { ResearchLifecycleStagePage } from '@/components/research/research-lifecycle-stage-page';
+import { getLifecyclePageFromSearch } from '@/src/config/research-lifecycle-pages';
 
 export default function AccessPage() {
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const lifecyclePage = getLifecyclePageFromSearch(searchParams);
+
+  if (lifecyclePage) {
+    return <ResearchLifecycleStagePage config={lifecyclePage} />;
+  }
 
   return (
     <div>

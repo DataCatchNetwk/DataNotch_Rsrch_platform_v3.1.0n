@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   Activity,
   BarChart3,
@@ -119,6 +120,17 @@ type DatabaseOverview = {
   columns: DatabaseColumn[]
   savedQueries: SavedQuery[]
   queryHistory: QueryHistoryItem[]
+}
+
+type PreparationWorkflowStatus = {
+  workflowId: string
+  datasetId: string
+  datasetName: string
+  status: string
+  currentStage: string
+  nextStage: string
+  lastMessage: string | null
+  updatedAt: string
 }
 
 type QueryResult = {
@@ -339,6 +351,10 @@ async function fetchDatabaseOverview() {
 }
 
 export default function DatabaseStudioPage() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const workflowStorageKey = "databaseStudio.activeWorkflowId"
   const [connections, setConnections] = useState<DbConnection[]>(fallbackConnections)
   const [activeConnectionId, setActiveConnectionId] = useState("health_data")
   const [openConnectionModal, setOpenConnectionModal] = useState(false)
@@ -353,6 +369,7 @@ export default function DatabaseStudioPage() {
   const [executionPlan, setExecutionPlan] = useState<unknown[]>([])
   const [showAllHistory, setShowAllHistory] = useState(false)
   const [showAllSaved, setShowAllSaved] = useState(false)
+  const [activeWorkflowId, setActiveWorkflowId] = useState("")
   const [queryResult, setQueryResult] = useState<QueryResult>({
     columns: Object.keys(fallbackRows[0]),
     rows: fallbackRows,
@@ -377,6 +394,25 @@ export default function DatabaseStudioPage() {
   })
 
   const data = overview.data
+  const preparationStageRoute: Record<string, string> = {
+    profiling: "profiling",
+    cleaning: "cleaning",
+    harmonization: "harmonization",
+    features: "feature-engineering",
+    quality: "quality-validation",
+    versions: "versioning",
+  }
+
+  const workflowStatus = useQuery({
+    queryKey: ["database-preparation-workflow", activeWorkflowId],
+    queryFn: async () => {
+      const response = await api.get<PreparationWorkflowStatus>(`/v1/data-preparation/workflows/${activeWorkflowId}`)
+      return response.data
+    },
+    enabled: Boolean(activeWorkflowId),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: false,
+  })
 
   const activeConnection = useMemo(
     () => connections.find((connection) => connection.id === activeConnectionId) ?? connections[0],
@@ -496,6 +532,59 @@ export default function DatabaseStudioPage() {
     ["copilot", "AI SQL Copilot"],
   ] as const
 
+  const syncWorkflowIdToDatabaseUrl = useCallback((workflowId: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("workflowId", workflowId)
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [pathname, router, searchParams])
+
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (!tab) return
+
+    const allowedTabs = new Set(mainTabs.map(([key]) => key))
+    if (allowedTabs.has(tab as (typeof mainTabs)[number][0])) {
+      setActiveStudioTab(tab)
+    }
+  }, [mainTabs, searchParams])
+
+  useEffect(() => {
+    const workflowIdFromUrl = searchParams.get("workflowId")
+    if (workflowIdFromUrl) {
+      if (workflowIdFromUrl !== activeWorkflowId) {
+        setActiveWorkflowId(workflowIdFromUrl)
+      }
+      return
+    }
+
+    if (activeWorkflowId) return
+    const storedWorkflowId = window.localStorage.getItem(workflowStorageKey)
+    if (storedWorkflowId) {
+      setActiveWorkflowId(storedWorkflowId)
+      syncWorkflowIdToDatabaseUrl(storedWorkflowId)
+    }
+  }, [activeWorkflowId, searchParams, syncWorkflowIdToDatabaseUrl, workflowStorageKey])
+
+  useEffect(() => {
+    if (!activeWorkflowId) {
+      window.localStorage.removeItem(workflowStorageKey)
+      return
+    }
+
+    window.localStorage.setItem(workflowStorageKey, activeWorkflowId)
+  }, [activeWorkflowId, workflowStorageKey])
+
+  const handleStudioTabChange = (tab: string) => {
+    setActiveStudioTab(tab)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", tab)
+    const query = params.toString()
+
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
+
   const runQuery = useMutation({
     mutationFn: async () => {
       setQueryStatus("Running query...")
@@ -608,15 +697,21 @@ export default function DatabaseStudioPage() {
 
   const buildDataset = useMutation({
     mutationFn: async () => {
-      const response = await api.post("/v1/database/datasets/build", {
-        name: `${selectedTable?.name ?? "query"} dataset`,
-        sourceType: "sql",
+      const response = await api.post<{ datasetId: string; next: string; status: string; currentStage: string; nextStage: string; workflowId: string }>("/v1/data-preparation/handoff/database-studio", {
+        sourceConnectionId: activeConnection?.id ?? liveConnection.id,
+        datasetName: `${selectedTable?.name ?? "query"} dataset`,
         sql: sqlQuery,
-        variables: queryColumns,
       })
       return response.data
     },
-    onSuccess: () => setQueryStatus("Dataset created from query"),
+    onSuccess: (result) => {
+      setActiveWorkflowId(result.workflowId)
+      setQueryStatus("Dataset handed off to Data Preparation profiling")
+      router.push(`${result.next}?datasetId=${encodeURIComponent(result.datasetId)}&workflowId=${encodeURIComponent(result.workflowId)}`)
+    },
+    onError: (error) => {
+      setQueryStatus(error instanceof Error ? error.message : "Failed to start Data Preparation workflow")
+    },
   })
 
   const previewCohort = useMutation({
@@ -673,6 +768,14 @@ export default function DatabaseStudioPage() {
           </Button>
         </div>
       </header>
+
+      <div className="border-b bg-slate-50 px-4 py-2 text-xs text-slate-600">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">SQL Workspace</span>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">Schema Explorer</span>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">Query to Dataset Handoff</span>
+        </div>
+      </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[285px_minmax(0,1fr)]">
         <aside className="grid min-h-0 grid-rows-[auto_minmax(18rem,1fr)_auto_245px] border-r bg-white">
@@ -782,7 +885,7 @@ export default function DatabaseStudioPage() {
         </aside>
 
         <main className="min-w-0 overflow-hidden">
-          <Tabs value={activeStudioTab} onValueChange={setActiveStudioTab} className="flex h-full min-h-0 flex-col">
+          <Tabs value={activeStudioTab} onValueChange={handleStudioTabChange} className="flex h-full min-h-0 flex-col">
             <TabsList className="flex h-11 shrink-0 justify-start gap-0 overflow-x-auto rounded-none border-b bg-white px-3">
               {mainTabs.map(([value, label]) => (
                 <TabsTrigger key={value} value={value} className="h-11 shrink-0 rounded-none px-4">
@@ -879,7 +982,7 @@ export default function DatabaseStudioPage() {
                     </div>
                   </Card>
 
-                  <div className="grid min-h-0 grid-cols-3 gap-3">
+                  <div className="grid min-h-0 grid-cols-4 gap-3">
                     <BottomPanel title="Query History" action="View All" onAction={() => setShowAllHistory((current) => !current)}>
                       <QueryHistoryList items={showAllHistory ? queryHistory : queryHistory.slice(0, 5)} onSelect={setSqlQuery} />
                     </BottomPanel>
@@ -888,11 +991,38 @@ export default function DatabaseStudioPage() {
                     </BottomPanel>
                     <BottomPanel title="Quick Actions">
                       <div className="grid gap-2">
-                        <ActionButton icon={FileText} label="Create Dataset from Query" onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
+                        <ActionButton icon={FileText} label="Start Data Preparation" onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
                         <ActionButton icon={Users} label="Create Cohort from Results" onClick={() => previewCohort.mutate()} busy={previewCohort.isPending} />
                         <ActionButton icon={Download} label="Export Results (CSV)" onClick={() => downloadCsv(queryRows, "database-query-results.csv")} />
                         <ActionButton icon={BarChart3} label="Visualize Results" onClick={() => handoff.mutate("visualization")} busy={handoff.isPending} />
                         <ActionButton icon={Activity} label="Send to Analysis Studio" onClick={() => handoff.mutate("descriptive")} busy={handoff.isPending} />
+                      </div>
+                    </BottomPanel>
+                    <BottomPanel title="Workflow">
+                      <div className="grid gap-2">
+                        <div className="rounded-lg border p-2">
+                          <p className="text-[10px] uppercase text-slate-500">Current Stage</p>
+                          <p className="text-xs font-semibold text-slate-900">{workflowStatus.data?.currentStage ?? "Not started"}</p>
+                        </div>
+                        <div className="rounded-lg border p-2">
+                          <p className="text-[10px] uppercase text-slate-500">Status</p>
+                          <p className="text-xs font-semibold text-slate-900">{workflowStatus.data?.status ?? "Idle"}</p>
+                        </div>
+                        <div className="rounded-lg border p-2">
+                          <p className="text-[10px] uppercase text-slate-500">Next Stage</p>
+                          <p className="text-xs font-semibold text-slate-900">{workflowStatus.data?.nextStage ?? "profiling"}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (!workflowStatus.data) return
+                            const route = preparationStageRoute[workflowStatus.data.currentStage] ?? "profiling"
+                            router.push(`/dashboard/data-preparation/${route}?datasetId=${encodeURIComponent(workflowStatus.data.datasetId)}&workflowId=${encodeURIComponent(workflowStatus.data.workflowId)}`)
+                          }}
+                          disabled={!workflowStatus.data}
+                        >
+                          Open Current Stage
+                        </Button>
                       </div>
                     </BottomPanel>
                   </div>
@@ -945,7 +1075,7 @@ export default function DatabaseStudioPage() {
             </TabsContent>
 
             <TabsContent value="erd" className="m-0 min-h-0 flex-1 overflow-auto p-4">
-              <Card className="h-full min-h-[32rem]">
+              <Card className="h-full min-h-128">
                 <CardHeader><CardTitle>Research ERD Designer</CardTitle></CardHeader>
                 <CardContent className="h-[calc(100%-4rem)]">
                   <div className="grid h-full place-items-center rounded-2xl border bg-white">
@@ -962,7 +1092,7 @@ export default function DatabaseStudioPage() {
                   <CardContent className="space-y-4">
                     <Input value={`${selectedTable?.name ?? "query"} dataset`} readOnly />
                     <ResultsSummary columns={queryColumns} rows={queryRows} />
-                    <div className="flex gap-2"><Button onClick={() => buildDataset.mutate()}>Create Dataset</Button><Button variant="outline" onClick={() => previewCohort.mutate()}>Build Cohort</Button><Button variant="outline" onClick={() => handoff.mutate("descriptive")}>Send to Analytics</Button></div>
+                    <div className="flex gap-2"><Button onClick={() => buildDataset.mutate()}>Start Data Preparation</Button><Button variant="outline" onClick={() => previewCohort.mutate()}>Build Cohort</Button><Button variant="outline" onClick={() => handoff.mutate("descriptive")}>Send to Analytics</Button></div>
                   </CardContent>
                 </Card>
                 <LineageFlow />
@@ -1015,7 +1145,7 @@ export default function DatabaseStudioPage() {
                   <Card>
                     <CardHeader className="p-3 pb-2"><CardTitle className="text-sm">Research Workflow Actions</CardTitle></CardHeader>
                     <CardContent className="grid gap-2 p-3 pt-0 md:grid-cols-3">
-                      <ActionButton icon={Table} label="Create Dataset" onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
+                      <ActionButton icon={Table} label="Start Data Preparation" onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
                       <ActionButton icon={Users} label="Build Cohort" onClick={() => previewCohort.mutate()} busy={previewCohort.isPending} />
                       <ActionButton icon={BarChart3} label="Visualize Results" onClick={() => handoff.mutate("visualization")} busy={handoff.isPending} />
                       <ActionButton icon={Activity} label="Descriptive Stats" onClick={() => handoff.mutate("descriptive")} busy={handoff.isPending} />
@@ -1200,7 +1330,7 @@ export default function DatabaseStudioPage() {
 
         <Panel defaultSize={isCopilotActive ? 81 : 57} minSize={38}>
         <section className="relative z-10 flex h-full min-w-0 flex-col overflow-hidden bg-slate-50">
-        <Tabs value={activeStudioTab} onValueChange={setActiveStudioTab} className="flex h-full min-h-0 flex-col">
+        <Tabs value={activeStudioTab} onValueChange={handleStudioTabChange} className="flex h-full min-h-0 flex-col">
           <TabsList className="flex h-11 shrink-0 justify-start gap-0 overflow-x-auto rounded-none border-b bg-white px-2">
             {[
               ["overview", "Overview"],
@@ -1259,7 +1389,7 @@ export default function DatabaseStudioPage() {
               </Button>
               <div className="ml-auto flex items-center gap-1.5">
                 <Button variant="outline" size="sm" className="h-8 px-2 text-[11px]" onClick={() => buildDataset.mutate()}>
-                  Create Dataset
+                  Start Data Preparation
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 px-2 text-[11px]" onClick={() => previewCohort.mutate()}>
                   Create Cohort
@@ -1271,7 +1401,7 @@ export default function DatabaseStudioPage() {
               </div>
             </div>
 
-            <div className="min-h-[16rem] flex-[1.08] overflow-hidden border-b bg-white">
+            <div className="min-h-64 flex-[1.08] overflow-hidden border-b bg-white">
               <Editor
                 height="100%"
                 defaultLanguage="sql"
@@ -1294,7 +1424,7 @@ export default function DatabaseStudioPage() {
               />
             </div>
 
-            <div className="min-h-[14rem] flex-1 overflow-hidden border-b bg-white">
+            <div className="min-h-56 flex-1 overflow-hidden border-b bg-white">
               <div className="flex items-center justify-between border-b px-3 py-1.5">
                 <div className="flex items-center gap-5 text-[11px]">
                   {[
@@ -1406,7 +1536,7 @@ export default function DatabaseStudioPage() {
               ) : null}
             </div>
 
-            <div className="grid h-[13.5rem] shrink-0 gap-2.5 border-t bg-slate-50 p-2.5 xl:grid-cols-3">
+            <div className="grid h-54 shrink-0 gap-2.5 border-t bg-slate-50 p-2.5 xl:grid-cols-3">
               <BottomPanel title="Query History" action="View All" onAction={() => setShowAllHistory((current) => !current)}>
                 {(showAllHistory ? queryHistory : queryHistory.slice(0, 5)).map((item) => (
                   <button
@@ -1443,7 +1573,7 @@ export default function DatabaseStudioPage() {
 
               <BottomPanel title="Quick Actions">
                 <div className="grid gap-2">
-                  <ActionButton label="Create Dataset from Query" icon={Table} onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
+                  <ActionButton label="Start Data Preparation" icon={Table} onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
                   <ActionButton label="Create Cohort from Results" icon={Users} onClick={() => previewCohort.mutate()} busy={previewCohort.isPending} />
                   <ActionButton label="Export Results (CSV)" icon={Download} onClick={() => downloadCsv(queryRows, "database-studio-results.csv")} />
                   <ActionButton label="Visualize Results" icon={BarChart3} onClick={() => handoff.mutate("visualization")} busy={handoff.isPending} />
@@ -1539,7 +1669,7 @@ export default function DatabaseStudioPage() {
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <Button variant="outline" onClick={() => buildDataset.mutate()}>
                   <Table className="mr-2 h-4 w-4" />
-                  Create Dataset from Query
+                  Start Data Preparation
                 </Button>
                 <Button variant="outline" onClick={() => previewCohort.mutate()}>
                   <Users className="mr-2 h-4 w-4" />
@@ -1721,7 +1851,7 @@ export default function DatabaseStudioPage() {
                     <CardTitle className="text-sm">Research Workflow Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-2 p-3 pt-0 md:grid-cols-3">
-                    <ActionButton label="Create Dataset" icon={Table} onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
+                    <ActionButton label="Start Data Preparation" icon={Table} onClick={() => buildDataset.mutate()} busy={buildDataset.isPending} />
                     <ActionButton label="Build Cohort" icon={Users} onClick={() => previewCohort.mutate()} busy={previewCohort.isPending} />
                     <ActionButton label="Visualize Results" icon={BarChart3} onClick={() => handoff.mutate("visualization")} busy={handoff.isPending} />
                     <ActionButton label="Descriptive Stats" icon={Activity} onClick={() => handoff.mutate("descriptive")} busy={handoff.isPending} />
@@ -1796,7 +1926,7 @@ export default function DatabaseStudioPage() {
                   onChange={(event) => setTableSearch(event.target.value)}
                 />
               </div>
-              <ScrollArea className="h-[15rem]">
+              <ScrollArea className="h-60">
                 <div className="space-y-1 text-sm">
                   <TreeGroup label={`Tables (${visibleTables.length})`} open />
                   {visibleTables.map((table) => (
@@ -1852,7 +1982,7 @@ export default function DatabaseStudioPage() {
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <Input className="h-8 pl-9 text-xs" placeholder="Search columns..." />
                 </div>
-                <ScrollArea className="h-[9rem]">
+                <ScrollArea className="h-36">
                   <div className="space-y-2">
                     {columnsForPanel.map((column) => (
                       <div key={column.column_name} className="flex justify-between gap-3 border-b pb-2 text-xs">
@@ -2004,7 +2134,7 @@ function ResultsGrid({
         <TableHeader className="sticky top-6 z-10 bg-slate-50">
           <TableRow>
             {columns.map((column) => (
-              <TableHead key={column} className="h-8 min-w-[8rem] whitespace-nowrap px-3 py-1">
+              <TableHead key={column} className="h-8 min-w-32 whitespace-nowrap px-3 py-1">
                 {column}
               </TableHead>
             ))}
@@ -2014,7 +2144,7 @@ function ResultsGrid({
           {rows.slice(0, 100).map((row, index) => (
             <TableRow key={index} className="cursor-pointer hover:bg-violet-50/70">
               {columns.map((column) => (
-                <TableCell key={column} className="max-w-[14rem] truncate whitespace-nowrap px-3 py-1.5">
+                <TableCell key={column} className="max-w-56 truncate whitespace-nowrap px-3 py-1.5">
                   {displayValue(row[column])}
                 </TableCell>
               ))}
@@ -2213,6 +2343,23 @@ function ColumnProfileCard({
 }: {
   profile: ReturnType<typeof profileRows>[number]
 }) {
+  const widthClassByBucket: Record<number, string> = {
+    8: "w-[8%]",
+    10: "w-[10%]",
+    20: "w-[20%]",
+    30: "w-[30%]",
+    40: "w-[40%]",
+    50: "w-[50%]",
+    60: "w-[60%]",
+    70: "w-[70%]",
+    80: "w-[80%]",
+    90: "w-[90%]",
+    100: "w-full",
+  }
+  const clamped = Math.max(8, Math.min(100, profile.uniquePct))
+  const widthBucket = clamped < 10 ? 8 : Math.ceil(clamped / 10) * 10
+  const widthClass = widthClassByBucket[widthBucket] ?? "w-full"
+
   return (
     <div className="rounded-xl border p-3">
       <div className="flex justify-between">
@@ -2220,7 +2367,7 @@ function ColumnProfileCard({
         <span className="text-slate-500">Missing {profile.missingPct}%</span>
       </div>
       <div className="mt-2 h-2 rounded-full bg-slate-100">
-        <div className="h-2 rounded-full bg-violet-500" style={{ width: `${Math.max(8, Math.min(100, profile.uniquePct))}%` }} />
+        <div className={`h-2 rounded-full bg-violet-500 ${widthClass}`} />
       </div>
       <p className="mt-2 text-xs text-slate-500">
         Unique {profile.uniquePct}% {profile.mean !== null ? `- Mean ${profile.mean.toFixed(2)}` : ""}
@@ -2363,7 +2510,7 @@ function ResultsSummary({ columns, rows }: { columns: string[]; rows: Array<Reco
         <TableHeader className="sticky top-0 z-10 bg-slate-50">
           <TableRow>
             {columns.map((column) => (
-              <TableHead key={column} className="h-8 min-w-[8rem] whitespace-nowrap px-3 py-1">{column}</TableHead>
+              <TableHead key={column} className="h-8 min-w-32 whitespace-nowrap px-3 py-1">{column}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -2371,7 +2518,7 @@ function ResultsSummary({ columns, rows }: { columns: string[]; rows: Array<Reco
           {rows.slice(0, 50).map((row, index) => (
             <TableRow key={index} className="cursor-pointer hover:bg-violet-50/70">
               {columns.map((column) => (
-                <TableCell key={column} className="max-w-[14rem] truncate whitespace-nowrap px-3 py-1.5">{displayValue(row[column])}</TableCell>
+                <TableCell key={column} className="max-w-56 truncate whitespace-nowrap px-3 py-1.5">{displayValue(row[column])}</TableCell>
               ))}
             </TableRow>
           ))}

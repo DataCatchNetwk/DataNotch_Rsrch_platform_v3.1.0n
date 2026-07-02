@@ -1,7 +1,7 @@
 const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3001';
+  'http://127.0.0.1:3001';
 
 const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
@@ -74,7 +74,11 @@ export type SdohPublicationPack = {
 
 function token() {
   if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem('auth_token');
+  try {
+    return window.localStorage.getItem('auth_token') ?? window.sessionStorage.getItem('auth_token');
+  } catch {
+    return null;
+  }
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {

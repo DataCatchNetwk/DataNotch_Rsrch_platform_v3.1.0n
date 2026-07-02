@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import {
   AlertTriangle,
   BarChart3,
+  Brain,
   BookCopy,
   CheckCircle2,
   Clock3,
@@ -18,12 +19,14 @@ import {
   FlaskConical,
   Loader2,
   MoreHorizontal,
+  Network,
   Plus,
   RefreshCw,
   RotateCcw,
   Search,
   Share2,
   SlidersHorizontal,
+  Sparkles,
   Square,
   Trash2,
   Upload,
@@ -105,6 +108,14 @@ const STATUSES: Array<AnalysisJobStatus | "ALL"> = [
   "SUCCEEDED",
   "FAILED",
   "CANCELLED",
+]
+
+const analyticsAiLibraryCards: Array<{ name: string; description: string; icon: typeof BarChart3 }> = [
+  { name: "Descriptive & Inferential", description: "Cohort summaries and hypothesis testing.", icon: BarChart3 },
+  { name: "Machine Learning", description: "Classification, risk scoring, and model comparison.", icon: Brain },
+  { name: "Causal & Survival", description: "Treatment effects and time-to-event analysis.", icon: Workflow },
+  { name: "Network & Geographic", description: "Graph pathways, communities, and map outputs.", icon: Network },
+  { name: "Explainability & AI", description: "Feature importance and AI-assisted interpretation.", icon: Sparkles },
 ]
 
 type SortOption = AnalysisJobsSortOption
@@ -985,6 +996,56 @@ export default function AnalysisJobsPage() {
         ) : null}
         </CardContent>
       </Card>
+
+      <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Analytics & AI Module Library</CardTitle>
+            <CardDescription>Aligned with the Analytics & AI full logic pack while preserving existing analysis job workflows.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {analyticsAiLibraryCards.map((module) => {
+              const Icon = module.icon
+              return (
+                <button
+                  key={module.name}
+                  type="button"
+                  onClick={() => {
+                    setSearch(module.name)
+                    setQuickFilter("ALL")
+                  }}
+                  className="rounded-2xl border bg-white p-4 text-left transition hover:border-violet-300 hover:bg-violet-50"
+                >
+                  <Icon className="h-5 w-5 text-violet-600" />
+                  <p className="mt-3 text-sm font-semibold text-slate-950">{module.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{module.description}</p>
+                </button>
+              )
+            })}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Research-to-Output Handoff</CardTitle>
+            <CardDescription>Fast path from Research Studio experiments into analytics jobs and publication-ready outputs.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Input Contract</p>
+              <p className="mt-1 text-sm text-blue-950">Study design, cohort, predictors, outcomes, and protocol notes from Research Studio.</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Output Contract</p>
+              <p className="mt-1 text-sm text-emerald-950">Job results, visualization specs, interpretation summaries, and output handoff package.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button variant="outline" onClick={() => router.push("/dashboard/sdoh?tab=analytics")}>Open Research Studio</Button>
+              <Button variant="outline" onClick={() => router.push("/dashboard/results")}>Open Results Workspace</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {selectedItems.length > 0 ? (
         <Card className="mt-6 rounded-2xl border-violet-200 bg-violet-50/70 shadow-sm">

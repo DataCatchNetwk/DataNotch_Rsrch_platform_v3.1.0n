@@ -28,7 +28,7 @@ export async function createSupportTicket(payload: CreateSupportTicketPayload) {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${(process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '')}/api/v1/support`, {
+  const response = await fetch(`${(process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001').replace(/\/+$/, '')}/api/v1/support`, {
     method: 'POST',
     headers,
     body: formData,
@@ -86,7 +86,7 @@ export async function replyToSupportTicket(ticketId: string, payload: { message:
   if (payload.isInternal) formData.set('isInternal', 'true');
   if (payload.attachment) formData.set('attachment', payload.attachment);
 
-  const response = await fetch(`${(process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '')}/api/v1/support/${ticketId}/reply`, {
+  const response = await fetch(`${(process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001').replace(/\/+$/, '')}/api/v1/support/${ticketId}/reply`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: formData,

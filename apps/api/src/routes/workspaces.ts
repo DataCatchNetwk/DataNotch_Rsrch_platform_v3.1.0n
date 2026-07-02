@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { uploadSingleFile } from '../common/upload.js';
+import { uploadDatasetFiles, uploadSingleFile } from '../common/upload.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { validateBody } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -31,6 +31,7 @@ import {
   members,
   removeMember,
   uploadDataset,
+  uploadDatasetBundle,
   uploadReport,
   update,
   updateRole,
@@ -54,6 +55,7 @@ router.delete('/:workspaceId/members/:memberUserId', asyncHandler(removeMember))
 router.get('/:workspaceId/datasets', asyncHandler(listDatasets));
 router.post('/:workspaceId/datasets', validateBody(createDatasetSchema), asyncHandler(createDatasetRecord));
 router.post('/:workspaceId/datasets/upload', uploadSingleFile, asyncHandler(uploadDataset));
+router.post('/:workspaceId/datasets/upload-bundle', uploadDatasetFiles, asyncHandler(uploadDatasetBundle));
 router.get('/:workspaceId/datasets/:datasetId', asyncHandler(getDataset));
 router.delete('/:workspaceId/datasets/:datasetId', asyncHandler(deleteDatasetRecord));
 

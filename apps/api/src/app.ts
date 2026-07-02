@@ -33,6 +33,12 @@ import opsRoutes from './routes/ops.js';
 import sdohRoutes from './routes/sdoh.js';
 import researchLifecycleRoutes from './routes/research-lifecycle.js';
 import databaseRoutes from './routes/database.js';
+import datasetRegistryRoutes from './routes/dataset-registry.js';
+import dataPreparationRoutes from './routes/data-preparation.js';
+import workspaceZipRoutes from './routes/workspaceZip.routes.js';
+import platformCrossLayerRoutes from './routes/platform-cross-layer.js';
+import governanceCrossLayerRoutes from './routes/governance-cross-layer.js';
+import systemServicesCrossLayerRoutes from './routes/system-services-cross-layer.js';
 
 export function createApp() {
   const app = express();
@@ -51,6 +57,18 @@ export function createApp() {
   app.use('/api/v1/research-lifecycle', researchLifecycleRoutes);
   app.use('/api/database', databaseRoutes);
   app.use('/api/v1/database', databaseRoutes);
+  app.use('/api/data-preparation', dataPreparationRoutes);
+  app.use('/api/v1/data-preparation', dataPreparationRoutes);
+  app.use('/api/workspace-zip', workspaceZipRoutes);
+  app.use('/api/v1/workspace-zip', workspaceZipRoutes);
+  app.use('/api/platform', platformCrossLayerRoutes);
+  app.use('/api/v1/platform', platformCrossLayerRoutes);
+  app.use('/api/governance', governanceCrossLayerRoutes);
+  app.use('/api/v1/governance', governanceCrossLayerRoutes);
+  app.use('/api/system', systemServicesCrossLayerRoutes);
+  app.use('/api/v1/system', systemServicesCrossLayerRoutes);
+  app.use('/api/dataset-registry', datasetRegistryRoutes);
+  app.use('/api/v1/dataset-registry', datasetRegistryRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/analysis/jobs', analysisJobsRoutes);

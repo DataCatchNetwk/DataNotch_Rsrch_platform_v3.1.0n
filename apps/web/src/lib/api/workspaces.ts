@@ -246,6 +246,12 @@ export type UploadDatasetPayload = CreateDatasetPayload & {
   autoRunPipeline?: boolean;
 };
 
+export type UploadDatasetBundlePayload = CreateDatasetPayload & {
+  files: File[];
+  relativePaths?: string[];
+  autoRunPipeline?: boolean;
+};
+
 export type UploadReportPayload = CreateReportPayload & {
   file: File;
 };
@@ -365,6 +371,26 @@ export async function uploadDataset(workspaceId: string, payload: UploadDatasetP
   appendIfPresent(formData, "autoRunPipeline", payload.autoRunPipeline === undefined ? undefined : String(payload.autoRunPipeline));
 
   const data = await apiRequest<DatasetEnvelope>(`/workspaces/${workspaceId}/datasets/upload`, {
+    method: "POST",
+    json: formData,
+  });
+  return data.dataset;
+}
+
+export async function uploadDatasetBundle(workspaceId: string, payload: UploadDatasetBundlePayload) {
+  const formData = new FormData();
+  payload.files.forEach((file) => formData.append("files", file));
+  appendIfPresent(formData, "name", payload.name);
+  appendIfPresent(formData, "description", payload.description);
+  appendIfPresent(formData, "visibility", payload.visibility);
+  appendIfPresent(formData, "recordCount", payload.recordCount);
+  appendIfPresent(formData, "tags", payload.tags?.join(","));
+  appendIfPresent(formData, "autoRunPipeline", payload.autoRunPipeline === undefined ? undefined : String(payload.autoRunPipeline));
+  if (payload.relativePaths?.length) {
+    formData.append("relativePaths", JSON.stringify(payload.relativePaths));
+  }
+
+  const data = await apiRequest<DatasetEnvelope>(`/workspaces/${workspaceId}/datasets/upload-bundle`, {
     method: "POST",
     json: formData,
   });

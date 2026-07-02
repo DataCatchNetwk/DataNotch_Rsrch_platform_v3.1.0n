@@ -12,7 +12,7 @@ import { io } from "socket.io-client";
 const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001";
+  "http://127.0.0.1:3001";
 
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 const SOCKET_BASE =
@@ -37,7 +37,7 @@ function getStoredToken() {
   }
 
   try {
-    return window.localStorage.getItem("auth_token");
+    return window.localStorage.getItem("auth_token") ?? window.sessionStorage.getItem("auth_token");
   } catch {
     return null;
   }

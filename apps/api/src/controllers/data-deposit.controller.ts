@@ -152,8 +152,7 @@ export async function debugPullStatus(req: Request, res: Response) {
 export async function download(req: Request, res: Response) {
   const result = await getDepositDatasetDownload(req.params.datasetId, req.user ? requireUser(req) : undefined);
   res.setHeader('Content-Type', result.contentType);
-  res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-  res.status(200).send(result.content);
+  return res.download(result.filePath, result.fileName);
 }
 
 export async function remove(req: Request, res: Response) {

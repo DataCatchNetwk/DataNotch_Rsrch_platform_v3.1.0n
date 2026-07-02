@@ -12,6 +12,10 @@ export function useUploadDataset() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["datasets"] }),
         queryClient.invalidateQueries({ queryKey: ["dataset-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspaces"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-datasets"] }),
+        queryClient.invalidateQueries({ queryKey: ["workspace-detail"] }),
       ])
     },
   })

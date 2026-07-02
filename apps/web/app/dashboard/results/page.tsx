@@ -110,6 +110,15 @@ function resultRecords(job: AnalysisJobDetails | null): ResearchChartRecord[] {
   ];
 }
 
+const outputsLibrary: Array<{ title: string; description: string; href: string; icon: typeof BarChart3 }> = [
+  { title: 'Interactive Dashboards', description: 'Operational and executive dashboards from analysis assets.', href: '/dashboard/results', icon: BarChart3 },
+  { title: 'Visualization Studio', description: 'Figure-ready charts, maps, and explainability visuals.', href: '/dashboard/visualizations', icon: Workflow },
+  { title: 'Reports', description: 'Structured reports with methods, tables, and findings.', href: '/dashboard/reports', icon: FileText },
+  { title: 'Publications', description: 'Publication packs, review artifacts, and evidence bundles.', href: '/dashboard/sdoh?tab=publication', icon: CheckCircle2 },
+  { title: 'Presentations', description: 'Deck-ready summaries for stakeholder and leadership review.', href: '/dashboard/reports?tab=all', icon: Clock },
+  { title: 'Data/Model/API Exports', description: 'Governed downloads and integration-ready output payloads.', href: '/dashboard/downloads', icon: Download },
+];
+
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const jobId = searchParams.get('jobId');
@@ -210,6 +219,52 @@ export default function ResultsPage() {
             <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Output Builder</CardTitle>
+            <CardDescription>Lifecycle handoff from Analytics & AI result objects into governed output assets.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Input Contract</p>
+              <p className="mt-1 text-sm text-blue-950">Analysis result object with metrics, visual specs, interpretation text, lineage, and source job context.</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Output Contract</p>
+              <p className="mt-1 text-sm text-emerald-950">Dashboard, visualization, report, publication, manuscript, presentation, and export-ready assets with audit state.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button asChild variant="outline">
+                <Link href="/dashboard/analysis/jobs">Open Analytics Jobs</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/dashboard/reports">Open Reports</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Outputs Library</CardTitle>
+            <CardDescription>Pack-aligned output modules mapped to existing platform routes and services.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            {outputsLibrary.map((module) => {
+              const Icon = module.icon;
+              return (
+                <Link key={module.title} href={module.href} className="rounded-xl border bg-white p-3 transition hover:border-violet-300 hover:bg-violet-50">
+                  <Icon className="h-4 w-4 text-violet-600" />
+                  <p className="mt-2 text-sm font-semibold text-slate-950">{module.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{module.description}</p>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
       </div>
 
       <ResearchChartStudio
