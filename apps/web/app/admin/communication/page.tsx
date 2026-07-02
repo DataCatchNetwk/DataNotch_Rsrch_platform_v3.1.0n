@@ -1,152 +1,297 @@
 "use client";
 
-import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Phone, Video, MessageSquare, Users, Monitor, AlertTriangle, Play, Search, Mail, PhoneCall, XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CommunicationPanel } from '@/components/communication/communication-panel';
-import { AudioCallCard } from '@/components/communication/audio-call-card';
-import { VideoRoomCard } from '@/components/communication/video-room-card';
-import { MessagingCard } from '@/components/communication/messaging-card';
-import { RoomSidebar } from '@/components/communication/room-sidebar';
-import {
-  createCommunicationRoom,
-  getCommunicationMonitoring,
-  listCommunicationRooms,
-  startRoomCall,
-  type CommunicationRoom,
-} from '@/lib/api/communication';
-import { usePresence } from '@/hooks/use-presence';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { communicationApi, CommunicationRoom, RegisteredUser } from '@/lib/communicationApi';
 
-export default function CommunicationAdminPage() {
+type ActiveMode = 'audio' | 'video' | 'messaging';
+
+export default function AdminCommunicationCenter() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const mode = searchParams.get('mode');
-  const [rooms, setRooms] = React.useState<CommunicationRoom[]>([]);
-  const [selectedRoom, setSelectedRoom] = React.useState<CommunicationRoom | null>(null);
-  const [monitoring, setMonitoring] = React.useState({
-    activeCalls: 0,
-    activeVideoRooms: 0,
-    onlineUsers: 0,
-    unreadMessages: 0,
-    failedConnectionAttempts: 0,
-    flaggedSessions: 0,
-  });
+  const [activeMode, setActiveMode] = useState<ActiveMode>('audio');
+  const [users, setUsers] = useState<RegisteredUser[]>([]);
+  const [rooms, setRooms] = useState<CommunicationRoom[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
+  const [query, setQuery] = useState('');
+  const [contactMethod, setContactMethod] = useState<'PHONE' | 'EMAIL'>('PHONE');
+  const [messageSubject, setMessageSubject] = useState('Research Platform Message');
+  const [messageBody, setMessageBody] = useState('Hello, this is an official message from the Research Platform administrator.');
+  const [status, setStatus] = useState('Ready');
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ activeCalls: 0, activeVideoRooms: 0, onlineUsers: 0, unreadMessages: 0, failedAttempts: 0, flaggedSessions: 0 });
 
-  usePresence('ONLINE');
+  async function refresh() {
+    setLoading(true);
+    try {
+      const [u, r, s] = await Promise.all([
+        communicationApi.users(query),
+        communicationApi.rooms(),
+        communicationApi.stats(),
+      ]);
+      setUsers(u);
+      setRooms(r);
+      setStats(s);
+    } catch (err: any) {
+      setStatus(err.message ?? 'Failed to refresh');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const load = React.useCallback(async () => {
-    const [roomList, mon] = await Promise.all([listCommunicationRooms(), getCommunicationMonitoring()]);
-    setRooms(roomList);
-    setSelectedRoom((prev) => prev ?? roomList[0] ?? null);
-    setMonitoring(mon.cards);
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 15000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  React.useEffect(() => {
-    void load().catch((error) => toast.error((error as Error).message));
-  }, [load]);
+  const selectedUser = useMemo(() => users.find((u) => u.id === selectedUserId), [users, selectedUserId]);
+  const selectedRoom = useMemo(() => rooms.find((r) => r.id === selectedRoomId), [rooms, selectedRoomId]);
 
-  async function ensureRoom(type: CommunicationRoom['type']) {
-    if (selectedRoom?.type === type) return selectedRoom;
+  const filteredRooms = rooms.filter((room) => {
+    if (activeMode === 'audio') return room.mode === 'AUDIO';
+    if (activeMode === 'video') return room.mode === 'VIDEO';
+    return room.mode === 'EMAIL';
+  });
 
-    const existing = rooms.find((room) => room.type === type);
-    if (existing) {
-      setSelectedRoom(existing);
-      return existing;
-    }
-
-    const room = await createCommunicationRoom({
-      name: type === 'CHANNEL' ? 'Messaging Channel' : type === 'CALL_ROOM' ? 'Realtime Call Room' : 'Communication Room',
-      type,
-      visibility: 'ORG',
-    });
-    await load();
-    setSelectedRoom(room);
-    return room;
-  }
-
-  async function handleAudio() {
+  async function startAudioCall() {
+    if (!selectedUserId) return setStatus('Select a registered user first.');
+    if (contactMethod === 'PHONE' && !selectedUser?.phone) return setStatus('Selected user has no phone number on file.');
+    setLoading(true);
     try {
-      const room = await ensureRoom('CALL_ROOM');
-      const call = await startRoomCall(room.id, 'AUDIO');
-      toast.success('R-MEET audio started');
-      router.push(`/admin/communication/${room.id}?mode=audio&callSessionId=${call.id}`);
-    } catch (error) {
-      toast.error((error as Error).message || 'Failed to start audio call');
+      const room = await communicationApi.startAudio({ userId: selectedUserId, contactMethod });
+      setSelectedRoomId(room.id);
+      setStatus(`R-MEET audio call started for ${selectedUser?.fullName}.`);
+      await refresh();
+    } catch (err: any) {
+      setStatus(err.message ?? 'Failed to start audio call');
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function handleVideo() {
+  async function inviteVideoRoom() {
+    if (!selectedUserId) return setStatus('Select a registered user first.');
+    if (!selectedUser?.email) return setStatus('R-ZOOMA requires registered email on file.');
+    setLoading(true);
     try {
-      const room = await ensureRoom('CALL_ROOM');
-      const call = await startRoomCall(room.id, 'VIDEO');
-      toast.success('R-ZOOMA video room started');
-      router.push(`/admin/communication/${room.id}?mode=video&callSessionId=${call.id}`);
-    } catch (error) {
-      toast.error((error as Error).message || 'Failed to start video room');
+      const room = await communicationApi.inviteVideo({ userId: selectedUserId, topic: 'R-ZOOMA Admin Video Room' });
+      setSelectedRoomId(room.id);
+      setStatus(`R-ZOOMA invitation emailed to ${selectedUser.email}.`);
+      await refresh();
+    } catch (err: any) {
+      setStatus(err.message ?? 'Failed to invite video room');
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function handleMessaging() {
+  async function sendEmailMessage() {
+    if (!selectedUserId) return setStatus('Select a registered user first.');
+    if (!selectedUser?.email) return setStatus('Messaging requires registered email on file.');
+    setLoading(true);
     try {
-      const room = await ensureRoom('CHANNEL');
-      toast.success('Messaging room ready');
-      router.push(`/admin/communication/${room.id}?mode=messaging`);
-    } catch (error) {
-      toast.error((error as Error).message || 'Failed to open messaging');
+      await communicationApi.sendEmailMessage({ userId: selectedUserId, subject: messageSubject, body: messageBody });
+      setStatus(`Email message sent to ${selectedUser.email}.`);
+      await refresh();
+    } catch (err: any) {
+      setStatus(err.message ?? 'Failed to send message');
+    } finally {
+      setLoading(false);
     }
   }
 
-  React.useEffect(() => {
-    if (!mode) return;
-    if (mode === 'audio') void handleAudio();
-    if (mode === 'video') void handleVideo();
-    if (mode === 'messaging') void handleMessaging();
-  }, [mode]);
+  async function endActiveRoom() {
+    if (!selectedRoomId) return setStatus('Select an active room to end.');
+    setLoading(true);
+    try {
+      const room = await communicationApi.endRoom(selectedRoomId);
+      setStatus(`Room ended: ${room.name}`);
+      setSelectedRoomId('');
+      await refresh();
+    } catch (err: any) {
+      setStatus(err.message ?? 'Failed to end room');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function returnToMainPage() {
+    router.push('/dashboard');
+  }
 
   return (
-    <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-semibold">Admin Communication Center</h1>
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Communication Command Center</h1>
+          <p className="mt-1 text-slate-600">Contact registered users through approved onboarding channels.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-green-100 text-green-700">Live</Badge>
+          <Button variant="outline" onClick={refresh} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
+          <Button variant="outline" onClick={returnToMainPage}><ArrowLeft className="mr-2 h-4 w-4" />Return to Main Page</Button>
+        </div>
+      </div>
 
-      <CommunicationPanel
-        activeRooms={monitoring.activeCalls + monitoring.activeVideoRooms}
-        onlineUsers={monitoring.onlineUsers}
-        onAudio={() => void handleAudio()}
-        onVideo={() => void handleVideo()}
-        onMessaging={() => void handleMessaging()}
-      />
+      <Card className="mb-6 border-2 border-sky-400">
+        <CardContent className="p-5">
+          <Tabs value={activeMode} onValueChange={(v) => { setActiveMode(v as ActiveMode); setSelectedRoomId(''); }}>
+            <TabsList className="grid h-16 w-full grid-cols-3 border bg-white">
+              <TabsTrigger value="audio" className="text-lg font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white"><Phone className="mr-2 h-5 w-5" />R-MEET Audio</TabsTrigger>
+              <TabsTrigger value="video" className="text-lg font-bold data-[state=active]:bg-black data-[state=active]:text-white"><Video className="mr-2 h-5 w-5" />R-ZOOMA Email Invite</TabsTrigger>
+              <TabsTrigger value="messaging" className="text-lg font-bold data-[state=active]:bg-pink-600 data-[state=active]:text-white"><MessageSquare className="mr-2 h-5 w-5" />Messaging Email Only</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-        <RoomSidebar rooms={rooms} selectedRoomId={selectedRoom?.id} />
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 space-y-6 xl:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Registered Users</CardTitle>
+              <CardDescription>Only users onboarded with email/phone can be contacted.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-3 flex gap-2">
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone" />
+                <Button variant="outline" onClick={refresh}><Search className="h-4 w-4" /></Button>
+              </div>
+              <ScrollArea className="h-90 pr-3">
+                <div className="space-y-2">
+                  {users.map((user) => (
+                    <button key={user.id} onClick={() => setSelectedUserId(user.id)} className={`w-full rounded-xl border p-3 text-left ${selectedUserId === user.id ? 'border-violet-500 bg-violet-50' : 'bg-white hover:bg-slate-50'}`}>
+                      <div className="font-semibold">{user.fullName}</div>
+                      <div className="flex items-center gap-1 text-xs text-slate-600"><Mail className="h-3 w-3" />{user.email}</div>
+                      <div className="flex items-center gap-1 text-xs text-slate-600"><PhoneCall className="h-3 w-3" />{user.phone ?? 'No phone on file'}</div>
+                      <Badge variant="outline" className="mt-2">{user.role}</Badge>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
 
-        <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <AudioCallCard onStart={() => void handleAudio()} />
-            <VideoRoomCard onStart={() => void handleVideo()} />
-            <MessagingCard onOpen={() => void handleMessaging()} />
-          </div>
+        <div className="col-span-12 space-y-6 xl:col-span-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{activeMode === 'audio' ? 'R-MEET Audio Console' : activeMode === 'video' ? 'R-ZOOMA Video Invite Console' : 'Messaging Email Console'}</CardTitle>
+              <CardDescription>
+                {activeMode === 'audio' && 'Call registered users using phone number or email contact fallback.'}
+                {activeMode === 'video' && 'R-ZOOMA sends video room invitations only to registered email addresses.'}
+                {activeMode === 'messaging' && 'Messaging sends email only to the registered email on file.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {selectedUser ? (
+                <div className="rounded-xl border bg-slate-50 p-4">
+                  <div className="font-semibold">Selected user: {selectedUser.fullName}</div>
+                  <div className="text-sm text-slate-600">{selectedUser.email} · {selectedUser.phone ?? 'No phone'}</div>
+                </div>
+              ) : (
+                <div className="rounded-xl border bg-amber-50 p-4 text-sm">Select a registered user before starting contact.</div>
+              )}
+
+              {activeMode === 'audio' && (
+                <div className="space-y-3">
+                  <Select value={contactMethod} onValueChange={(v) => setContactMethod(v as 'PHONE' | 'EMAIL')}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PHONE">Use registered phone number</SelectItem>
+                      <SelectItem value="EMAIL">Use registered email contact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={startAudioCall} disabled={loading} className="bg-orange-600 hover:bg-orange-700"><Play className="mr-2 h-4 w-4" />Start Audio Call</Button>
+                </div>
+              )}
+
+              {activeMode === 'video' && (
+                <Button onClick={inviteVideoRoom} disabled={loading} className="bg-black hover:bg-slate-800"><Video className="mr-2 h-4 w-4" />Email R-ZOOMA Invite</Button>
+              )}
+
+              {activeMode === 'messaging' && (
+                <div className="space-y-3">
+                  <Input value={messageSubject} onChange={(e) => setMessageSubject(e.target.value)} placeholder="Subject" />
+                  <Textarea value={messageBody} onChange={(e) => setMessageBody(e.target.value)} rows={6} placeholder="Message body" />
+                  <Button onClick={sendEmailMessage} disabled={loading} className="bg-pink-600 hover:bg-pink-700"><Mail className="mr-2 h-4 w-4" />Send Email Message</Button>
+                </div>
+              )}
+
+              <div className="rounded-xl border bg-white p-3 text-sm text-slate-700">Status: {status}</div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Admin Monitoring</CardTitle>
+              <CardTitle className="flex items-center gap-2"><Monitor className="h-5 w-5" />Admin Monitoring</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <Metric label="Active Calls" value={stats.activeCalls} />
+              <Metric label="Video Rooms" value={stats.activeVideoRooms} />
+              <Metric label="Online Users" value={stats.onlineUsers} />
+              <Metric label="Unread Emails" value={stats.unreadMessages} />
+              <Metric label="Failed Attempts" value={stats.failedAttempts} />
+              <Metric label="Flagged Sessions" value={stats.flaggedSessions} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="col-span-12 space-y-6 xl:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Rooms</CardTitle>
+              <CardDescription>Choose a room and end it when complete.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-lg border p-3 text-sm">Active calls: {monitoring.activeCalls}</div>
-                <div className="rounded-lg border p-3 text-sm">Active video rooms: {monitoring.activeVideoRooms}</div>
-                <div className="rounded-lg border p-3 text-sm">Online users: {monitoring.onlineUsers}</div>
-                <div className="rounded-lg border p-3 text-sm">Unread messages: {monitoring.unreadMessages}</div>
-                <div className="rounded-lg border p-3 text-sm">Failed connection attempts: {monitoring.failedConnectionAttempts}</div>
-                <div className="rounded-lg border p-3 text-sm">Flagged sessions: {monitoring.flaggedSessions}</div>
-              </div>
-              {selectedRoom ? (
-                <Button className="mt-4" onClick={() => router.push(`/admin/communication/${selectedRoom.id}`)}>Open selected room</Button>
-              ) : null}
+              <ScrollArea className="h-82.5 pr-3">
+                <div className="space-y-2">
+                  {filteredRooms.map((room) => (
+                    <button key={room.id} onClick={() => setSelectedRoomId(room.id)} className={`w-full rounded-xl border p-3 text-left ${selectedRoomId === room.id ? 'border-red-500 bg-red-50' : 'bg-white hover:bg-slate-50'}`}>
+                      <div className="text-sm font-semibold">{room.name}</div>
+                      <div className="text-xs text-slate-600">{room.mode} · {room.status}</div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+              <Button variant="destructive" onClick={endActiveRoom} disabled={!selectedRoomId || loading} className="mt-3 w-full"><XCircle className="mr-2 h-4 w-4" />End Call / Room</Button>
+              {selectedRoom && <div className="mt-2 text-xs text-slate-600">Selected: {selectedRoom.name}</div>}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" />Rules</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-slate-700">
+              <p>R-MEET: phone or email from registered onboarding record.</p>
+              <p>R-ZOOMA: email invitation only.</p>
+              <p>Messaging: email on file only.</p>
+              <p>All admin actions are audited by backend events.</p>
             </CardContent>
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border bg-white p-4">
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="mt-1 text-2xl font-bold">{value}</div>
     </div>
   );
 }

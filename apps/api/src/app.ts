@@ -39,6 +39,7 @@ import workspaceZipRoutes from './routes/workspaceZip.routes.js';
 import platformCrossLayerRoutes from './routes/platform-cross-layer.js';
 import governanceCrossLayerRoutes from './routes/governance-cross-layer.js';
 import systemServicesCrossLayerRoutes from './routes/system-services-cross-layer.js';
+import adminCommunicationRoutes from './routes/admin-communication.js';
 
 export function createApp() {
   const app = express();
@@ -81,6 +82,7 @@ export function createApp() {
   app.use('/api/pipeline-runs', pipelineRoutes);
   app.use('/api/v1/pipeline-runs', pipelineRoutes);
   app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/admin/communication', adminCommunicationRoutes);
   app.use('/api/v1/admin-governance', adminGovernanceRoutes);
   app.use('/api/v1/admin-policy', adminPolicyRoutes);
   app.use('/api/v1/system-monitoring', systemMonitoringRealtimeRoutes);
