@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -126,6 +126,12 @@ export default function AdminCommunicationCenter() {
     }
   }
 
+  function formatUserRole(role: RegisteredUser['role']) {
+    if (!role) return 'No role';
+    if (typeof role === 'string') return role;
+    return role.name || role.description || role.id || 'Role assigned';
+  }
+
   function returnToMainPage() {
     router.push('/dashboard');
   }
@@ -175,7 +181,7 @@ export default function AdminCommunicationCenter() {
                       <div className="font-semibold">{user.fullName}</div>
                       <div className="flex items-center gap-1 text-xs text-slate-600"><Mail className="h-3 w-3" />{user.email}</div>
                       <div className="flex items-center gap-1 text-xs text-slate-600"><PhoneCall className="h-3 w-3" />{user.phone ?? 'No phone on file'}</div>
-                      <Badge variant="outline" className="mt-2">{user.role}</Badge>
+                      <Badge variant="outline" className="mt-2">{formatUserRole(user.role)}</Badge>
                     </button>
                   ))}
                 </div>
@@ -198,7 +204,7 @@ export default function AdminCommunicationCenter() {
               {selectedUser ? (
                 <div className="rounded-xl border bg-slate-50 p-4">
                   <div className="font-semibold">Selected user: {selectedUser.fullName}</div>
-                  <div className="text-sm text-slate-600">{selectedUser.email} · {selectedUser.phone ?? 'No phone'}</div>
+                  <div className="text-sm text-slate-600">{selectedUser.email} Â· {selectedUser.phone ?? 'No phone'}</div>
                 </div>
               ) : (
                 <div className="rounded-xl border bg-amber-50 p-4 text-sm">Select a registered user before starting contact.</div>
@@ -260,7 +266,7 @@ export default function AdminCommunicationCenter() {
                   {filteredRooms.map((room) => (
                     <button key={room.id} onClick={() => setSelectedRoomId(room.id)} className={`w-full rounded-xl border p-3 text-left ${selectedRoomId === room.id ? 'border-red-500 bg-red-50' : 'bg-white hover:bg-slate-50'}`}>
                       <div className="text-sm font-semibold">{room.name}</div>
-                      <div className="text-xs text-slate-600">{room.mode} · {room.status}</div>
+                      <div className="text-xs text-slate-600">{room.mode} Â· {room.status}</div>
                     </button>
                   ))}
                 </div>
@@ -295,3 +301,4 @@ function Metric({ label, value }: { label: string; value: number }) {
     </div>
   );
 }
+

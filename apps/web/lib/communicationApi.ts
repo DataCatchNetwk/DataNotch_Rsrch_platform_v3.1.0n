@@ -1,11 +1,11 @@
-import { api } from '@/lib/api/client';
+﻿import { api } from '@/lib/api/client';
 
 export type RegisteredUser = {
   id: string;
   fullName: string;
   email: string;
   phone?: string | null;
-  role: string;
+  role: string | { id?: string; name?: string; description?: string } | null;
   status: string;
 };
 
@@ -64,3 +64,4 @@ export const communicationApi = {
     return data as CommunicationRoom;
   },
 };
+
