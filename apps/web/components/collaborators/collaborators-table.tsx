@@ -64,7 +64,7 @@ export function CollaboratorsTable({
   }, [collaborators, filters])
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+    <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -125,7 +125,7 @@ export function CollaboratorsTable({
                   <Badge>{item.primaryRole}</Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex max-w-[280px] flex-wrap gap-1">
+                  <div className="flex max-w-70 flex-wrap gap-1">
                     {item.workspaces.map((ws) => (
                       <Badge key={ws.workspaceId} variant="outline">
                         {ws.workspaceName} · {ws.role}
@@ -134,7 +134,7 @@ export function CollaboratorsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex max-w-[220px] flex-wrap gap-1">
+                  <div className="flex max-w-55 flex-wrap gap-1">
                     {item.permissions.slice(0, 3).map((p) => (
                       <Badge key={p.key} variant="secondary">
                         {p.label}

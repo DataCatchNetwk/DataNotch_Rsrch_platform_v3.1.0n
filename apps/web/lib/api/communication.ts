@@ -1,4 +1,4 @@
-import { api } from '@/lib/api/client';
+﻿import { api } from '@/lib/api/client';
 
 export type CommunicationRoom = {
   id: string;
@@ -17,6 +17,7 @@ export type CommunicationRoomState = {
     roomId: string;
     userId: string;
     role: 'OWNER' | 'MODERATOR' | 'MEMBER';
+    joinedAt: string;
     muted: boolean;
     cameraEnabled: boolean;
     micEnabled: boolean;
@@ -48,6 +49,7 @@ export async function createCommunicationRoom(payload: {
   name: string;
   type: CommunicationRoom['type'];
   visibility?: CommunicationRoom['visibility'];
+  workspaceId?: string;
 }) {
   const { data } = await api.post('/v1/communication/rooms', payload);
   return data as CommunicationRoom;
@@ -56,6 +58,22 @@ export async function createCommunicationRoom(payload: {
 export async function getCommunicationRoomState(roomId: string) {
   const { data } = await api.get(`/v1/communication/rooms/${roomId}`);
   return data as CommunicationRoomState;
+}
+export async function sendRoomMessage(roomId: string, body: string) {
+  const { data } = await api.post(`/v1/communication/rooms/${roomId}/messages`, { body });
+  return data as CommunicationRoomState['messages'][number];
+}
+
+export async function createSupportRoom(subject: string, body: string) {
+  const room = await createCommunicationRoom({
+    name: subject || 'User Support Conversation',
+    type: 'CHANNEL',
+    visibility: 'ORG',
+  });
+  if (body.trim()) {
+    await sendRoomMessage(room.id, body.trim());
+  }
+  return room;
 }
 
 export async function startRoomCall(roomId: string, mode: 'AUDIO' | 'VIDEO') {
@@ -101,3 +119,5 @@ export async function getCommunicationAudit() {
   const { data } = await api.get('/v1/communication/audit');
   return (data?.items ?? []) as CommunicationAuditItem[];
 }
+
+

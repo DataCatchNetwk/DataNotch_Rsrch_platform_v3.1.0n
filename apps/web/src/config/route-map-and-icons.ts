@@ -21,6 +21,7 @@ import {
   AreaChart,
   BarChart3,
   Bell,
+  MessageSquare,
   BookOpen,
   BrainCircuit,
   ClipboardCheck,
@@ -136,6 +137,7 @@ export const ROUTES = {
   // Collaboration routes retained for existing pages/deep links
   REQUESTS: "/dashboard/requests",
   COLLABORATORS: "/dashboard/collaborators",
+  USER_COMMUNICATION: "/dashboard/communication",
 
   // System
   NOTIFICATIONS: "/dashboard/notifications",
@@ -213,6 +215,7 @@ export const ICON_REGISTRY: Record<RouteKey, LucideIcon> = {
   COMPLIANCE_CENTER: Shield,
   REQUESTS: ClipboardList,
   COLLABORATORS: Users,
+  USER_COMMUNICATION: MessageSquare,
   NOTIFICATIONS: Bell,
   DOWNLOADS: Download,
   PROFILE: UserCircle2,
@@ -331,6 +334,14 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "ACCESS", title: "Access Governance" },
       { key: "ACTIVITY", title: "Audit Log", roles: ["ADMIN", "ANALYST"] },
       { key: "COMPLIANCE_CENTER", title: "Compliance Center" },
+    ],
+  },
+  {
+    title: "Collaboration",
+    items: [
+      { key: "USER_COMMUNICATION", title: "Communication Hub", roles: ["USER", "ANALYST", "ADMIN"] },
+      { key: "REQUESTS", title: "Requests" },
+      { key: "COLLABORATORS", title: "Collaborators" },
     ],
   },
   {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical, LifeBuoy, LogOut, HeartPulse } from 'lucide-react';
+import { Database, Home, Users2, Bell, FolderOpenDot, ClipboardList, FileUp, Plus, Shield, PanelLeftClose, PanelLeftOpen, Activity, FlaskConical, LifeBuoy, LogOut, HeartPulse, MessageSquare } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import styles from './app-sidebar.module.css';
@@ -20,6 +20,7 @@ const navItems = [
   { title: 'Workspaces', url: '/dashboard/workspaces', icon: ClipboardList },
   { title: 'Monitoring', url: '/dashboard/monitoring/pipelines', icon: Activity },
   { title: 'Requests', url: '/dashboard/requests', icon: FileUp },
+  { title: 'Communication', url: '/dashboard/communication', icon: MessageSquare },
   { title: 'Support', url: '/dashboard/support', icon: LifeBuoy },
   { title: 'Collaborators', url: '/dashboard/reports?tab=collaborators', icon: Users2 },
   { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },

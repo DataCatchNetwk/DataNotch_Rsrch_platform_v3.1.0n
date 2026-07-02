@@ -271,7 +271,10 @@ export default function AdminCommunicationCenter() {
                   ))}
                 </div>
               </ScrollArea>
-              <Button variant="destructive" onClick={endActiveRoom} disabled={!selectedRoomId || loading} className="mt-3 w-full"><XCircle className="mr-2 h-4 w-4" />End Call / Room</Button>
+                            <div className="mt-3 grid gap-2">
+                <Button variant="outline" onClick={() => selectedRoomId && router.push(`/admin/communication/${selectedRoomId}`)} disabled={!selectedRoomId}>Open Room Thread</Button>
+                <Button variant="destructive" onClick={endActiveRoom} disabled={!selectedRoomId || loading}><XCircle className="mr-2 h-4 w-4" />End Call / Room</Button>
+              </div>
               {selectedRoom && <div className="mt-2 text-xs text-slate-600">Selected: {selectedRoom.name}</div>}
             </CardContent>
           </Card>
@@ -301,4 +304,5 @@ function Metric({ label, value }: { label: string; value: number }) {
     </div>
   );
 }
+
 

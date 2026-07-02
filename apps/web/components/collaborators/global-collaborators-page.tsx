@@ -78,13 +78,21 @@ export function GlobalCollaboratorsPage() {
         onReset={() => setFilters(defaultFilters)}
       />
 
-      {/* Main content: table + side panel */}
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <div className="space-y-6">
-          <CollaboratorsTable collaborators={collaborators} filters={filters} onView={handleView} />
+      {/* Main content: research collaborators + pending invites */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.95fr)] xl:items-start">
+        <div className="min-w-0 space-y-6">
+          <div className="rounded-2xl border bg-card p-5 shadow-sm">
+            <div className="mb-4 space-y-1">
+              <h3 className="font-semibold">Research Collaborators</h3>
+              <p className="text-sm text-muted-foreground">
+                Active collaborator roster across workspaces, roles, access scope, and memberships.
+              </p>
+            </div>
+            <CollaboratorsTable collaborators={collaborators} filters={filters} onView={handleView} />
+          </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <PendingInvitesPanel invites={pendingInvites} />
 
           <div className="rounded-2xl border bg-card p-5 shadow-sm">
