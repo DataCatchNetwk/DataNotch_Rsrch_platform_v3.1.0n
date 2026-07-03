@@ -28,10 +28,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --dir server prisma:generate
+        run: pnpm --dir apps/api prisma:generate
 
       - name: Build server
-        run: pnpm --dir server build
+        run: pnpm --dir apps/api build
 
       - name: Typecheck web
-        run: pnpm --dir my-app exec tsc --noEmit
+        run: pnpm --dir apps/web exec tsc --noEmit
