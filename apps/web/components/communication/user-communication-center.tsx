@@ -59,7 +59,7 @@ export function UserCommunicationCenter() {
       return;
     }
     setLoading(true);
-    setStatus(pane === 'scheduler' ? 'Opening R-Meet schedule panel...' : 'Opening R-Zooma video workspace...');
+    setStatus('Opening R-Zooma video workspace...');
     router.push(`/dashboard/communication/rzooma/${nextMeeting.room.id}?mode=video&pane=rzooma`);
   }
 
@@ -158,7 +158,6 @@ export function UserCommunicationCenter() {
     </CommShell>
   );
 }
-
 
 
 
