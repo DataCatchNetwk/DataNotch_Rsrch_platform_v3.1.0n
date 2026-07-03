@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DatasetStatus {
+  QUEUED
+  RAW_REGISTERED
+  PROFILING
+  PROFILED
+  CLEANING
+  CLEANED
+  HARMONIZING
+  HARMONIZED
+  VALIDATING
+  READY_FOR_ANALYSIS
+  FAILED
+}
+
+enum PrepStageStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  datasets  WorkspaceDataset[]
+}
+
+model Dataset {
+  id          String        @id @default(cuid())
+  workspaceId String?
+  name        String
+  sourceType  String
+  status      DatasetStatus @default(QUEUED)
+  qualityScore Float?
+  rowCount     Int?
+  columnCount  Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  assets       DatasetAsset[]
+  workflows    PreparationWorkflow[]
+  workspaceLinks WorkspaceDataset[]
+}
+
+model DatasetAsset {
+  id        String   @id @default(cuid())
+  datasetId String
+  kind      String   // RAW, PROFILE_REPORT, CLEANED, HARMONIZED, VALIDATION_REPORT
+  filename  String
+  mimeType  String?
+  path      String
+  checksum  String?
+  sizeBytes Int?
+  createdAt DateTime @default(now())
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, kind])
+}
+
+model WorkspaceDataset {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dataset     Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, datasetId])
+}
+
+model PreparationWorkflow {
+  id        String   @id @default(cuid())
+  datasetId String
+  status    PrepStageStatus @default(PENDING)
+  currentStage String?
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  stages    PreparationStageRun[]
+}
+
+model PreparationStageRun {
+  id          String @id @default(cuid())
+  workflowId  String
+  stage       String
+  status      PrepStageStatus @default(PENDING)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  metricsJson Json?
+  error       String?
+  workflow    PreparationWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, stage])
+}

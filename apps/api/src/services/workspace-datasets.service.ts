@@ -1,4 +1,4 @@
-import { prisma } from '../db/prisma.js';
+﻿import { prisma } from '../db/prisma.js';
 import { Prisma } from '@prisma/client';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -12,6 +12,7 @@ import { AutomationService } from './automation.service.js';
 import { UniversalDataParser, type ParsedDataProfile } from './universal-data-parser.service.js';
 import { DataPreparationEngine } from './data-preparation-engine.service.js';
 import { ingestWorkspaceZip, registerWorkspaceFileAsDataset } from '../modules/workspace-zip/workspaceZip.service.js';
+import { DataPreparationService } from '../modules/data-preparation/data-preparation.service.js';
 
 type AuthUser = {
   id: string;
@@ -252,6 +253,24 @@ function buildDataPreparationMetadata(profile: ParsedDataProfile) {
   };
 }
 
+async function registerPreparationWorkflowForDataset(
+  datasetId: string,
+  sourceConnectionId: string,
+  message = 'Dataset parsed, cleaned, profiled, and registered for analysis.',
+) {
+  try {
+    await new DataPreparationService().registerDatasetWorkflow(datasetId, {
+      sourceConnectionId,
+      status: 'ready-for-analysis',
+      message,
+    });
+  } catch (error) {
+    console.warn(
+      `Unable to register data-preparation workflow for dataset ${datasetId}`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
 function sanitizeFileName(value: string) {
   const cleaned = value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
   return cleaned || 'external-dataset';
@@ -498,6 +517,14 @@ async function createExternalDatasetImport(user: AuthUser, workspaceId: string, 
     });
   }
 
+  await registerPreparationWorkflowForDataset(
+    readyDataset.id,
+    downloaded ? 'external-direct-import' : 'external-connector-sync',
+    downloaded
+      ? 'External dataset downloaded, parsed, cleaned, and registered for analysis.'
+      : 'External connector manifest registered; preparation workflow is waiting for connector sync.',
+  );
+
   await notifyWorkspaceMembers(workspaceId, {
     type: 'DATASET_ADDED',
     title: downloaded ? 'External dataset imported' : 'External connector registered',
@@ -705,6 +732,12 @@ export async function uploadDatasetFile(
     });
   }
 
+  await registerPreparationWorkflowForDataset(
+    readyDataset.id,
+    isZipUpload(file, input.uploadKind) ? 'zip-upload' : 'workspace-upload',
+    'Uploaded dataset parsed, cleaned, profiled, and registered for analysis.',
+  );
+
   await notifyWorkspaceMembers(workspaceId, {
     type: 'DATASET_ADDED',
     title: 'Dataset uploaded',
@@ -876,6 +909,12 @@ export async function uploadDatasetBundleFiles(
     });
   }
 
+  await registerPreparationWorkflowForDataset(
+    readyDataset.id,
+    input.uploadKind === 'folder' ? 'folder-upload' : 'bundle-upload',
+    'Dataset bundle parsed, cleaned, profiled, and registered for analysis.',
+  );
+
   await notifyWorkspaceMembers(workspaceId, {
     type: 'DATASET_ADDED',
     title: 'Dataset bundle uploaded',
@@ -953,3 +992,5 @@ export async function deleteDataset(user: AuthUser, workspaceId: string, dataset
     where: { id: datasetId },
   });
 }
+
+

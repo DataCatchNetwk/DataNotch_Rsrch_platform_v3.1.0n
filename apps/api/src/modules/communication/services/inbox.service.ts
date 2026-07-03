@@ -1,4 +1,4 @@
-import { NotificationSeverity, NotificationType, type InboxMessageCategory, type InboxMessageType } from '@prisma/client';
+﻿import { NotificationSeverity, NotificationType, type InboxMessageCategory, type InboxMessageType } from '@prisma/client';
 import { prisma } from '../../../db/prisma.js';
 import { HttpError } from '../../../utils/errors.js';
 import { createNotification } from '../../../services/notifications.service.js';
@@ -152,6 +152,14 @@ export class InboxService {
   async listInbox(user: AuthLikeUser, folder: 'inbox' | 'drafts' | 'spam' | 'deleted' | 'sent' | 'starred' = 'inbox') {
     const admin = isAdmin(user.roles);
     const spamCategories: InboxMessageCategory[] = ['SYSTEM_ALERT', 'BROADCAST'];
+    const inboxCategories: InboxMessageCategory[] = [
+      'USER_MESSAGE',
+      'SUPPORT_TICKET',
+      'STUDY_REQUEST',
+      'DATASET_REQUEST',
+      'APPROVAL_REQUEST',
+      'SYSTEM_ALERT',
+    ];
     const starredThreadIds = await this.resolveStarredThreadIds(user.id);
     const starredFilter = folder === 'starred' ? { id: { in: Array.from(starredThreadIds) } } : {};
 
@@ -206,9 +214,7 @@ export class InboxService {
                   status: { not: 'ARCHIVED' as const },
                 }
               : {
-                  category: {
-                    in: ['USER_MESSAGE', 'SUPPORT_TICKET', 'STUDY_REQUEST', 'DATASET_REQUEST', 'APPROVAL_REQUEST', 'SYSTEM_ALERT'],
-                  },
+                  category: { in: inboxCategories },
                   status: { not: 'ARCHIVED' as const },
                 };
 
@@ -546,3 +552,4 @@ export class InboxService {
 }
 
 export const inboxService = new InboxService();
+
