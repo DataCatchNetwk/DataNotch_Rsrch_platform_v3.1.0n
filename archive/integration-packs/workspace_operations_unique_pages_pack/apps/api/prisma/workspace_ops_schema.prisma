@@ -1,0 +1,72 @@
+// Merge these models into your existing Prisma schema if not already present.
+
+model ResearchWorkspace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  owner       String
+  status      String   @default("ACTIVE")
+  stage       String   @default("DATA_MANAGEMENT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  projects    ResearchProject[]
+  tasks       ResearchTask[]
+}
+
+model ResearchProject {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  workspace   ResearchWorkspace? @relation(fields: [workspaceId], references: [id])
+  title       String
+  objective   String?
+  owner       String
+  progress    Int      @default(0)
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  milestones  ProjectMilestone[]
+}
+
+model ProjectMilestone {
+  id        String   @id @default(cuid())
+  projectId String
+  project   ResearchProject @relation(fields: [projectId], references: [id])
+  title     String
+  status    String   @default("OPEN")
+  dueDate   DateTime?
+  createdAt DateTime @default(now())
+}
+
+model ResearchTask {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  workspace   ResearchWorkspace? @relation(fields: [workspaceId], references: [id])
+  title       String
+  status      String   @default("TO_DO")
+  owner       String?
+  stage       String?
+  priority    String   @default("MEDIUM")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PipelineRunOperation {
+  id           String   @id @default(cuid())
+  workspaceId  String?
+  name         String
+  status       String
+  progress     Int      @default(0)
+  currentStage String
+  startedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WorkspaceHandoffEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  fromStage   String?
+  toStage     String
+  actor       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}

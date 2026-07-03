@@ -1,0 +1,49 @@
+model OutputAsset {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  projectId       String?
+  studyId         String?
+  analysisJobId   String?
+  title           String
+  outputType      String
+  status          String   @default("DRAFT")
+  format          String?
+  summary         String?
+  renderPayload   Json
+  lineagePayload  Json?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OutputExport {
+  id            String   @id @default(cuid())
+  outputAssetId String
+  format        String
+  fileName      String
+  filePath      String?
+  mimeType      String?
+  status        String   @default("READY")
+  createdAt     DateTime @default(now())
+}
+
+model OutputTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  outputType  String
+  description String?
+  templateJson Json
+  isDefault   Boolean @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model ApiOutputEndpoint {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  path        String
+  method      String  @default("GET")
+  outputAssetId String?
+  enabled     Boolean @default(true)
+  createdAt   DateTime @default(now())
+}

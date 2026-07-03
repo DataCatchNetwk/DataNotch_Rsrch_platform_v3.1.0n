@@ -1,0 +1,53 @@
+// Merge these models into your existing Prisma schema.prisma
+
+model DatasetAsset {
+  id             String   @id @default(cuid())
+  name           String
+  stage          String
+  source         String
+  owner          String
+  records        Int
+  variables      Int
+  qualityScore   Int
+  status         String
+  version        String
+  tags           String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  versions       DatasetVersion[]
+  lineageFrom    DatasetLineage[] @relation("LineageFrom")
+  lineageTo      DatasetLineage[] @relation("LineageTo")
+}
+
+model DatasetVersion {
+  id          String   @id @default(cuid())
+  datasetId   String
+  version     String
+  changeNote  String
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  dataset     DatasetAsset @relation(fields: [datasetId], references: [id])
+}
+
+model DatasetLineage {
+  id          String   @id @default(cuid())
+  fromId      String
+  toId        String
+  action      String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  from        DatasetAsset @relation("LineageFrom", fields: [fromId], references: [id])
+  to          DatasetAsset @relation("LineageTo", fields: [toId], references: [id])
+}
+
+model DatasetAccessRequest {
+  id          String   @id @default(cuid())
+  datasetId   String
+  requesterId String
+  status      String   @default("pending")
+  reason      String?
+  createdAt   DateTime @default(now())
+}

@@ -9,6 +9,8 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,11 +29,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL repository secret is required for Prisma commands."
+            exit 1
+          fi
+
       - name: Generate Prisma client
-        run: pnpm --dir server prisma:generate
+        run: pnpm --dir apps/api run prisma:generate
 
       - name: Build server
-        run: pnpm --dir server build
+        run: pnpm --dir apps/api run build
 
       - name: Typecheck web
-        run: pnpm --dir my-app exec tsc --noEmit
+        run: pnpm --dir apps/web exec tsc --noEmit

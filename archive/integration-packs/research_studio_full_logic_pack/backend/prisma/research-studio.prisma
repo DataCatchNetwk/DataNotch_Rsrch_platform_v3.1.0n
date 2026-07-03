@@ -1,0 +1,84 @@
+// Merge into schema.prisma
+model ResearchQuestion {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String?
+  question    String
+  outcome     String?
+  exposure    String?
+  population  String?
+  rationale   String?
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StudyDesign {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String?
+  questionId  String?
+  designType  String
+  objective   String
+  population  String?
+  exposure    String?
+  outcome     String?
+  timeframe   String?
+  biasControls Json?
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ResearchCohort {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String
+  name        String
+  rules       Json
+  estimatedN  Int      @default(0)
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VariableSelection {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String
+  outcome     String
+  predictors  Json
+  covariates  Json
+  exclusions  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ResearchProtocol {
+  id          String   @id @default(cuid())
+  workspaceId String
+  studyId     String?
+  title       String
+  methods     String
+  inclusion   Json
+  exclusion   Json
+  analysisPlan Json
+  ethicsNotes String?
+  status      String @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ResearchExperiment {
+  id          String   @id @default(cuid())
+  workspaceId String
+  datasetId   String
+  studyId     String?
+  cohortId    String?
+  variableSetId String?
+  protocolId  String?
+  recommendedAnalyses Json
+  status      String @default("READY_FOR_ANALYTICS")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

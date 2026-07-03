@@ -1,0 +1,1 @@
+export default function Home(){return <main style={{padding:40,fontFamily:'Arial'}}><h1>Communication Pack 2</h1><p><a href="/admin/communication">Admin Communication</a></p><p><a href="/user/communication">User Communication</a></p></main>}

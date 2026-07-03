@@ -1,0 +1,95 @@
+enum UserCommunicationAssetType {
+  PROJECT
+  STUDY
+  DATASET
+  ANALYSIS
+  PUBLICATION
+}
+
+enum UserInboxCategory {
+  MESSAGE
+  STUDY_INVITATION
+  DATASET_REQUEST
+  REVIEW_REQUEST
+  APPROVAL
+  ADMIN_MESSAGE
+  MEETING_INVITATION
+  TASK_ASSIGNMENT
+  ANNOUNCEMENT
+}
+
+model UserInboxThread {
+  id          String   @id @default(cuid())
+  subject     String
+  category    UserInboxCategory
+  createdById String
+  assetType   UserCommunicationAssetType?
+  assetId     String?
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages     UserInboxMessage[]
+  participants UserInboxParticipant[]
+
+  @@index([category])
+  @@index([assetType, assetId])
+}
+
+model UserInboxMessage {
+  id            String   @id @default(cuid())
+  threadId      String
+  senderId      String
+  body          String
+  attachmentUrl String?
+  isSystem      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  thread UserInboxThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+model UserInboxParticipant {
+  id         String   @id @default(cuid())
+  threadId   String
+  userId     String
+  role       String   @default("PARTICIPANT")
+  lastReadAt DateTime?
+  archivedAt DateTime?
+
+  thread UserInboxThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([userId])
+}
+
+model UserNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  eventType String
+  isRead    Boolean  @default(false)
+  assetType UserCommunicationAssetType?
+  assetId   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([assetType, assetId])
+}
+
+model UserSupportTicket {
+  id          String   @id @default(cuid())
+  userId      String
+  category    String
+  subject     String
+  description String
+  status      String   @default("OPEN")
+  priority    String   @default("NORMAL")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+}

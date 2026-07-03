@@ -1,0 +1,37 @@
+model WorkspaceFileAsset {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  parentId         String?
+  name             String
+  storagePath      String
+  kind             String
+  mimeType         String?
+  sizeBytes        Int      @default(0)
+  checksum         String?
+  status           String   @default("uploaded")
+  datasetCandidate Boolean  @default(false)
+  metadataJson     Json?
+  createdBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model WorkspaceArchiveExtraction {
+  id          String   @id @default(cuid())
+  workspaceId String
+  archiveId   String
+  status      String
+  filesCreated Int    @default(0)
+  errorsJson  Json?
+  createdAt   DateTime @default(now())
+}
+
+model DatasetRegistrationCandidate {
+  id          String   @id @default(cuid())
+  workspaceId String
+  fileAssetId String
+  detectedType String
+  suggestedName String
+  status      String   @default("candidate")
+  createdAt   DateTime @default(now())
+}
