@@ -6,7 +6,7 @@ export function VideoRoomCard({ onStart }: { onStart: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Video className="h-4 w-4" /> R-ZOOMA Video</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Video className="h-4 w-4" /> R-Zooma Video</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="mb-3 text-sm text-muted-foreground">Realtime video rooms with WebRTC signaling, observer and moderation controls.</p>
@@ -15,3 +15,5 @@ export function VideoRoomCard({ onStart }: { onStart: () => void }) {
     </Card>
   );
 }
+
+

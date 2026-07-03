@@ -35,7 +35,8 @@ router.post(
     const { assetType, assetId } = req.params;
     const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
     if (!body) {
-      return res.status(400).json({ error: 'Message body is required' });
+      res.status(400).json({ error: 'Message body is required' });
+      return;
     }
 
     const result = await userCommunicationService.sendAssetMessage({
@@ -49,3 +50,4 @@ router.post(
 );
 
 export default router;
+

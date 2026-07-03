@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  RESEARCHER
+  DATA_STEWARD
+  REVIEWER
+}
+
+enum MeetingType {
+  R_MEET_AUDIO
+  R_ZOOMA_VIDEO
+  STUDY_REVIEW
+  DATASET_REVIEW
+  ANALYSIS_REVIEW
+  PUBLICATION_REVIEW
+}
+
+enum MeetingStatus {
+  DRAFT
+  SCHEDULED
+  INVITES_SENT
+  READY
+  LIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum InvitationStatus {
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum AssetType {
+  PROJECT
+  STUDY
+  DATASET
+  ANALYSIS
+  PUBLICATION
+  NONE
+}
+
+enum ActivityAction {
+  CREATED
+  INVITED
+  ACCEPTED
+  DECLINED
+  READY
+  STARTED
+  AUTO_OPENED
+  PAUSED
+  RESUMED
+  CANCELLED
+  COMPLETED
+  DELETED_LOG
+  CALENDAR_SYNCED
+}
+
+model PlatformUser {
+  id          String              @id @default(cuid())
+  name        String
+  email       String              @unique
+  phone       String?
+  role        UserRole            @default(USER)
+  createdAt   DateTime            @default(now())
+  meetings    Meeting[]           @relation("MeetingCreatedBy")
+  invitations MeetingInvitation[]
+  activities  MeetingActivity[]
+}
+
+model Meeting {
+  id              String              @id @default(cuid())
+  title           String
+  description     String?
+  agenda          String?
+  type            MeetingType         @default(R_ZOOMA_VIDEO)
+  status          MeetingStatus       @default(SCHEDULED)
+  assetType       AssetType           @default(NONE)
+  assetId         String?
+  assetTitle      String?
+  startsAt        DateTime
+  endsAt          DateTime
+  autoOpenWindow  Boolean             @default(true)
+  createdById     String
+  createdBy       PlatformUser        @relation("MeetingCreatedBy", fields: [createdById], references: [id])
+  invitations     MeetingInvitation[]
+  activities      MeetingActivity[]
+  notifications   MeetingNotification[]
+  roomUrl         String?
+  calendarUid     String              @unique @default(cuid())
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model MeetingInvitation {
+  id          String           @id @default(cuid())
+  meetingId   String
+  meeting     Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId      String
+  user        PlatformUser     @relation(fields: [userId], references: [id])
+  status      InvitationStatus @default(SENT)
+  respondedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@unique([meetingId, userId])
+}
+
+model MeetingActivity {
+  id          String         @id @default(cuid())
+  meetingId   String
+  meeting     Meeting        @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       PlatformUser?   @relation(fields: [actorId], references: [id])
+  action      ActivityAction
+  message     String
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+}
+
+model MeetingNotification {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  recipientId String
+  title       String
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}

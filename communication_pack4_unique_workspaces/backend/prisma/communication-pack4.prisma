@@ -1,0 +1,93 @@
+// Merge these models/enums into your main Prisma schema.prisma
+
+enum CommunicationMode {
+  AUDIO
+  VIDEO
+  EMAIL
+}
+
+enum MeetingStatus {
+  DRAFT
+  INVITED
+  ACCEPTED
+  DECLINED
+  READY
+  LIVE
+  PAUSED
+  ENDED
+  CANCELLED
+}
+
+enum InvitationStatus {
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum ActivityAction {
+  CREATED
+  INVITED
+  ACCEPTED
+  DECLINED
+  STARTED
+  AUTO_OPENED
+  PAUSED
+  ENDED
+  CANCELLED
+  DELETED
+  ICS_DOWNLOADED
+}
+
+model CommunicationMeeting {
+  id            String        @id @default(cuid())
+  title         String
+  agenda        String?
+  mode          CommunicationMode
+  status        MeetingStatus @default(DRAFT)
+  roomName      String?
+  createdById   String
+  startsAt      DateTime
+  endsAt        DateTime?
+  autoOpen      Boolean       @default(true)
+  calendarSync  Boolean       @default(false)
+  externalUrl   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  invitations   CommunicationInvitation[]
+  logs          CommunicationActivityLog[]
+
+  @@index([mode, status])
+  @@index([startsAt])
+}
+
+model CommunicationInvitation {
+  id          String           @id @default(cuid())
+  meetingId   String
+  userId      String
+  email       String?
+  phone       String?
+  status      InvitationStatus @default(SENT)
+  respondedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  meeting     CommunicationMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([userId, status])
+}
+
+model CommunicationActivityLog {
+  id          String         @id @default(cuid())
+  meetingId   String?
+  actorId     String
+  action      ActivityAction
+  detail      Json?
+  createdAt   DateTime       @default(now())
+
+  meeting     CommunicationMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@index([meetingId, createdAt])
+  @@index([actorId, createdAt])
+}

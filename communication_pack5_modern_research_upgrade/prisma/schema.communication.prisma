@@ -1,0 +1,110 @@
+model CommunicationWorkspace {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // RMEET, RZOOMA, MESSAGING
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduledMeeting {
+  id              String   @id @default(cuid())
+  title           String
+  mode            String   // AUDIO or VIDEO
+  agenda          String?
+  assetType       String?  // PROJECT, STUDY, DATASET, ANALYSIS, PUBLICATION
+  assetId         String?
+  status          String   @default("SCHEDULED")
+  startsAt        DateTime
+  endsAt          DateTime
+  autoOpenEnabled Boolean  @default(true)
+  calendarSync    Boolean  @default(true)
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invitations     MeetingInvitation[]
+  logs            CallActivityLog[]
+}
+
+model MeetingInvitation {
+  id          String   @id @default(cuid())
+  meetingId   String
+  recipientId String?
+  email       String?
+  status      String   @default("SENT") // SENT, ACCEPTED, DECLINED
+  respondedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  meeting     ScheduledMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model CallActivityLog {
+  id          String   @id @default(cuid())
+  meetingId   String?
+  action      String
+  actorId     String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  meeting     ScheduledMeeting? @relation(fields: [meetingId], references: [id])
+}
+
+model InboxThread {
+  id          String   @id @default(cuid())
+  subject     String
+  createdById String
+  assetType   String?
+  assetId     String?
+  status      String   @default("OPEN")
+  visibility  String   @default("PRIVATE") // PUBLIC or PRIVATE external email handling
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages     InboxMessage[]
+  participants InboxParticipant[]
+}
+
+model InboxMessage {
+  id            String   @id @default(cuid())
+  threadId      String
+  senderId      String
+  body          String
+  externalEmail String?
+  attachmentUrl String?
+  isRead        Boolean  @default(false)
+  emailCopySent Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  thread        InboxThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
+
+model InboxParticipant {
+  id         String   @id @default(cuid())
+  threadId   String
+  userId     String
+  role       String
+  lastReadAt DateTime?
+
+  thread     InboxThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
+
+model CommunicationNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model EmailGatewayLog {
+  id        String   @id @default(cuid())
+  toEmail   String
+  fromEmail String?
+  subject   String
+  status    String
+  provider  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}

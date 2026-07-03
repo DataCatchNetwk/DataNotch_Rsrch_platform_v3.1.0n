@@ -1,0 +1,173 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum Role { ADMIN USER RESEARCHER DATA_STEWARD REVIEWER }
+enum AssetType { PROJECT STUDY DATASET ANALYSIS PUBLICATION GENERAL }
+enum ThreadStatus { OPEN CLOSED ARCHIVED ESCALATED }
+enum MessageKind { HUMAN SYSTEM ANNOUNCEMENT SUPPORT MEETING_INVITE }
+enum MeetingKind { RMEET_AUDIO RZOOMA_VIDEO }
+enum MeetingStatus { DRAFT SCHEDULED INVITED ACCEPTED_READY LIVE PAUSED ENDED CANCELLED ARCHIVED }
+enum InviteStatus { SENT ACCEPTED DECLINED EXPIRED CANCELLED }
+enum NotificationType { MESSAGE INVITATION MEETING STATUS SYSTEM TICKET ANNOUNCEMENT }
+enum TicketStatus { OPEN IN_PROGRESS RESOLVED CLOSED ESCALATED }
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  phone String?
+  role Role @default(USER)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  threadsCreated CommunicationThread[] @relation("ThreadCreator")
+  messages CommunicationMessage[]
+  participants ThreadParticipant[]
+  meetingsCreated Meeting[] @relation("MeetingCreator")
+  invitations MeetingInvitation[]
+  notifications Notification[]
+  ticketsCreated SupportTicket[] @relation("TicketCreator")
+}
+
+model CommunicationThread {
+  id String @id @default(cuid())
+  subject String
+  assetType AssetType @default(GENERAL)
+  assetId String?
+  status ThreadStatus @default(OPEN)
+  kind MessageKind @default(HUMAN)
+  createdById String
+  createdBy User @relation("ThreadCreator", fields:[createdById], references:[id])
+  messages CommunicationMessage[]
+  participants ThreadParticipant[]
+  supportTicket SupportTicket?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CommunicationMessage {
+  id String @id @default(cuid())
+  threadId String
+  thread CommunicationThread @relation(fields:[threadId], references:[id], onDelete: Cascade)
+  senderId String
+  sender User @relation(fields:[senderId], references:[id])
+  body String
+  attachmentUrl String?
+  kind MessageKind @default(HUMAN)
+  createdAt DateTime @default(now())
+  emailCopies EmailLog[]
+}
+
+model ThreadParticipant {
+  id String @id @default(cuid())
+  threadId String
+  thread CommunicationThread @relation(fields:[threadId], references:[id], onDelete: Cascade)
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  lastReadAt DateTime?
+  muted Boolean @default(false)
+  role String @default("participant")
+  @@unique([threadId,userId])
+}
+
+model Meeting {
+  id String @id @default(cuid())
+  title String
+  agenda String?
+  kind MeetingKind
+  status MeetingStatus @default(SCHEDULED)
+  assetType AssetType @default(GENERAL)
+  assetId String?
+  roomSlug String @unique
+  startTime DateTime
+  endTime DateTime
+  autoOpen Boolean @default(true)
+  calendarIcsUrl String?
+  createdById String
+  createdBy User @relation("MeetingCreator", fields:[createdById], references:[id])
+  invitations MeetingInvitation[]
+  callLogs CallLog[]
+  recordings MeetingRecording[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MeetingInvitation {
+  id String @id @default(cuid())
+  meetingId String
+  meeting Meeting @relation(fields:[meetingId], references:[id], onDelete: Cascade)
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  status InviteStatus @default(SENT)
+  respondedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([meetingId,userId])
+}
+
+model MeetingRecording {
+  id String @id @default(cuid())
+  meetingId String
+  meeting Meeting @relation(fields:[meetingId], references:[id], onDelete: Cascade)
+  url String
+  transcript String?
+  aiSummary String?
+  createdAt DateTime @default(now())
+}
+
+model CallLog {
+  id String @id @default(cuid())
+  meetingId String?
+  meeting Meeting? @relation(fields:[meetingId], references:[id])
+  action String
+  actorId String
+  details Json?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  type NotificationType
+  title String
+  body String
+  entityType String?
+  entityId String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id String @id @default(cuid())
+  subject String
+  category String
+  status TicketStatus @default(OPEN)
+  priority String @default("normal")
+  createdById String
+  createdBy User @relation("TicketCreator", fields:[createdById], references:[id])
+  threadId String @unique
+  thread CommunicationThread @relation(fields:[threadId], references:[id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailLog {
+  id String @id @default(cuid())
+  to String
+  from String
+  subject String
+  status String
+  providerMessageId String?
+  messageId String?
+  message CommunicationMessage? @relation(fields:[messageId], references:[id])
+  createdAt DateTime @default(now())
+}
+
+model CommunicationAudit {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  resourceType String
+  resourceId String
+  details Json?
+  createdAt DateTime @default(now())
+}

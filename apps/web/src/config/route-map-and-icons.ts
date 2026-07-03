@@ -21,6 +21,7 @@ import {
   AreaChart,
   BarChart3,
   Bell,
+  CalendarDays,
   MessageSquare,
   BookOpen,
   BrainCircuit,
@@ -138,6 +139,7 @@ export const ROUTES = {
   REQUESTS: "/dashboard/requests",
   COLLABORATORS: "/dashboard/collaborators",
   USER_COMMUNICATION: "/dashboard/communication",
+  USER_COMMUNICATION_SCHEDULER: "/dashboard/communication/scheduler",
 
   // System
   NOTIFICATIONS: "/dashboard/notifications",
@@ -216,6 +218,7 @@ export const ICON_REGISTRY: Record<RouteKey, LucideIcon> = {
   REQUESTS: ClipboardList,
   COLLABORATORS: Users,
   USER_COMMUNICATION: MessageSquare,
+  USER_COMMUNICATION_SCHEDULER: CalendarDays,
   NOTIFICATIONS: Bell,
   DOWNLOADS: Download,
   PROFILE: UserCircle2,
@@ -340,6 +343,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Collaboration",
     items: [
       { key: "USER_COMMUNICATION", title: "Communication Hub", roles: ["USER", "ANALYST", "ADMIN"] },
+      { key: "USER_COMMUNICATION_SCHEDULER", title: "Communication Scheduler", roles: ["USER", "ANALYST", "ADMIN"] },
       { key: "REQUESTS", title: "Requests" },
       { key: "COLLABORATORS", title: "Collaborators" },
     ],

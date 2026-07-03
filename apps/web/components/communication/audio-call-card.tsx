@@ -6,7 +6,7 @@ export function AudioCallCard({ onStart }: { onStart: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Phone className="h-4 w-4" /> R-MEET Audio</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Phone className="h-4 w-4" /> R-Meet (Call/Voice)</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="mb-3 text-sm text-muted-foreground">One-to-one and team audio sessions with moderation hooks.</p>
@@ -15,3 +15,4 @@ export function AudioCallCard({ onStart }: { onStart: () => void }) {
     </Card>
   );
 }
+

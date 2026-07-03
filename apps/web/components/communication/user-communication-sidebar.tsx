@@ -66,6 +66,7 @@ const sidebarItems: SidebarItem[] = [
     children: [
       { key: 'upcoming', label: 'Upcoming', badge: 2, icon: CalendarDays },
       { key: 'active', label: 'Active', badge: 1, icon: Radio },
+      { key: 'scheduler', label: 'R-Meet Scheduler', icon: CalendarDays },
       { key: 'recordings', label: 'Recordings', icon: Video },
       { key: 'meeting-invitations', label: 'Invitations', badge: 2 },
       { key: 'calendar', label: 'Calendar' },

@@ -62,7 +62,7 @@ export default function CommunicationRoomPage() {
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
-            <CardTitle>{mode === 'messaging' ? 'Messaging Thread' : mode === 'video' ? 'R-ZOOMA Video Room' : 'R-MEET Audio Call'}</CardTitle>
+            <CardTitle>{mode === 'messaging' ? 'Messaging Thread' : mode === 'video' ? 'R-Zooma Video Room' : 'R-Meet Call/Voice'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {mode === 'messaging' ? <MessageThread roomId={roomId} messages={messages} /> : null}
@@ -125,3 +125,5 @@ export default function CommunicationRoomPage() {
     </div>
   );
 }
+
+

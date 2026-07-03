@@ -1,0 +1,33 @@
+{
+  "name": "rzooma-scheduling-research-platform-v3",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "next dev",
+    "dev:api": "tsx watch server/src/index.ts",
+    "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
+    "seed": "tsx server/prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "latest",
+    "cors": "latest",
+    "date-fns": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "prisma": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "socket.io": "latest",
+    "socket.io-client": "latest",
+    "tsx": "latest",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}

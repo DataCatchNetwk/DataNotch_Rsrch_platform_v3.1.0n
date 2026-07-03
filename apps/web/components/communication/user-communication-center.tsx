@@ -1,278 +1,164 @@
-﻿"use client";
+"use client";
 
-import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Headphones, Inbox, Mail, MessageSquare, Phone, Plus, RefreshCw, Send, ShieldCheck, Video } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, CalendarDays, MessageSquare, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
+import { CommShell } from '@/components/communication/comm-shell';
+import { UnifiedInbox } from '@/components/communication/unified-inbox';
+import { ResearchAssetDiscussion } from '@/components/communication/research-asset-discussion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  CommunicationRoom,
-  CommunicationRoomState,
-  createCommunicationRoom,
-  createSupportRoom,
-  getCommunicationRoomState,
-  listCommunicationRooms,
-  sendRoomMessage,
-  startRoomCall,
-} from '@/lib/api/communication';
-
-type Filter = 'all' | 'messages' | 'meetings' | 'support';
+import { listCommunicationMeetings, type CommunicationMeeting } from '@/lib/api/communication';
 
 export function UserCommunicationCenter() {
   const router = useRouter();
-  const [rooms, setRooms] = useState<CommunicationRoom[]>([]);
-  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-  const [state, setState] = useState<CommunicationRoomState | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [subject, setSubject] = useState('Support Request');
-  const [body, setBody] = useState('');
-  const [reply, setReply] = useState('');
-  const [status, setStatus] = useState('Ready');
+  const inboxRef = useRef<HTMLDivElement | null>(null);
+  const [meetings, setMeetings] = useState<CommunicationMeeting[]>([]);
+  const [status, setStatus] = useState('Communication tools are ready.');
   const [loading, setLoading] = useState(false);
 
-  async function refresh(roomId = selectedRoomId) {
-    setLoading(true);
-    try {
-      const nextRooms = await listCommunicationRooms();
-      setRooms(nextRooms);
-      const nextRoomId = roomId || nextRooms[0]?.id || '';
-      setSelectedRoomId(nextRoomId);
-      if (nextRoomId) {
-        setState(await getCommunicationRoomState(nextRoomId));
-      } else {
-        setState(null);
-      }
-      setStatus('Communication data synced.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to load communication data.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    refresh();
-    const timer = window.setInterval(() => refresh(), 20000);
-    return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let mounted = true;
+    void (async () => {
+      try {
+        const items = await listCommunicationMeetings();
+        if (!mounted) return;
+        setMeetings(items);
+      } catch {
+        if (!mounted) return;
+        setStatus('Unable to load meeting spaces right now. Messaging remains available.');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const filteredRooms = useMemo(() => rooms.filter((room) => {
-    if (filter === 'messages') return room.type === 'CHANNEL' || room.type === 'DIRECT' || room.type === 'GROUP';
-    if (filter === 'meetings') return room.type === 'CALL_ROOM';
-    if (filter === 'support') return /support|help|request/i.test(room.name);
-    return true;
-  }), [rooms, filter]);
+  const nextMeeting = useMemo(() => {
+    const candidates = meetings
+      .filter((meeting) => ['SCHEDULED', 'READY', 'LIVE'].includes(meeting.metadata.status))
+      .sort((a, b) => new Date(a.metadata.startsAt).getTime() - new Date(b.metadata.startsAt).getTime());
+    return candidates[0] ?? null;
+  }, [meetings]);
 
-  async function openRoom(roomId: string) {
-    setSelectedRoomId(roomId);
-    setLoading(true);
-    try {
-      setState(await getCommunicationRoomState(roomId));
-      setStatus('Room opened.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to open room.');
-    } finally {
-      setLoading(false);
-    }
+  function openMessageSpace() {
+    setLoading(false);
+    setStatus('Opening dedicated messaging page...');
+    router.push('/dashboard/communication/messaging');
   }
 
-  async function createThread() {
-    if (!subject.trim()) return setStatus('Enter a subject before creating a communication thread.');
-    setLoading(true);
-    try {
-      const room = await createSupportRoom(subject.trim(), body.trim());
-      setSubject('Support Request');
-      setBody('');
-      await refresh(room.id);
-      setStatus('Support conversation created and sent to the admin communication center.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create communication thread.');
-    } finally {
-      setLoading(false);
+  function openRMeetPane(pane: 'scheduler' | 'rzooma') {
+    if (pane === 'scheduler') {
+      setLoading(true);
+      setStatus('Opening R-Meet schedule panel...');
+      router.push('/dashboard/communication/scheduler');
+      return;
     }
+
+    if (!nextMeeting?.room?.id) {
+      setStatus('No active meeting found. Ask admin to schedule an R-Meet call or R-Zooma session first.');
+      return;
+    }
+    setLoading(true);
+    setStatus(pane === 'scheduler' ? 'Opening R-Meet schedule panel...' : 'Opening R-Zooma video workspace...');
+    router.push(`/dashboard/communication/rzooma/${nextMeeting.room.id}?mode=video&pane=rzooma`);
   }
 
-  async function sendReply() {
-    if (!selectedRoomId || !reply.trim()) return;
-    setLoading(true);
-    try {
-      await sendRoomMessage(selectedRoomId, reply.trim());
-      setReply('');
-      await openRoom(selectedRoomId);
-      setStatus('Message sent.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to send message.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function createMeeting(mode: 'AUDIO' | 'VIDEO') {
-    setLoading(true);
-    try {
-      const room = await createCommunicationRoom({
-        name: mode === 'AUDIO' ? 'R-MEET User Audio Room' : 'R-ZOOMA User Video Room',
-        type: 'CALL_ROOM',
-        visibility: 'ORG',
-      });
-      await startRoomCall(room.id, mode);
-      await refresh(room.id);
-      setStatus(mode === 'AUDIO' ? 'R-MEET audio room started.' : 'R-ZOOMA video room started.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to start meeting room.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const activeCalls = state?.activeCalls ?? [];
+  const launchers = [
+    {
+      key: 'messages',
+      title: 'Organize Message Space',
+      desc: 'Open and organize inbox threads, support replies, and direct admin communication.',
+      badge: 'Messaging',
+      cta: 'Open Message Space',
+      hint: 'Inbox and replies',
+      accent: 'bg-linear-to-r from-cyan-500 to-teal-500',
+      iconBg: 'bg-cyan-100 text-cyan-900',
+      badgeTone: 'bg-cyan-100 text-cyan-800',
+      action: openMessageSpace,
+      icon: MessageSquare,
+    },
+    {
+      key: 'rmeet',
+      title: 'R-Meet (Call/Voice)',
+      desc: 'Open the booking schedule panel for R-Meet call/voice discussions, R-Zooma meetings, availability tracking, and agenda preparation.',
+      badge: 'Scheduler',
+      cta: 'Open Schedule Panel',
+      hint: 'Bookings and availability',
+      accent: 'bg-linear-to-r from-emerald-500 to-teal-500',
+      iconBg: 'bg-emerald-100 text-emerald-900',
+      badgeTone: 'bg-emerald-100 text-emerald-800',
+      action: () => openRMeetPane('scheduler'),
+      icon: CalendarDays,
+    },
+    {
+      key: 'rzooma',
+      title: 'R-Zooma Video',
+      desc: 'Open the R-Zooma video workspace with live meeting controls, active stage view, and notes.',
+      badge: 'Video',
+      cta: 'Open R-Zooma Video',
+      hint: 'Live stage controls',
+      accent: 'bg-linear-to-r from-teal-500 to-sky-500',
+      iconBg: 'bg-teal-100 text-teal-900',
+      badgeTone: 'bg-teal-100 text-teal-800',
+      action: () => openRMeetPane('rzooma'),
+      icon: Video,
+    },
+  ] as const;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-slate-500">Research Platform</p>
-          <h1 className="text-3xl font-bold tracking-tight">User Communication Center</h1>
-          <p className="mt-1 text-slate-600">Unified inbox, support requests, R-MEET audio, and R-ZOOMA video rooms.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => refresh()} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
-          <Button variant="outline" onClick={() => router.push('/dashboard')}><ArrowLeft className="mr-2 h-4 w-4" />Dashboard</Button>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Metric label="Rooms" value={rooms.length} icon={<Inbox className="h-5 w-5" />} />
-        <Metric label="Messages" value={state?.messages.length ?? 0} icon={<MessageSquare className="h-5 w-5" />} />
-        <Metric label="Active Calls" value={activeCalls.length} icon={<Phone className="h-5 w-5" />} />
-        <Metric label="Security" value="Audited" icon={<ShieldCheck className="h-5 w-5" />} />
-      </div>
-
-      <div className="mt-6 grid grid-cols-12 gap-6">
-        <Card className="col-span-12 xl:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Inbox className="h-5 w-5" />Inbox</CardTitle>
-            <CardDescription>Messages and meeting rooms available to your account.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {(['all', 'messages', 'meetings', 'support'] as Filter[]).map((item) => (
-                <Button key={item} size="sm" variant={filter === item ? 'default' : 'outline'} onClick={() => setFilter(item)} className="capitalize">
-                  {item}
-                </Button>
-              ))}
-            </div>
-            <ScrollArea className="h-[520px] pr-3">
-              <div className="space-y-2">
-                {filteredRooms.map((room) => (
-                  <button key={room.id} onClick={() => openRoom(room.id)} className={`w-full rounded-xl border p-3 text-left transition ${selectedRoomId === room.id ? 'border-violet-500 bg-violet-50' : 'bg-white hover:bg-slate-50'}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold">{room.name}</div>
-                      <Badge variant="outline">{room.type}</Badge>
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">{new Date(room.updatedAt).toLocaleString()}</div>
-                  </button>
-                ))}
-                {!filteredRooms.length && <div className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">No communication rooms yet.</div>}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-12 xl:col-span-6">
-          <CardHeader>
-            <CardTitle>{state?.room.name ?? 'Select a communication room'}</CardTitle>
-            <CardDescription>Threaded messages are stored in the backend and visible to authorized participants.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex h-[640px] flex-col">
-            {state ? (
-              <>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <Badge>{state.room.type}</Badge>
-                  <Badge variant="outline">{state.room.visibility}</Badge>
-                  <Badge variant="secondary">{state.participants.length} participant(s)</Badge>
-                  {activeCalls.map((call) => <Badge key={call.id} className="bg-green-100 text-green-700">{call.mode} {call.status}</Badge>)}
+    <CommShell title="User Communication Center" subtitle="Receive admin messages, meeting invitations, task notices, support replies, and asset discussions." backHref="/dashboard">
+      <section className="mt-1 grid gap-5 lg:grid-cols-3">
+        {launchers.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.action}
+              className="group overflow-hidden rounded-[2rem] border bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className={`h-2 ${item.accent}`} />
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${item.badgeTone}`}>{item.badge}</span>
+                  <ArrowRight className="h-5 w-5 text-slate-500 transition group-hover:translate-x-1 group-hover:text-slate-800" />
                 </div>
-                <ScrollArea className="flex-1 rounded-xl border bg-white p-4">
-                  <div className="space-y-3">
-                    {state.messages.map((message) => (
-                      <div key={message.id} className="rounded-xl border p-3">
-                        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
-                          <span>{message.senderName}</span>
-                          <span>{new Date(message.sentAt).toLocaleString()}</span>
-                        </div>
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{message.body}</p>
-                      </div>
-                    ))}
-                    {!state.messages.length && <div className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">No messages in this room yet.</div>}
+                <div className="mb-5 flex items-center gap-3">
+                  <div className={`rounded-3xl p-3 ${item.iconBg}`}>
+                    <Icon className="h-6 w-6" />
                   </div>
-                </ScrollArea>
-                <div className="mt-3 grid gap-2">
-                  <Textarea value={reply} onChange={(event) => setReply(event.target.value)} rows={3} placeholder="Write a reply..." />
-                  <Button onClick={sendReply} disabled={loading || !reply.trim()}><Send className="mr-2 h-4 w-4" />Send Message</Button>
+                  <h2 className="text-2xl font-black text-slate-950">{item.title}</h2>
                 </div>
-              </>
-            ) : (
-              <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed text-slate-500">Create or select a room to begin.</div>
-            )}
-          </CardContent>
-        </Card>
+                <p className="min-h-20 text-sm leading-6 text-slate-600">{item.desc}</p>
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{item.hint}</span>
+                  <span className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white">{item.cta}</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </section>
 
-        <div className="col-span-12 space-y-6 xl:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5" />New Communication</CardTitle>
-              <CardDescription>Create a support or research communication visible to admins.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" />
-              <Textarea value={body} onChange={(event) => setBody(event.target.value)} rows={5} placeholder="Message body" />
-              <Button className="w-full" onClick={createThread} disabled={loading}><Mail className="mr-2 h-4 w-4" />Create Support Thread</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Meetings</CardTitle>
-              <CardDescription>Start audited research collaboration rooms.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => createMeeting('AUDIO')} disabled={loading}><Headphones className="mr-2 h-4 w-4" />Start R-MEET Audio</Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => createMeeting('VIDEO')} disabled={loading}><Video className="mr-2 h-4 w-4" />Start R-ZOOMA Video</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-xl border bg-white p-3 text-sm text-slate-700">{status}</div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">{status}</p>
+        <Button onClick={openMessageSpace} className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
+          <MessageSquare className="mr-2 h-4 w-4" /> Open Messaging Page
+        </Button>
       </div>
-    </div>
+
+      {loading ? <p className="mb-4 text-sm font-medium text-slate-500">Loading workspace...</p> : null}
+
+      <div ref={inboxRef}>
+        <UnifiedInbox userId="user-demo-id" role="USER" defaultParticipantIds="admin-demo-id" defaultSubject="Support Request" />
+      </div>
+      <div className="mt-6">
+        <ResearchAssetDiscussion assetType="STUDY" assetId="NeuroTwinFM_Phase_2" />
+      </div>
+    </CommShell>
   );
 }
 
-function Metric({ label, value, icon }: { label: string; value: string | number; icon: ReactNode }) {
-  return (
-    <Card>
-      <CardContent className="flex items-center justify-between p-5">
-        <div>
-          <div className="text-sm text-slate-500">{label}</div>
-          <div className="mt-1 text-2xl font-bold">{value}</div>
-        </div>
-        <div className="rounded-xl bg-violet-100 p-3 text-violet-700">{icon}</div>
-      </CardContent>
-    </Card>
-  );
-}
+
+
 

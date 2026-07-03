@@ -1,9 +1,10 @@
-import type { Request, Response } from 'express';
+﻿import type { Request, Response } from 'express';
 import { HttpError } from '../../utils/errors.js';
 import { auditLogService } from './services/audit-log.service.js';
 import { callSessionService } from './services/call-session.service.js';
 import { communicationRoomService } from './services/communication-room.service.js';
 import { messageService } from './services/message.service.js';
+import { meetingLifecycleService } from './services/meeting-lifecycle.service.js';
 import { presenceService } from './services/presence.service.js';
 import type { CallMode, CommunicationRoomType } from './communication.types.js';
 
@@ -24,6 +25,129 @@ function requireUser(req: Request) {
 }
 
 export class CommunicationController {
+
+  roomToolbarAction = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const roomId = req.params.roomId;
+    const action = typeof req.body?.action === 'string' ? req.body.action.trim().toLowerCase() : '';
+    const state = typeof req.body?.state === 'boolean' ? req.body.state : undefined;
+
+    const allowed = new Set(['audio', 'video', 'participants', 'chat', 'react', 'share', 'host_tools', 'more', 'end']);
+    if (!allowed.has(action)) {
+      throw new HttpError(400, 'Invalid toolbar action');
+    }
+
+    const canAccess = await communicationRoomService.canAccessRoom(roomId, user.id, user.roles);
+    if (!canAccess) {
+      throw new HttpError(403, 'Not authorized to access this room');
+    }
+
+    let participantState: Record<string, unknown> | undefined;
+
+    if (action === 'audio') {
+      const participant = await communicationRoomService.updateParticipantMediaState(roomId, user.id, {
+        micEnabled: state ?? true,
+        muted: state === undefined ? false : !state,
+      });
+      participantState = {
+        micEnabled: participant.micEnabled,
+        muted: participant.muted,
+        cameraEnabled: participant.cameraEnabled,
+      };
+    }
+
+    if (action === 'video') {
+      const participant = await communicationRoomService.updateParticipantMediaState(roomId, user.id, {
+        cameraEnabled: state ?? true,
+      });
+      participantState = {
+        micEnabled: participant.micEnabled,
+        muted: participant.muted,
+        cameraEnabled: participant.cameraEnabled,
+      };
+    }
+
+    if (action === 'end') {
+      await callSessionService.endRoomCalls(roomId);
+    }
+
+    const audit = await auditLogService.create({
+      actorUserId: user.id,
+      roomId,
+      action: `TOOLBAR_${action.toUpperCase()}`,
+      metadataJson: {
+        action,
+        state,
+        participantState,
+        source: typeof req.body?.source === 'string' ? req.body.source : 'rzooma-toolbar',
+      },
+    });
+
+    res.json({ ok: true, action, state, participantState, auditId: audit.id });
+  };
+
+  listMeetings = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const items = await meetingLifecycleService.listMeetings({ id: user.id, email: user.email, roles: user.roles });
+    res.json({ items });
+  };
+
+  createMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const meeting = await meetingLifecycleService.createMeeting(req.body ?? {}, { id: user.id, email: user.email, roles: user.roles });
+    res.status(201).json(meeting);
+  };
+
+  updateMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const meeting = await meetingLifecycleService.updateMeeting(req.params.roomId, req.body ?? {}, { id: user.id, email: user.email, roles: user.roles });
+    res.json(meeting);
+  };
+
+  respondMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const response = req.body?.response === 'DECLINED' ? 'DECLINED' : 'ACCEPTED';
+    const meeting = await meetingLifecycleService.respond(req.params.roomId, response, { id: user.id, email: user.email, roles: user.roles });
+    res.json(meeting);
+  };
+
+  startMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const meeting = await meetingLifecycleService.start(req.params.roomId, { id: user.id, email: user.email, roles: user.roles });
+    res.json(meeting);
+  };
+
+  pauseMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const meeting = await meetingLifecycleService.pause(req.params.roomId, { id: user.id, email: user.email, roles: user.roles });
+    res.json(meeting);
+  };
+
+  cancelMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const meeting = await meetingLifecycleService.cancel(req.params.roomId, { id: user.id, email: user.email, roles: user.roles });
+    res.json(meeting);
+  };
+
+  deleteMeeting = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const result = await meetingLifecycleService.removeMeeting(req.params.roomId, { id: user.id, email: user.email, roles: user.roles });
+    res.json(result);
+  };
+
+  deleteMeetingLog = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const result = await meetingLifecycleService.deleteLog(req.params.roomId, req.params.logId, { id: user.id, email: user.email, roles: user.roles });
+    res.json(result);
+  };
+
+  meetingCalendar = async (req: Request, res: Response): Promise<void> => {
+    const user = requireUser(req);
+    const ics = await meetingLifecycleService.calendar(req.params.roomId, { id: user.id, email: user.email, roles: user.roles });
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="meeting-${req.params.roomId}.ics"`);
+    res.send(ics);
+  };
   listRooms = async (req: Request, res: Response): Promise<void> => {
     const user = requireUser(req);
     const items = await communicationRoomService.listRooms(user.id, user.roles);
@@ -177,3 +301,4 @@ export class CommunicationController {
 }
 
 export const communicationController = new CommunicationController();
+

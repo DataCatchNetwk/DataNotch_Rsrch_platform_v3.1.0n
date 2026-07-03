@@ -147,20 +147,23 @@ router.post(
     const adminId = req.user?.id;
 
     if (!adminId) {
-      return res.status(401).json({ message: 'Authentication required' });
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
     if (!target) {
-      return res.status(404).json({ message: 'Registered user not found.' });
+      res.status(404).json({ message: 'Registered user not found.' });
+      return;
     }
 
     if (contactMethod === 'PHONE' && !target.mobileNumber) {
-      return res.status(400).json({ message: 'Selected user has no phone number on file.' });
+      res.status(400).json({ message: 'Selected user has no phone number on file.' });
+      return;
     }
 
     const room = await communicationRoomService.createRoom({
-      name: `R-MEET Audio - ${target.firstname} ${target.surname}`.trim(),
+      name: `R-Meet (Call/Voice) - ${target.firstname} ${target.surname}`.trim(),
       type: 'CALL_ROOM',
       visibility: 'ORG',
       createdById: adminId,
@@ -177,7 +180,7 @@ router.post(
     });
 
     const mapped = await mapRoom(room.id);
-    return res.status(201).json(mapped);
+    res.status(201).json(mapped);
   })
 );
 
@@ -185,20 +188,23 @@ router.post(
   '/video/invite',
   asyncHandler(async (req, res) => {
     const userId = String(req.body?.userId ?? '');
-    const topic = String(req.body?.topic ?? 'R-ZOOMA Admin Video Room');
+    const topic = String(req.body?.topic ?? 'R-MeetA Admin Video Room');
     const adminId = req.user?.id;
 
     if (!adminId) {
-      return res.status(401).json({ message: 'Authentication required' });
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
     if (!target) {
-      return res.status(404).json({ message: 'Registered user not found.' });
+      res.status(404).json({ message: 'Registered user not found.' });
+      return;
     }
 
     if (!target.email) {
-      return res.status(400).json({ message: 'R-ZOOMA requires registered email on file.' });
+      res.status(400).json({ message: 'R-MeetA requires registered email on file.' });
+      return;
     }
 
     const room = await communicationRoomService.createRoom({
@@ -219,7 +225,7 @@ router.post(
     });
 
     const mapped = await mapRoom(room.id);
-    return res.status(201).json(mapped);
+    res.status(201).json(mapped);
   })
 );
 
@@ -232,20 +238,24 @@ router.post(
     const adminId = req.user?.id;
 
     if (!adminId) {
-      return res.status(401).json({ message: 'Authentication required' });
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
 
     if (!subject || !body) {
-      return res.status(400).json({ message: 'subject and body are required' });
+      res.status(400).json({ message: 'subject and body are required' });
+      return;
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
     if (!target) {
-      return res.status(404).json({ message: 'Registered user not found.' });
+      res.status(404).json({ message: 'Registered user not found.' });
+      return;
     }
 
     if (!target.email) {
-      return res.status(400).json({ message: 'Messaging requires registered email on file.' });
+      res.status(400).json({ message: 'Messaging requires registered email on file.' });
+      return;
     }
 
     const room = await communicationRoomService.createRoom({
@@ -271,7 +281,7 @@ router.post(
       metadataJson: { targetUserId: target.id, email: target.email, subject },
     });
 
-    return res.status(201).json({ ok: true, eventId: message.id });
+    res.status(201).json({ ok: true, eventId: message.id });
   })
 );
 
@@ -282,12 +292,14 @@ router.post(
     const adminId = req.user?.id;
 
     if (!adminId) {
-      return res.status(401).json({ message: 'Authentication required' });
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
 
     const room = await prisma.communicationRoom.findUnique({ where: { id: roomId } });
     if (!room) {
-      return res.status(404).json({ message: 'Room not found.' });
+      res.status(404).json({ message: 'Room not found.' });
+      return;
     }
 
     await callSessionService.endRoomCalls(roomId);
@@ -299,11 +311,14 @@ router.post(
 
     const mapped = await mapRoom(roomId);
     if (!mapped) {
-      return res.status(404).json({ message: 'Room not found.' });
+      res.status(404).json({ message: 'Room not found.' });
+      return;
     }
 
-    return res.json({ ...mapped, status: 'ENDED' as const, endedAt: new Date().toISOString() });
+    res.json({ ...mapped, status: 'ENDED' as const, endedAt: new Date().toISOString() });
   })
 );
 
 export default router;
+
+

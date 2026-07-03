@@ -21,6 +21,7 @@ const navItems = [
   { title: 'Monitoring', url: '/dashboard/monitoring/pipelines', icon: Activity },
   { title: 'Requests', url: '/dashboard/requests', icon: FileUp },
   { title: 'Communication', url: '/dashboard/communication', icon: MessageSquare },
+  { title: 'Comm Scheduler', url: '/dashboard/communication/scheduler', icon: Activity },
   { title: 'Support', url: '/dashboard/support', icon: LifeBuoy },
   { title: 'Collaborators', url: '/dashboard/reports?tab=collaborators', icon: Users2 },
   { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },

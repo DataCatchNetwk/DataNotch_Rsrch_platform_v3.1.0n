@@ -23,10 +23,10 @@ export function CommunicationPanel({
       <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
         <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
           <Button className="h-20 rounded-2xl border-4 border-amber-700 bg-white text-3xl font-black text-indigo-600 hover:bg-amber-50" variant="outline" onClick={onAudio}>
-            R-MEET
+            R-Meet
           </Button>
           <Button className="h-20 rounded-2xl border-4 border-black bg-white text-3xl font-black text-red-500 hover:bg-neutral-50" variant="outline" onClick={onVideo}>
-            R-ZOOMA
+            R-Zooma
           </Button>
           <Button className="h-20 rounded-2xl border-4 border-pink-500 bg-white text-2xl font-black text-fuchsia-600 hover:bg-pink-50" variant="outline" onClick={onMessaging}>
             MESSAGING
@@ -57,3 +57,4 @@ export function CommunicationPanel({
     </Card>
   );
 }
+

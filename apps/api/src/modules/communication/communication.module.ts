@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { asyncHandler } from '../../utils/async-handler.js';
@@ -7,13 +7,25 @@ import { communicationController } from './communication.controller.js';
 const router = Router();
 
 router.use(authenticate);
+router.get('/meetings', asyncHandler(communicationController.listMeetings));
+router.post('/meetings', asyncHandler(communicationController.createMeeting));
+router.patch('/meetings/:roomId', asyncHandler(communicationController.updateMeeting));
+router.post('/meetings/:roomId/respond', asyncHandler(communicationController.respondMeeting));
+router.post('/meetings/:roomId/start', asyncHandler(communicationController.startMeeting));
+router.post('/meetings/:roomId/pause', asyncHandler(communicationController.pauseMeeting));
+router.post('/meetings/:roomId/cancel', asyncHandler(communicationController.cancelMeeting));
+router.delete('/meetings/:roomId', asyncHandler(communicationController.deleteMeeting));
+router.delete('/meetings/:roomId/logs/:logId', authorize('ADMIN', 'SUPER_ADMIN'), asyncHandler(communicationController.deleteMeetingLog));
+router.get('/meetings/:roomId/calendar.ics', asyncHandler(communicationController.meetingCalendar));
 router.get('/rooms', asyncHandler(communicationController.listRooms));
 router.post('/rooms', asyncHandler(communicationController.createRoom));
 router.get('/rooms/:roomId', asyncHandler(communicationController.roomState));
 router.post('/rooms/:roomId/messages', asyncHandler(communicationController.sendMessage));
+router.post('/rooms/:roomId/toolbar-action', asyncHandler(communicationController.roomToolbarAction));
 router.post('/rooms/:roomId/call/start', asyncHandler(communicationController.startCall));
 router.post('/call-sessions/:callSessionId/end', asyncHandler(communicationController.endCall));
 router.get('/monitoring', authorize('ADMIN', 'SUPER_ADMIN'), asyncHandler(communicationController.monitoring));
 router.get('/audit', authorize('ADMIN', 'SUPER_ADMIN'), asyncHandler(communicationController.audit));
 
 export default router;
+

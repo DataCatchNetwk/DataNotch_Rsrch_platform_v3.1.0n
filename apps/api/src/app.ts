@@ -25,6 +25,7 @@ import survivalRoutes from './modules/survival/survival.module.js';
 import genomicsRoutes from './modules/genomics/genomics.module.js';
 import experimentTrackingRoutes from './modules/experiment-tracking/experiment-tracking.module.js';
 import communicationRoutes from './modules/communication/communication.module.js';
+import messagesRoutes from './modules/communication/messages.module.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestId } from './middleware/request-id.js';
 import { rateLimit } from './middleware/rate-limit.js';
@@ -104,6 +105,8 @@ export function createApp() {
   app.use('/api/v1/genomics', genomicsRoutes);
   app.use('/api/v1/experiments', experimentTrackingRoutes);
   app.use('/api/v1/communication', communicationRoutes);
+  app.use('/api/messages', messagesRoutes);
+  app.use('/api/v1/messages', messagesRoutes);
 
   app.use(errorHandler);
   return app;

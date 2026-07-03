@@ -339,6 +339,45 @@ enum CommunicationMessageKind {
   FILE
 }
 
+enum InboxThreadStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum InboxThreadParticipantRole {
+  OWNER
+  MEMBER
+}
+
+enum InboxMessageType {
+  TEXT
+  MEETING_INVITATION
+  ANNOUNCEMENT
+  SUPPORT
+  SYSTEM
+}
+
+enum InboxMessageCategory {
+  USER_MESSAGE
+  ADMIN_MESSAGE
+  STUDY_REQUEST
+  DATASET_REQUEST
+  REVIEW_REQUEST
+  APPROVAL_REQUEST
+  SUPPORT_TICKET
+  MEETING_INVITATION
+  SYSTEM_ALERT
+  ANNOUNCEMENT
+  BROADCAST
+}
+
+enum EmailLogStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 enum CommunicationCallMode {
   AUDIO
   VIDEO
@@ -526,6 +565,11 @@ model User {
   communicationPresenceHeartbeats CommunicationPresenceHeartbeat[]
   communicationAuditLogsActed CommunicationAuditLog[] @relation("CommunicationAuditActor")
   uploadedWorkspaceArchives WorkspaceArchive[] @relation("WorkspaceArchiveUploadedBy")
+  inboxThreadsCreated       InboxThread[] @relation("InboxThreadCreatedBy")
+  inboxParticipants         InboxParticipant[]
+  inboxMessagesSent         InboxMessage[] @relation("InboxMessageSender")
+  emailLogsSent             EmailLog[] @relation("EmailLogSender")
+  supportTicketsOwned       SupportTicket[] @relation("SupportTicketOwner")
 
   @@unique([countryCode, mobileNumber])
   @@map("users")
@@ -556,6 +600,10 @@ model SupportTicket {
   assignedTo        User?                  @relation("AssignedSupportTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdByUserId   String?                @map("created_by_user_id") @db.VarChar(30)
   createdByUser     User?                  @relation("CreatedSupportTickets", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  userId            String?                @map("user_id") @db.VarChar(30)
+  user              User?                  @relation("SupportTicketOwner", fields: [userId], references: [id], onDelete: SetNull)
+  threadId          String?                @map("thread_id") @db.VarChar(30)
+  thread            InboxThread?           @relation(fields: [threadId], references: [id], onDelete: SetNull)
   firstResponseAt   DateTime?              @map("first_response_at")
   resolvedAt        DateTime?              @map("resolved_at")
   closedAt          DateTime?              @map("closed_at")
@@ -567,6 +615,8 @@ model SupportTicket {
   @@index([status, priority, createdAt])
   @@index([assignedToId, status])
   @@index([requesterEmail])
+  @@index([threadId])
+  @@index([userId])
   @@map("support_tickets")
 }
 
@@ -1434,6 +1484,75 @@ model CommunicationAuditLog {
   @@index([roomId])
   @@index([createdAt])
   @@map("communication_audit_logs")
+}
+
+model InboxThread {
+  id          String              @id @default(cuid()) @db.VarChar(30)
+  subject     String              @db.VarChar(255)
+  category    InboxMessageCategory
+  assetType   String?             @map("asset_type") @db.VarChar(50)
+  assetId     String?             @map("asset_id") @db.VarChar(30)
+  status      InboxThreadStatus   @default(OPEN)
+  createdById String              @map("created_by") @db.VarChar(30)
+  createdBy   User                @relation("InboxThreadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  participants InboxParticipant[]
+  messages    InboxMessage[]
+  supportTickets SupportTicket[]
+
+  @@index([createdById])
+  @@index([category, updatedAt])
+  @@index([status, updatedAt])
+  @@map("inbox_threads")
+}
+
+model InboxParticipant {
+  id               String                     @id @default(cuid()) @db.VarChar(30)
+  threadId         String                     @map("thread_id") @db.VarChar(30)
+  thread           InboxThread                @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId           String                     @map("user_id") @db.VarChar(30)
+  user             User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participantRole  InboxThreadParticipantRole @default(MEMBER) @map("participant_role")
+  lastReadAt       DateTime?                  @map("last_read_at")
+  isArchived       Boolean                    @default(false) @map("is_archived")
+
+  @@unique([threadId, userId])
+  @@index([userId, isArchived])
+  @@map("inbox_participants")
+}
+
+model InboxMessage {
+  id             String               @id @default(cuid()) @db.VarChar(30)
+  threadId       String               @map("thread_id") @db.VarChar(30)
+  thread         InboxThread          @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId       String               @map("sender_id") @db.VarChar(30)
+  sender         User                 @relation("InboxMessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  body           String               @db.Text
+  messageType    InboxMessageType     @default(TEXT) @map("message_type")
+  attachmentUrl  String?              @map("attachment_url") @db.Text
+  emailCopySent  Boolean              @default(false) @map("email_copy_sent")
+  createdAt      DateTime             @default(now()) @map("created_at")
+
+  @@index([threadId, createdAt])
+  @@index([senderId, createdAt])
+  @@map("inbox_messages")
+}
+
+model EmailLog {
+  id               String         @id @default(cuid()) @db.VarChar(30)
+  recipientEmail   String         @map("recipient_email") @db.VarChar(150)
+  senderId         String?        @map("sender_id") @db.VarChar(30)
+  sender           User?          @relation("EmailLogSender", fields: [senderId], references: [id], onDelete: SetNull)
+  subject          String?        @db.VarChar(255)
+  body             String?        @db.Text
+  status           EmailLogStatus @default(PENDING)
+  providerResponse String?        @map("provider_response") @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  @@index([recipientEmail, createdAt])
+  @@index([senderId])
+  @@map("email_logs")
 }
 
 model AccessRequest {

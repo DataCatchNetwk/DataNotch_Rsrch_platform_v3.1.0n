@@ -82,6 +82,29 @@ export class CommunicationRoomService {
     return result.count > 0;
   }
 
+  async updateParticipantMediaState(roomId: string, userId: string, input: { micEnabled?: boolean; cameraEnabled?: boolean; muted?: boolean }) {
+    return prisma.communicationParticipant.upsert({
+      where: { roomId_userId: { roomId, userId } },
+      update: {
+        micEnabled: input.micEnabled,
+        cameraEnabled: input.cameraEnabled,
+        muted: input.muted,
+        lastSeenAt: new Date(),
+        isOnline: true,
+      },
+      create: {
+        roomId,
+        userId,
+        role: 'MEMBER',
+        micEnabled: input.micEnabled ?? true,
+        cameraEnabled: input.cameraEnabled ?? false,
+        muted: input.muted ?? false,
+        isOnline: true,
+        lastSeenAt: new Date(),
+      },
+    });
+  }
+
   async canAccessRoom(roomId: string, userId: string, roles: string[]) {
     if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) return true;
 

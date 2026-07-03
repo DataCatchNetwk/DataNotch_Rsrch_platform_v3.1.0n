@@ -292,13 +292,13 @@ function AdminContent() {
 
   function handleServiceAction(service: 'audio' | 'video' | 'messaging') {
     if (service === 'audio') {
-      toast.success('Launching R-MEET audio call tools.');
+      toast.success('Launching R-Meet audio call tools.');
       router.push('/admin/communication?mode=audio');
       return;
     }
 
     if (service === 'video') {
-      toast.success('Launching R-ZOOMA video call tools.');
+      toast.success('Launching R-Zooma video call tools.');
       router.push('/admin/communication?mode=video');
       return;
     }
@@ -404,7 +404,7 @@ function AdminContent() {
                       className="w-full whitespace-nowrap rounded-2xl border-4 border-amber-700 bg-white px-1 py-1 text-[1.2rem] font-extrabold leading-none tracking-tight text-indigo-700 shadow-[0_0_0.6rem_rgba(180,83,9,0.35)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_1rem_rgba(79,70,229,0.55)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-400 active:scale-[0.99]"
                       onClick={() => handleServiceAction('audio')}
                     >
-                      R-MEET
+                      R-Meet
                     </button>
                     <p className="mt-0.5 text-center text-[9px] font-bold leading-tight text-slate-800">AUDIO CALL</p>
                   </div>
@@ -415,7 +415,7 @@ function AdminContent() {
                       className="w-full whitespace-nowrap rounded-2xl border-4 border-black bg-white px-1 py-1 text-[1.2rem] font-extrabold leading-none tracking-tight text-rose-600 shadow-[0_0_0.6rem_rgba(0,0,0,0.28)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_1rem_rgba(244,63,94,0.55)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-400 active:scale-[0.99]"
                       onClick={() => handleServiceAction('video')}
                     >
-                      R-ZOOMA
+                      R-Zooma
                     </button>
                     <p className="mt-0.5 text-center text-[9px] font-bold leading-tight text-emerald-600">VIDEO CALL</p>
                   </div>
@@ -651,3 +651,4 @@ export default function AdminPage() {
     </ProtectedRoute>
   );
 }
+
