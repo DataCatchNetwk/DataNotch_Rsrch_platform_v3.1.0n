@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Archive, Bell, CalendarClock, Inbox, Megaphone, Paperclip, Search, Send, Star, Ticket, Users, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CommShell } from '@/components/communication/comm-shell';
@@ -30,6 +30,49 @@ import {
 type ThreadDetail = Awaited<ReturnType<typeof getMessageThread>>;
 type ComposerMode = 'Message' | 'Internal Note';
 type InboxFolder = 'inbox' | 'drafts' | 'spam' | 'deleted' | 'sent' | 'starred';
+type ReplyScope = 'reply' | 'reply-all';
+
+const folderTabs: Array<{ key: InboxFolder; label: string }> = [
+  { key: 'inbox', label: 'Inbox' },
+  { key: 'sent', label: 'Sent' },
+  { key: 'starred', label: 'Starred' },
+  { key: 'drafts', label: 'Drafts' },
+  { key: 'spam', label: 'Spam' },
+  { key: 'deleted', label: 'Deleted' },
+];
+
+function formatThreadStamp(value: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function groupThreadsByDate(items: InboxThreadListItem[]) {
+  return items.reduce<Record<string, InboxThreadListItem[]>>((groups, item) => {
+    const key = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(item.updatedAt));
+    groups[key] = groups[key] || [];
+    groups[key].push(item);
+    return groups;
+  }, {});
+}
+
+function attachmentLabel(url: string) {
+  if (!url) return 'Attached file';
+  if (url.startsWith('data:')) {
+    const mime = url.slice(5, url.indexOf(';'));
+    const subtype = mime.split('/')[1];
+    return subtype ? `Attached ${subtype.toUpperCase()} file` : 'Attached file';
+  }
+  try {
+    const name = new URL(url).pathname.split('/').filter(Boolean).pop();
+    return name ? `Attached ${name}` : 'Attached file';
+  } catch {
+    return 'Attached file';
+  }
+}
 
 const moduleDefinitions = [
   { key: 'INBOX', label: 'Inbox', categories: ['USER_MESSAGE', 'ADMIN_MESSAGE', 'REVIEW_REQUEST', 'APPROVAL_REQUEST'] },
@@ -74,8 +117,16 @@ export default function MessagingPage() {
   const [selectedFolder, setSelectedFolder] = useState<InboxFolder>('inbox');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
+  const [composeAttachmentUrl, setComposeAttachmentUrl] = useState('');
+  const [composeAttachmentName, setComposeAttachmentName] = useState('');
+  const [replyAttachmentUrl, setReplyAttachmentUrl] = useState('');
+  const [replyAttachmentName, setReplyAttachmentName] = useState('');
   const [mutedByThread, setMutedByThread] = useState<Record<string, boolean>>({});
   const [starredByThread, setStarredByThread] = useState<Record<string, boolean>>({});
+  const [replyScope, setReplyScope] = useState<ReplyScope>('reply');
+  const replyAttachmentInputRef = useRef<HTMLInputElement>(null);
+  const composeAttachmentInputRef = useRef<HTMLInputElement>(null);
+  const replyBodyRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedThread = useMemo(() => threadDetails[selectedThreadId] ?? null, [threadDetails, selectedThreadId]);
   const activeCategories = useMemo(() => moduleDefinitions.find((item) => item.key === activeModule)?.categories ?? [], [activeModule]);
@@ -212,6 +263,7 @@ export default function MessagingPage() {
         category,
         participantIds: [recipientId.trim()],
         body: body.trim(),
+        attachmentUrl: composeAttachmentUrl.trim() || undefined,
         sendEmailCopy: true,
       });
       const newId = (created.thread as { id?: string })?.id;
@@ -221,6 +273,8 @@ export default function MessagingPage() {
       }
       setStatus(`Message sent to ${recipientId.trim()}.`);
       setBody('');
+      setComposeAttachmentUrl('');
+      setComposeAttachmentName('');
       await refreshInbox();
     } catch (error: any) {
       setStatus(error?.message ?? 'Failed to send message.');
@@ -235,12 +289,15 @@ export default function MessagingPage() {
     setSending(true);
     try {
       const replyBody = composerMode === 'Internal Note' ? `[Internal Note]\n${body.trim()}` : body.trim();
-      await replyMessageThread(selectedThreadId, { body: replyBody, sendEmailCopy: true });
+      await replyMessageThread(selectedThreadId, { body: replyBody, sendEmailCopy: replyScope === 'reply-all', attachmentUrl: replyAttachmentUrl.trim() || undefined });
       await markThreadRead(selectedThreadId);
       setBody('');
+      setReplyAttachmentUrl('');
+      setReplyAttachmentName('');
       await loadThread(selectedThreadId);
       await refreshInbox();
-      setStatus('Reply sent.');
+      setStatus(replyScope === 'reply-all' ? 'Reply all sent.' : 'Reply sent.');
+      setReplyScope('reply');
     } catch (error: any) {
       setStatus(error?.message ?? 'Failed to send reply.');
     } finally {
@@ -258,6 +315,7 @@ export default function MessagingPage() {
         body: `Kickoff thread for ${template.subject}.`,
         assetType: template.assetType,
         assetId: template.assetId,
+        attachmentUrl: composeAttachmentUrl.trim() || undefined,
         sendEmailCopy: true,
       });
       const newId = (created.thread as { id?: string })?.id;
@@ -365,6 +423,7 @@ export default function MessagingPage() {
         ccEmails,
         bccEmails,
         body: composeBody.trim(),
+        attachmentUrl: composeAttachmentUrl.trim() || undefined,
         sendEmailCopy: true,
       });
       const newId = (created.thread as { id?: string })?.id;
@@ -376,6 +435,8 @@ export default function MessagingPage() {
       setComposeSubject('');
       setComposeCc('');
       setComposeBcc('');
+      setComposeAttachmentUrl('');
+      setComposeAttachmentName('');
       setComposeOpen(false);
       setStatus('New message thread created.');
       await refreshInbox();
@@ -386,8 +447,61 @@ export default function MessagingPage() {
     }
   }
 
+  function openForwardDraft(message: { sender: { email: string }; body: string; attachmentUrl?: string | null }) {
+    const participantEmails = (selectedThreadResolved?.participants ?? []).map((participant) => participant.user.email).filter(Boolean);
+    const ccRecipients = participantEmails.filter((email) => email !== message.sender.email);
+    setComposeTo(message.sender.email);
+    setComposeCc(ccRecipients.join(', '));
+    setComposeBcc('');
+    setComposeSubject(`Fwd: ${subject || selectedThreadResolved?.subject || 'Message'}`);
+    setComposeBody(`Forwarded message from ${message.sender.email}\n\n${message.body}`);
+    setComposeAttachmentUrl(message.attachmentUrl ?? '');
+    setComposeAttachmentName(message.attachmentUrl ? 'Forwarded attachment' : '');
+    setShowCcBcc(ccRecipients.length > 0);
+    setComposeOpen(true);
+    setStatus(`Forward draft opened for ${message.sender.email}.`);
+  }
+
+  function primeReplyComposer(message: { sender: { email: string }; body: string; createdAt: string; attachmentUrl?: string | null }, scope: ReplyScope) {
+    setReplyScope(scope);
+    setBody(`\n\nOn ${new Date(message.createdAt).toLocaleString()}, ${message.sender.email} wrote:\n${message.body}`);
+    setReplyAttachmentUrl(message.attachmentUrl ?? '');
+    setReplyAttachmentName(message.attachmentUrl ? 'Forwarded attachment' : '');
+    setStatus(scope === 'reply-all' ? 'Reply all selected for this thread.' : 'Reply selected for this thread.');
+    window.setTimeout(() => {
+      replyBodyRef.current?.focus();
+      replyBodyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+
+  async function readAttachmentFile(file: File, setUrl: (value: string) => void, setName: (value: string) => void) {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+      reader.onerror = () => reject(new Error('Unable to read file'));
+      reader.readAsDataURL(file);
+    });
+    setUrl(dataUrl);
+    setName(file.name);
+  }
+
+  function handleReplyAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    void readAttachmentFile(file, setReplyAttachmentUrl, setReplyAttachmentName);
+    event.target.value = '';
+  }
+
+  function handleComposeAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    void readAttachmentFile(file, setComposeAttachmentUrl, setComposeAttachmentName);
+    event.target.value = '';
+  }
+
   const participants = selectedThreadResolved?.participants ?? [];
   const attachments = (selectedThreadResolved?.messages ?? []).filter((message) => Boolean(message.attachmentUrl));
+  const groupedThreads = useMemo(() => groupThreadsByDate(filteredThreads), [filteredThreads]);
 
   return (
     <CommShell title="Research Communication Hub" subtitle="Inbox, invitations, support, and asset-linked conversations for project, study, dataset, analysis, and publication workflows." backHref="/admin/communication">
@@ -466,7 +580,17 @@ export default function MessagingPage() {
               <Input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} placeholder="Recipient user ID" />
               <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" />
             </div>
-            <Textarea value={body} onChange={(event) => setBody(event.target.value)} rows={4} className="mt-3" placeholder="Write the message body here..." />
+            <Textarea ref={replyBodyRef} value={body} onChange={(event) => setBody(event.target.value)} rows={4} className="mt-3" placeholder="Write the message body here..." />
+            <div className="mt-3 space-y-1">
+              <div className="flex gap-2">
+                <Input value={replyAttachmentUrl} onChange={(event) => setReplyAttachmentUrl(event.target.value)} placeholder="Reply attachment URL (optional)" />
+                <Button type="button" variant="outline" className="rounded-2xl" onClick={() => replyAttachmentInputRef.current?.click()}>
+                  Attach
+                </Button>
+              </div>
+              <input ref={replyAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleReplyAttachmentChange} />
+              <p className="text-xs text-slate-500">{replyAttachmentName ? `Attached: ${replyAttachmentName}` : 'Used when sending a reply on the selected thread.'}</p>
+            </div>
             <div className="mt-3 flex gap-2">
               {(['Message', 'Internal Note'] as ComposerMode[]).map((mode) => (
                 <button
@@ -478,6 +602,20 @@ export default function MessagingPage() {
                   {mode}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setReplyScope('reply')}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${replyScope === 'reply' ? 'bg-pink-100 text-pink-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                Reply
+              </button>
+              <button
+                type="button"
+                onClick={() => setReplyScope('reply-all')}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${replyScope === 'reply-all' ? 'bg-pink-100 text-pink-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                Reply all
+              </button>
             </div>
             <div className="mt-3 flex items-center justify-between gap-3">
               <p className="text-sm text-slate-600">Status: {status}</p>
@@ -487,35 +625,58 @@ export default function MessagingPage() {
                   {sending ? 'Sending...' : 'Create / Send Thread'}
                 </Button>
                 <Button onClick={() => void sendReply()} disabled={sending || !selectedThreadId || !body.trim()} variant="outline" className="rounded-2xl">
-                  <Send className="mr-2 h-4 w-4" /> Send Reply
+                  <Send className="mr-2 h-4 w-4" /> {replyScope === 'reply-all' ? 'Send Reply All' : 'Send Reply'}
                 </Button>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-3xl border bg-white p-4">
+          <div className="mb-4 flex flex-wrap gap-2">
+            {folderTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setSelectedFolder(tab.key)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selectedFolder === tab.key ? 'bg-pink-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+            <div className="space-y-2.5">
+              <div className="rounded-3xl border bg-white p-4">
               <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 border-b pb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
                 <div>From: Sender Email</div>
                 <div>To: Receiver Email</div>
-                <div>Subject</div>
+                <div>{selectedFolder === 'sent' ? 'Sent Subject' : 'Subject'}</div>
               </div>
-              <ScrollArea className="mt-2 h-72">
+              <ScrollArea className="mt-2 h-64">
                 <div className="space-y-2 pr-2">
-                  {filteredThreads.map((thread) => (
-                    <button
-                      key={thread.id}
-                      onClick={() => {
-                        setSelectedThreadId(thread.id);
-                        void markThreadRead(thread.id);
-                        void loadThread(thread.id);
-                      }}
-                      className={`grid w-full grid-cols-[1fr_1fr_1fr] gap-3 rounded-2xl border p-3 text-left text-sm transition ${selectedThreadId === thread.id ? 'border-pink-400 bg-pink-50' : 'bg-slate-50 hover:bg-slate-100'}`}
-                    >
-                      <div className="truncate text-slate-700">{actors(threadDetails[thread.id]).from}</div>
-                      <div className="truncate text-slate-700">{actors(threadDetails[thread.id]).to}</div>
-                      <div className="truncate font-semibold text-slate-900">{thread.subject}</div>
-                    </button>
+                  {Object.entries(groupedThreads).map(([date, items]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="flex justify-center py-1.5">
+                        <span className="rounded-full border bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">{date}</span>
+                      </div>
+                      {items.map((thread) => (
+                        <button
+                          key={thread.id}
+                          onClick={() => {
+                            setSelectedThreadId(thread.id);
+                            void markThreadRead(thread.id);
+                            void loadThread(thread.id);
+                          }}
+                          className={`grid w-full grid-cols-[1fr_1fr_1fr] gap-3 rounded-2xl border p-3 text-left text-sm transition ${selectedThreadId === thread.id ? 'border-pink-400 bg-pink-50' : 'bg-slate-50 hover:bg-slate-100'}`}
+                        >
+                          <div className="truncate text-slate-700">{actors(threadDetails[thread.id]).from}</div>
+                          <div className="truncate text-slate-700">{actors(threadDetails[thread.id]).to}</div>
+                          <div className="flex items-center justify-between gap-2 font-semibold text-slate-900">
+                            <span className="truncate">{thread.subject}</span>
+                            <span className="shrink-0 text-[11px] font-medium text-slate-500">{formatThreadStamp(thread.updatedAt)}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   ))}
                   {!filteredThreads.length ? <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-slate-500">No inbox threads yet.</p> : null}
                 </div>
@@ -524,7 +685,12 @@ export default function MessagingPage() {
 
             {selectedThreadResolved ? (
               <div className="rounded-3xl border bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">Thread Messages</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900">Thread Messages</p>
+                  <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
+                    <span className="rounded-full border bg-white px-2.5 py-1">Reply / Reply all / Forward attached to each message</span>
+                  </div>
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="outline">Category: {filteredThreads.find((thread) => thread.id === (selectedThreadResolved?.id ?? ''))?.category ?? 'N/A'}</Badge>
                   <Badge variant="outline">Asset: {filteredThreads.find((thread) => thread.id === (selectedThreadResolved?.id ?? ''))?.assetType ?? 'None'}</Badge>
@@ -533,9 +699,63 @@ export default function MessagingPage() {
                 <ScrollArea className="mt-2 h-48">
                   <div className="space-y-2 pr-2">
                     {selectedThreadResolved.messages.map((message) => (
-                      <div key={message.id} className="rounded-2xl border bg-white p-3">
-                        <div className="text-xs text-slate-500">{message.sender.email} - {new Date(message.createdAt).toLocaleString()}</div>
-                        <div className="mt-1 text-sm text-slate-800">{message.body}</div>
+                      <div key={message.id} className="rounded-2xl border bg-white p-2.5">
+                        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                          <span>{message.sender.email}</span>
+                          <span>{new Date(message.createdAt).toLocaleString()}</span>
+                        </div>
+                        <div className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-slate-800">{message.body}</div>
+                        {message.attachmentUrl ? (
+                          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                            <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
+                              <Paperclip className="h-3.5 w-3.5" />
+                              {attachmentLabel(message.attachmentUrl)}
+                            </span>
+                            <a href={message.attachmentUrl} target="_blank" rel="noreferrer" className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-100">
+                              Preview
+                            </a>
+                            <a href={message.attachmentUrl} download className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-100">
+                              Download
+                            </a>
+                          </div>
+                        ) : null}
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium text-slate-600">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              primeReplyComposer(message, 'reply');
+                            }}
+                            className="rounded-full border px-3 py-1 hover:bg-slate-50"
+                          >
+                            Reply
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              primeReplyComposer(message, 'reply-all');
+                            }}
+                            className="rounded-full border px-3 py-1 hover:bg-slate-50"
+                          >
+                            Reply all
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              primeReplyComposer(message, 'reply');
+                              replyAttachmentInputRef.current?.click();
+                            }}
+                            className="rounded-full border px-3 py-1 hover:bg-slate-50"
+                          >
+                            Attach
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openForwardDraft(message)}
+                            className="rounded-full border px-3 py-1 hover:bg-slate-50"
+                          >
+                            Forward
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -707,6 +927,16 @@ export default function MessagingPage() {
                   ) : null}
                   <Input value={composeSubject} onChange={(event) => setComposeSubject(event.target.value)} placeholder="Subject" />
                   <Textarea value={composeBody} onChange={(event) => setComposeBody(event.target.value)} rows={14} placeholder="Write message..." />
+                  <div className="space-y-1">
+                    <div className="flex gap-2">
+                      <Input value={composeAttachmentUrl} onChange={(event) => setComposeAttachmentUrl(event.target.value)} placeholder="Attachment URL (optional)" />
+                      <Button type="button" variant="outline" className="rounded-2xl" onClick={() => composeAttachmentInputRef.current?.click()}>
+                        Attach
+                      </Button>
+                    </div>
+                    <input ref={composeAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleComposeAttachmentChange} />
+                    <p className="text-xs text-slate-500">{composeAttachmentName ? `Attached: ${composeAttachmentName}` : 'Accepts any file type and stores it as a data URL attachment.'}</p>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex justify-between">

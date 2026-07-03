@@ -68,6 +68,7 @@ export class InboxService {
     participantIds: string[];
     assetType?: string;
     assetId?: string;
+    attachmentUrl?: string;
     sendEmailCopy?: boolean;
   }) {
     const participantIds = Array.from(new Set([input.actor.id, ...input.participantIds.filter(Boolean)]));
@@ -99,6 +100,7 @@ export class InboxService {
           senderId: input.actor.id,
           body: input.body.trim(),
           messageType: input.messageType ?? 'TEXT',
+          attachmentUrl: input.attachmentUrl,
           emailCopySent: Boolean(input.sendEmailCopy),
         },
       });

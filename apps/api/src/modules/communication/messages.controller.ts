@@ -106,6 +106,7 @@ export class MessagesController {
       participantIds,
       assetType: typeof req.body?.assetType === 'string' ? req.body.assetType : undefined,
       assetId: typeof req.body?.assetId === 'string' ? req.body.assetId : undefined,
+      attachmentUrl: typeof req.body?.attachmentUrl === 'string' ? req.body.attachmentUrl : undefined,
       sendEmailCopy: Boolean(req.body?.sendEmailCopy),
     });
 

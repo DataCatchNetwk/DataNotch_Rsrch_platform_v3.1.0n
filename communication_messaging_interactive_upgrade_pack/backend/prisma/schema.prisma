@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MessageBox {
+  INBOX
+  SENT
+  DRAFTS
+  STARRED
+  ARCHIVED
+  TRASH
+}
+
+enum ThreadStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ThreadPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CommunicationMessageKind {
+  MESSAGE
+  INTERNAL_NOTE
+  FORWARD
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String   @default("USER")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  sentMessages CommunicationMessage[] @relation("SentMessages")
+  participants ThreadParticipant[]
+}
+
+model CommunicationThread {
+  id          String         @id @default(cuid())
+  subject     String
+  preview     String?
+  status      ThreadStatus   @default(OPEN)
+  priority    ThreadPriority @default(NORMAL)
+  assetType   String?
+  assetId     String?
+  assetName   String?
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  participants ThreadParticipant[]
+  messages     CommunicationMessage[]
+  audits       CommunicationAudit[]
+
+  @@index([status, updatedAt])
+  @@index([assetType, assetId])
+}
+
+model ThreadParticipant {
+  id           String     @id @default(cuid())
+  threadId     String
+  userId       String?
+  email        String
+  displayName  String
+  box          MessageBox @default(INBOX)
+  unreadCount  Int        @default(0)
+  starred      Boolean    @default(false)
+  archived     Boolean    @default(false)
+  muted        Boolean    @default(false)
+  lastReadAt   DateTime?
+
+  thread CommunicationThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User?               @relation(fields: [userId], references: [id])
+
+  @@unique([threadId, email])
+  @@index([email, box])
+}
+
+model CommunicationMessage {
+  id        String                   @id @default(cuid())
+  threadId  String
+  senderId  String
+  body      String
+  kind      CommunicationMessageKind @default(MESSAGE)
+  toEmails  String[]
+  ccEmails  String[]                 @default([])
+  sentAt    DateTime                 @default(now())
+
+  thread CommunicationThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User                @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([threadId, sentAt])
+}
+
+model CommunicationAttachment {
+  id        String   @id @default(cuid())
+  messageId String
+  filename  String
+  mimeType  String
+  sizeBytes Int
+  path      String
+  createdAt DateTime @default(now())
+}
+
+model CommunicationAudit {
+  id        String   @id @default(cuid())
+  threadId  String
+  actorId   String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  thread CommunicationThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}

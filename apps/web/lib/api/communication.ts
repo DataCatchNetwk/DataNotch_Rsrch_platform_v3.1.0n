@@ -172,6 +172,7 @@ export async function createMessageThread(payload: {
   bccEmails?: string[];
   assetType?: string;
   assetId?: string;
+  attachmentUrl?: string;
   sendEmailCopy?: boolean;
 }) {
   const { data } = await api.post('/messages/thread', payload);
