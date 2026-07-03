@@ -13,6 +13,10 @@ package.json
 .env
 .env.*
 !.env.example
+apps/api/.env
+apps/api/.env.local
+apps/api/.env.production
+!apps/api/.env.example
 
 # SDOH uploaded implementation packs and generated artifacts
 sdoh_pack*/

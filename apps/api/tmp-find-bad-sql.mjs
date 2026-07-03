@@ -1,7 +1,11 @@
 ﻿import fs from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
-const url = "postgresql://postgres:Etikese1986@localhost:5432/health_data_shadow_reconcile_test?schema=public";
+const url = process.env.DATABASE_URL;
+if (!url) {
+  throw new Error("Missing DATABASE_URL. Set it to a disposable PostgreSQL database before running this migration diagnostic.");
+}
+
 const prisma = new PrismaClient({ datasources: { db: { url } } });
 const sql = fs.readFileSync("prisma/migrations/20260701_residual_drift_reconcile/migration.sql", "utf8");
 const statements = sql
