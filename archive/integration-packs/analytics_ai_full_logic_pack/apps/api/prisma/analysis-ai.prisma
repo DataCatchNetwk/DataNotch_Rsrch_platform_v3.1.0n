@@ -1,0 +1,38 @@
+model AnalysisAIJob {
+  id                 String   @id @default(cuid())
+  workspaceId        String
+  datasetId          String
+  featureSetId       String?
+  researchQuestionId String?
+  experimentId       String?
+  module             String
+  method             String
+  status             String   @default("QUEUED")
+  outcome            String?
+  predictors         String[]
+  config             Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  result             AnalysisAIResult?
+}
+
+model AnalysisAIResult {
+  id              String   @id @default(cuid())
+  jobId           String   @unique
+  job             AnalysisAIJob @relation(fields: [jobId], references: [id])
+  metrics         Json
+  tables          Json
+  visualizations  Json
+  interpretation  String
+  outputReady     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model AnalysisAIHandoff {
+  id        String   @id @default(cuid())
+  jobId     String
+  target    String
+  status    String   @default("READY")
+  payload   Json
+  createdAt DateTime @default(now())
+}

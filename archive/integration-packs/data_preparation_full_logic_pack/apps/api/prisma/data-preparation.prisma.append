@@ -1,0 +1,48 @@
+// Append these models to server/prisma/schema.prisma
+
+model PreparationJob {
+  id          String   @id @default(cuid())
+  datasetId   String
+  workspaceId String?
+  stage       String
+  status      String   @default("PENDING")
+  inputJson   Json?
+  outputJson  Json?
+  qualityScore Float?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PreparationStageResult {
+  id          String   @id @default(cuid())
+  jobId       String
+  datasetId   String
+  stage       String
+  metricsJson Json
+  artifactsJson Json?
+  nextStage   String?
+  createdAt   DateTime @default(now())
+}
+
+model DatasetPreparationVersion {
+  id          String   @id @default(cuid())
+  datasetId   String
+  version     String
+  checksum    String
+  releaseNotes String?
+  status      String   @default("DRAFT")
+  rowCount    Int
+  createdBy   String?
+  createdAt   DateTime @default(now())
+}
+
+model PreparationLineageEvent {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  fromAssetId String
+  toAssetId   String
+  operation   String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}

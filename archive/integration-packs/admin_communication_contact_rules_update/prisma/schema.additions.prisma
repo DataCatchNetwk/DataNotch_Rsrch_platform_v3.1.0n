@@ -1,0 +1,42 @@
+model PlatformUserContact {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  fullName    String
+  email       String   @unique
+  phone       String?
+  role        String   @default("USER")
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  callEvents  CommunicationEvent[]
+}
+
+model CommunicationRoom {
+  id          String   @id @default(cuid())
+  name        String
+  mode        String   // AUDIO, VIDEO, EMAIL
+  status      String   @default("ACTIVE") // ACTIVE, ENDED, FAILED
+  createdBy   String
+  targetUserId String?
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events      CommunicationEvent[]
+}
+
+model CommunicationEvent {
+  id          String   @id @default(cuid())
+  roomId      String?
+  userId      String?
+  type        String   // AUDIO_STARTED, VIDEO_INVITED, EMAIL_SENT, ROOM_ENDED
+  channel     String   // PHONE, EMAIL, VIDEO_EMAIL
+  payload     Json?
+  status      String   @default("SUCCESS")
+  createdAt   DateTime @default(now())
+
+  room        CommunicationRoom? @relation(fields: [roomId], references: [id])
+  user        PlatformUserContact? @relation(fields: [userId], references: [id])
+}

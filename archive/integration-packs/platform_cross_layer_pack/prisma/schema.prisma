@@ -1,0 +1,68 @@
+model PlatformHandoff {
+  id           String   @id @default(cuid())
+  workspaceId  String?
+  datasetId    String?
+  sourceStage  String
+  targetStage  String
+  artifactType String
+  artifactId   String
+  requestedBy  String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+}
+
+model GovernanceAuditEvent {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  objectId  String
+  objectType String?
+  stage     String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model GovernanceLineageEvent {
+  id            String   @id @default(cuid())
+  fromStage     String
+  toStage       String
+  sourceObject  String
+  targetObject  String
+  relationType  String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
+
+model SystemJob {
+  id          String   @id @default(cuid())
+  type        String
+  stage       String
+  status      String
+  progress    Int      @default(0)
+  artifactId  String?
+  payload     Json?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model SystemNotification {
+  id        String   @id @default(cuid())
+  userId    String?
+  title     String
+  body      String?
+  severity  String   @default("info")
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model PlatformStorageObject {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  path        String
+  objectType  String
+  sizeBytes   Int      @default(0)
+  checksum    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}

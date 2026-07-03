@@ -1,0 +1,12 @@
+{
+  "pack": "outputs_full_logic_pack",
+  "modules": [
+    "frontend pages",
+    "api client",
+    "backend routes",
+    "service logic",
+    "Prisma models",
+    "handoff docs"
+  ],
+  "flow": "Workspace -> Data Management -> Data Preparation -> Research Studio -> Analytics & AI -> Outputs"
+}

@@ -1,4 +1,5 @@
 node_modules/
+.pnpm-store/
 .next/
 dist/
 build/
@@ -8,6 +9,7 @@ package.json
 *.txt
 !package.json
 !structure.txt
+*.log
 .env
 .env.*
 !.env.example
@@ -17,6 +19,9 @@ sdoh_pack*/
 sdoh_*_pack*/
 sdoh_research_intelligence_pack*/
 server/storage/sdoh-exports/
+apps/api/uploads/
+apps/api/storage/
+tmp/
 _archive/packs/
 *.zip
 __pycache__/
