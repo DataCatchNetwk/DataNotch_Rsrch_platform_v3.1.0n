@@ -1,11 +1,6 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import multer from 'multer';
-
-const uploadDir = path.resolve(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+import { uploadDir } from './runtime-storage.js';
 
 const datasetUploadMaxBytes = Number(process.env.DATASET_UPLOAD_MAX_BYTES ?? 10 * 1024 * 1024 * 1024);
 

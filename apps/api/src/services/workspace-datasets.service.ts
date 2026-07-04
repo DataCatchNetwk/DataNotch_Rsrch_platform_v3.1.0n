@@ -13,6 +13,7 @@ import { UniversalDataParser, type ParsedDataProfile } from './universal-data-pa
 import { DataPreparationEngine } from './data-preparation-engine.service.js';
 import { ingestWorkspaceZip, registerWorkspaceFileAsDataset } from '../modules/workspace-zip/workspaceZip.service.js';
 import { DataPreparationService } from '../modules/data-preparation/data-preparation.service.js';
+import { uploadDir } from '../common/runtime-storage.js';
 
 type AuthUser = {
   id: string;
@@ -318,7 +319,6 @@ async function saveExternalBuffer(params: {
   fileName: string;
   contentType: string;
 }): Promise<UploadedFile> {
-  const uploadDir = path.resolve(process.cwd(), 'uploads');
   await mkdir(uploadDir, { recursive: true });
 
   const extension = path.extname(params.fileName);
@@ -992,5 +992,4 @@ export async function deleteDataset(user: AuthUser, workspaceId: string, dataset
     where: { id: datasetId },
   });
 }
-
 

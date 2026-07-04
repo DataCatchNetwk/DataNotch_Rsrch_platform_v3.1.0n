@@ -440,7 +440,7 @@ export default function UserMessagingPage() {
           </div>
         </ScrollArea>
 
-        <Group direction="vertical" className="mt-4 h-[42rem] rounded-2xl border bg-slate-50">
+        <Group orientation="vertical" className="mt-4 h-[42rem] rounded-2xl border bg-slate-50">
           <Panel defaultSize={62} minSize={35} className="min-h-0">
             <div className="h-full p-4">
               <div className="grid h-full grid-rows-[auto_1fr] gap-3">
@@ -658,4 +658,3 @@ export default function UserMessagingPage() {
     </CommShell>
   );
 }
-
