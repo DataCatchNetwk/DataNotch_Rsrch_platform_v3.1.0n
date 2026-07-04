@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const port = Number(process.env.PORT ?? 3001);
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const portFallbackEnabled = process.env.PORT_FALLBACK_ENABLED
+  ? process.env.PORT_FALLBACK_ENABLED.toLowerCase() !== 'false'
+  : nodeEnv !== 'production';
 
 function requireEnv(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
@@ -11,8 +15,9 @@ function requireEnv(name: string, fallback?: string): string {
 }
 
 export const env = {
-  NODE_ENV: process.env.NODE_ENV ?? 'development',
+  NODE_ENV: nodeEnv,
   PORT: port,
+  PORT_FALLBACK_ENABLED: portFallbackEnabled,
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:3000',
   SERVER_PUBLIC_URL: process.env.SERVER_PUBLIC_URL ?? `http://localhost:${port}`,
   REDIS_URL: process.env.REDIS_URL ?? '',
@@ -31,7 +36,7 @@ export const env = {
   AUTH_NETWORK_BLOCK_ENABLED: (process.env.AUTH_NETWORK_BLOCK_ENABLED ?? 'true').toLowerCase() !== 'false',
   AUTH_NETWORK_FAIL_CLOSED: process.env.AUTH_NETWORK_FAIL_CLOSED
     ? process.env.AUTH_NETWORK_FAIL_CLOSED.toLowerCase() !== 'false'
-    : (process.env.NODE_ENV ?? 'development') === 'production',
+    : nodeEnv === 'production',
   AUTH_NETWORK_CHECK_URL: process.env.AUTH_NETWORK_CHECK_URL ?? 'https://api.ipapi.is',
   AUTH_NETWORK_CHECK_TIMEOUT_MS: Number(process.env.AUTH_NETWORK_CHECK_TIMEOUT_MS ?? 6000),
 };
