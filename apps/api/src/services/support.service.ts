@@ -11,8 +11,9 @@ import type {
 } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { HttpError } from '../utils/errors.js';
+import { resolveUploadPath } from '../common/runtime-storage.js';
 
-const SUPPORT_UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'support');
+const SUPPORT_UPLOAD_DIR = resolveUploadPath('support');
 
 type CreateSupportTicketInput = {
   subject?: string;

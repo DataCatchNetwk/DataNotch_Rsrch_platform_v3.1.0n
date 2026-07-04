@@ -8,9 +8,11 @@ import {
   registerWorkspaceFileAsDataset,
   sendDatasetToPreparation,
 } from "../modules/workspace-zip/workspaceZip.service.js";
+import { ensureDirectory, resolveUploadPath } from "../common/runtime-storage.js";
 
 const router = Router();
-const upload = multer({ dest: "./uploads/workspace-zips" });
+const workspaceZipUploadDir = ensureDirectory(resolveUploadPath("workspace-zips"));
+const upload = multer({ dest: workspaceZipUploadDir });
 
 function normalizeBigInt<T>(value: T): T {
   return JSON.parse(

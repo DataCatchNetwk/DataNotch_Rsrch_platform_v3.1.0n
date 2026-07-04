@@ -8,6 +8,7 @@ import { WorkspaceAction } from './workspace-permissions.js';
 import { authorizeDepositOperation, DepositPermission } from '../guards/deposit-permission.guard.js';
 import { PullJobProcessor, processPullJobWithoutQueue } from '../workers/processors/pull-job.processor.js';
 import { isRedisReachable } from '../workers/queue.factory.js';
+import { uploadDir } from '../common/runtime-storage.js';
 
 type AuthUser = {
   id: string;
@@ -979,6 +980,7 @@ function getUploadSearchDirectories() {
 
   // Keep legacy roots during migration so old records still resolve if files were moved.
   const defaultDirs = [
+    uploadDir,
     path.resolve(cwd, 'uploads'),
     path.resolve(cwd, 'apps', 'api', 'uploads'),
     path.resolve(cwd, 'server', 'uploads'),
@@ -1129,4 +1131,3 @@ export async function getDatasetAuditTrail(datasetId: string) {
     })),
   };
 }
-

@@ -4,6 +4,7 @@ import path from "node:path";
 import AdmZip from "adm-zip";
 import { DatasetVisibility, Prisma } from "@prisma/client";
 import { prisma } from "../../db/prisma.js";
+import { workspaceStorageRoot } from "../../common/runtime-storage.js";
 import type { WorkspaceFileNode, WorkspaceZipIngestResult } from "./workspaceZip.types.js";
 
 const DATASET_EXTENSIONS = new Set([".csv", ".tsv", ".xlsx", ".xls", ".json", ".jsonl", ".parquet"]);
@@ -48,7 +49,7 @@ export async function ingestWorkspaceZip(params: {
     throw new Error("Workspace not found");
   }
 
-  const storageRoot = params.storageRoot ?? process.env.WORKSPACE_STORAGE_ROOT ?? "./storage/workspaces";
+  const storageRoot = params.storageRoot ? path.resolve(params.storageRoot) : workspaceStorageRoot;
   const workspaceRoot = path.resolve(storageRoot, params.workspaceId);
   const archiveDir = path.join(workspaceRoot, "archives");
   const extractRoot = path.join(workspaceRoot, "files", path.parse(params.originalName).name);

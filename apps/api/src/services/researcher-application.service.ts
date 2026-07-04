@@ -5,6 +5,7 @@ import { hashPassword } from '../utils/password.js';
 import { HttpError } from '../utils/errors.js';
 import type { ApplicationReviewStatus, ResearcherType } from '@prisma/client';
 import { logAdminAuditEvent } from './audit.service.js';
+import { resolveUploadPath } from '../common/runtime-storage.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function parseStringArray(value: string | string[] | undefined): string[] {
   }
 }
 
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'applications');
+const UPLOAD_DIR = resolveUploadPath('applications');
 
 function saveUploadedFile(file: Express.Multer.File, subfolder: string): string {
   const dir = path.join(UPLOAD_DIR, subfolder);

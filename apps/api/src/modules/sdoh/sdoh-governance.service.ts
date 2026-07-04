@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Request } from 'express';
 import { prisma } from '../../db/prisma.js';
+import { sdohExportDir } from '../../common/runtime-storage.js';
 
 export type SdohFeatureFlagKey =
   | 'causal_module'
@@ -25,7 +26,7 @@ const flagDefinitions: Array<{ key: SdohFeatureFlagKey; packKey: string; descrip
   { key: 'survival', packKey: 'sdoh.survival.enabled', description: 'Enable survival and Cox analysis outputs.' },
 ];
 
-const exportDir = path.resolve(process.cwd(), 'storage', 'sdoh-exports');
+const exportDir = sdohExportDir;
 
 function escapeCsv(value: unknown) {
   const text = value === null || value === undefined ? '' : String(value);

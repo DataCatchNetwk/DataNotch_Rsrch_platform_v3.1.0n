@@ -1,5 +1,4 @@
 import express from 'express';
-import path from 'node:path';
 import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.js';
@@ -42,6 +41,7 @@ import governanceCrossLayerRoutes from './routes/governance-cross-layer.js';
 import systemServicesCrossLayerRoutes from './routes/system-services-cross-layer.js';
 import adminCommunicationRoutes from './routes/admin-communication.js';
 import userCommunicationRoutes from './routes/user-communication.js';
+import { uploadDir } from './common/runtime-storage.js';
 
 export function createApp() {
   const app = express();
@@ -49,7 +49,7 @@ export function createApp() {
   app.use(cors({ origin: true, credentials: true }));
   app.use(morgan('dev'));
   app.use(express.json());
-  app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+  app.use('/uploads', express.static(uploadDir));
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', requestId: res.locals.requestId }));
   app.use('/api/v1/ops', opsRoutes);
