@@ -1,25 +1,33 @@
 import net from 'node:net';
 
+const mode = (process.env.HEALTHCHECK_MODE ?? 'full').toLowerCase();
+
+const apiCheck = {
+  name: 'api',
+  port: Number(process.env.API_PORT ?? 3001),
+  url: `${(process.env.API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '')}/health`,
+  validate: async (response) => {
+    if (!response.ok) return false;
+    const body = await response.json();
+    return body?.status === 'ok';
+  },
+};
+
 const checks = [
-  {
-    name: 'frontend',
-    port: 3000,
-    url: 'http://localhost:3000',
-    validate: async (response) => response.ok,
-  },
-  {
-    name: 'api',
-    port: 3001,
-    url: 'http://localhost:3001/health',
-    validate: async (response) => {
-      if (!response.ok) return false;
-      const body = await response.json();
-      return body?.status === 'ok';
-    },
-  },
+  ...(mode === 'full'
+    ? [
+        {
+          name: 'frontend',
+          port: Number(process.env.FRONTEND_PORT ?? 3000),
+          url: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+          validate: async (response) => response.ok,
+        },
+      ]
+    : []),
+  apiCheck,
   {
     name: 'postgres',
-    port: 5432,
+    port: Number(process.env.POSTGRES_PORT ?? 5432),
   },
 ];
 
@@ -85,7 +93,7 @@ async function run() {
     process.exit(1);
   }
 
-  console.log('Workspace healthcheck passed. Queue backend is PostgreSQL local mode.');
+  console.log(`Workspace healthcheck passed (${mode} mode). Queue backend is PostgreSQL local mode.`);
 }
 
 await run();

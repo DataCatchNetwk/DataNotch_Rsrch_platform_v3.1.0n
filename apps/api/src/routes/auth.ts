@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { completeSso, forgot, login, me, register, registerAdmin, reset, startSso } from '../controllers/auth.controller.js';
+import { ssoConfiguration } from '../controllers/auth.controller.js';
 import { submitApplication } from '../controllers/researcher-application.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
@@ -24,6 +25,7 @@ router.post('/register', asyncHandler(enforceTrustedNetwork), validateBody(regis
 router.post('/register-admin', authenticate, asyncHandler(enforceTrustedNetwork), authorize('ADMIN'), validateBody(registerSchema), asyncHandler(registerAdmin));
 router.post('/register-researcher-application', asyncHandler(enforceTrustedNetwork), applicationUpload, asyncHandler(submitApplication));
 router.post('/login', asyncHandler(enforceTrustedNetwork), validateBody(loginSchema), asyncHandler(login));
+router.get('/sso/configuration', asyncHandler(enforceTrustedNetwork), asyncHandler(ssoConfiguration));
 router.get('/sso/:provider/start', asyncHandler(enforceTrustedNetwork), asyncHandler(startSso));
 router.get('/sso/:provider/callback', asyncHandler(enforceTrustedNetwork), asyncHandler(completeSso));
 router.get('/sso/:provider', asyncHandler(enforceTrustedNetwork), asyncHandler(startSso));

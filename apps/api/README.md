@@ -15,6 +15,24 @@ Server for a health data platform using:
 - `POST /api/auth/reset-password`
 - `GET /api/auth/me`
 
+## OAuth setup
+
+The Google and Microsoft sign-in buttons are wired end to end through these backend env vars:
+
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `GOOGLE_OAUTH_REDIRECT_URI`
+- `MICROSOFT_OAUTH_CLIENT_ID`
+- `MICROSOFT_OAUTH_CLIENT_SECRET`
+- `MICROSOFT_OAUTH_REDIRECT_URI`
+
+For local development, set the redirect URIs to:
+
+- `http://localhost:3001/api/v1/auth/sso/google/callback`
+- `http://localhost:3001/api/v1/auth/sso/microsoft/callback`
+
+If these values are missing, the login page still renders the buttons, but the backend will return `503` for the corresponding provider start route.
+
 ## Health data endpoints
 
 - `GET /api/health-data`

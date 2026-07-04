@@ -27,6 +27,11 @@ export type RefreshResponse = {
   expiresIn: number;
 };
 
+export type SsoConfigurationStatus = {
+  googleConfigured: boolean;
+  microsoftConfigured: boolean;
+};
+
 export async function loginUser(payload: UserLoginPayload) {
   const data = await apiFetch<LoginResponse | LegacyLoginResponse>('/api/v1/auth/login', {
     method: 'POST',
@@ -122,4 +127,18 @@ export async function getGoogleSsoStart() {
 
 export async function getMicrosoftSsoStart() {
   return getSsoStart('microsoft', 'Microsoft sign-in is not configured.');
+}
+
+export async function getSsoConfigurationStatus() {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/sso/configuration`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to load SSO configuration.');
+  }
+
+  return (await response.json()) as SsoConfigurationStatus;
 }

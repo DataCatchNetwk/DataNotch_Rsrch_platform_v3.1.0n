@@ -9,6 +9,11 @@ import { logAudit } from './audit.service.js';
 
 type SsoProvider = 'google' | 'microsoft';
 
+export type SsoConfigurationStatus = {
+  googleConfigured: boolean;
+  microsoftConfigured: boolean;
+};
+
 type RoleEntry = {
   role: {
     name: string;
@@ -284,6 +289,13 @@ export async function getCurrentUser(userId: string) {
   if (!user) throw new HttpError(404, 'User not found');
 
   return serializeUser(user);
+}
+
+export function getSsoConfigurationStatus(): SsoConfigurationStatus {
+  return {
+    googleConfigured: Boolean(env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_REDIRECT_URI),
+    microsoftConfigured: Boolean(env.MICROSOFT_OAUTH_CLIENT_ID && env.MICROSOFT_OAUTH_REDIRECT_URI),
+  };
 }
 
 export function getSsoAuthorizationUrl(provider: SsoProvider) {

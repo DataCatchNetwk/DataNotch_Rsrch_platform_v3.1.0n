@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { forgotPassword, getCurrentUser, getSsoAuthorizationUrl, loginUser, registerAdminUser, registerUser, resetPassword } from '../services/auth.service.js';
+import { forgotPassword, getCurrentUser, getSsoAuthorizationUrl, getSsoConfigurationStatus, loginUser, registerAdminUser, registerUser, resetPassword } from '../services/auth.service.js';
 
 export async function register(req: Request, res: Response) {
   const result = await registerUser(req.body);
@@ -38,8 +38,14 @@ export async function me(req: Request, res: Response) {
   res.json({ user: result });
 }
 
+export async function ssoConfiguration(_req: Request, res: Response) {
+  res.json(getSsoConfigurationStatus());
+}
+
 export async function startSso(req: Request, res: Response) {
   const provider = req.params.provider as 'google' | 'microsoft';
+  console.log('Google ID:', Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID));
+  console.log('Microsoft ID:', Boolean(process.env.MICROSOFT_OAUTH_CLIENT_ID));
   const authorizationUrl = getSsoAuthorizationUrl(provider);
   res.json({ url: authorizationUrl });
 }

@@ -13,11 +13,8 @@ import adminPolicyRoutes from './routes/admin-policy.js';
 import systemMonitoringRealtimeRoutes from './modules/system-monitoring-realtime/system-monitoring-realtime.module.js';
 import systemMonitoringRoutes from './modules/system-monitoring/system-monitoring.module.js';
 import userRoutes from './routes/users.js';
-import workspaceRoutes from './routes/workspaces.js';
 import researcherApplicationsRoutes from './routes/researcher-applications.js';
 import supportRoutes from './routes/support.js';
-import dataDepositRoutes from './routes/data-deposit.js';
-import cohortsRoutes from './routes/cohorts.js';
 import statisticsRoutes from './modules/statistics/statistics.module.js';
 import mlRoutes from './modules/ml/ml.module.js';
 import survivalRoutes from './modules/survival/survival.module.js';
@@ -31,17 +28,13 @@ import { rateLimit } from './middleware/rate-limit.js';
 import { securityHeaders } from './middleware/security-headers.js';
 import opsRoutes from './routes/ops.js';
 import sdohRoutes from './routes/sdoh.js';
-import researchLifecycleRoutes from './routes/research-lifecycle.js';
-import databaseRoutes from './routes/database.js';
-import datasetRegistryRoutes from './routes/dataset-registry.js';
-import dataPreparationRoutes from './routes/data-preparation.js';
-import workspaceZipRoutes from './routes/workspaceZip.routes.js';
 import platformCrossLayerRoutes from './routes/platform-cross-layer.js';
 import governanceCrossLayerRoutes from './routes/governance-cross-layer.js';
 import systemServicesCrossLayerRoutes from './routes/system-services-cross-layer.js';
 import adminCommunicationRoutes from './routes/admin-communication.js';
 import userCommunicationRoutes from './routes/user-communication.js';
 import { uploadDir } from './common/runtime-storage.js';
+import { registerDomainCutoverRoutes, registerDomainSkeletonRoutes } from './domains/platform-domain-composer.js';
 
 export function createApp() {
   const app = express();
@@ -56,22 +49,13 @@ export function createApp() {
   app.use('/api/sdoh', sdohRoutes);
   app.use('/api/v1/sdoh', sdohRoutes);
   app.use('/api/sdoh-intelligence', sdohRoutes);
-  app.use('/api/research-lifecycle', researchLifecycleRoutes);
-  app.use('/api/v1/research-lifecycle', researchLifecycleRoutes);
-  app.use('/api/database', databaseRoutes);
-  app.use('/api/v1/database', databaseRoutes);
-  app.use('/api/data-preparation', dataPreparationRoutes);
-  app.use('/api/v1/data-preparation', dataPreparationRoutes);
-  app.use('/api/workspace-zip', workspaceZipRoutes);
-  app.use('/api/v1/workspace-zip', workspaceZipRoutes);
+  registerDomainCutoverRoutes(app);
   app.use('/api/platform', platformCrossLayerRoutes);
   app.use('/api/v1/platform', platformCrossLayerRoutes);
   app.use('/api/governance', governanceCrossLayerRoutes);
   app.use('/api/v1/governance', governanceCrossLayerRoutes);
   app.use('/api/system', systemServicesCrossLayerRoutes);
   app.use('/api/v1/system', systemServicesCrossLayerRoutes);
-  app.use('/api/dataset-registry', datasetRegistryRoutes);
-  app.use('/api/v1/dataset-registry', datasetRegistryRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/analysis/jobs', analysisJobsRoutes);
@@ -91,14 +75,10 @@ export function createApp() {
   app.use('/api/v1/system-monitoring', systemMonitoringRealtimeRoutes);
   app.use('/api/v1/system-monitoring', systemMonitoringRoutes);
   app.use('/api/v1/users', userRoutes);
-  app.use('/api/workspaces', workspaceRoutes);
-  app.use('/api/v1/workspaces', workspaceRoutes);
   app.use('/api/health-data', healthDataRoutes);
   app.use('/api/v1/admin/researcher-applications', researcherApplicationsRoutes);
   app.use('/api/support', supportRoutes);
   app.use('/api/v1/support', supportRoutes);
-  app.use('/api/v1/datasets/deposit', dataDepositRoutes);
-  app.use('/api/v1/cohorts', cohortsRoutes);
   app.use('/api/v1/statistics', statisticsRoutes);
   app.use('/api/v1/ml', mlRoutes);
   app.use('/api/v1/survival', survivalRoutes);
@@ -107,6 +87,8 @@ export function createApp() {
   app.use('/api/v1/communication', communicationRoutes);
   app.use('/api/messages', messagesRoutes);
   app.use('/api/v1/messages', messagesRoutes);
+
+  registerDomainSkeletonRoutes(app);
 
   app.use(errorHandler);
   return app;

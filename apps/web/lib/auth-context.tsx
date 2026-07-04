@@ -24,7 +24,7 @@ type AuthState = {
 };
 
 type AuthContextValue = AuthState & {
-  login: (identifier: string, password: string) => Promise<AuthUser>;
+  login: (identifier: string, password: string, rememberDevice?: boolean) => Promise<AuthUser>;
   register: (data: RegisterData) => Promise<AuthUser>;
   logout: () => void;
   hasRole: (role: string) => boolean;
@@ -59,10 +59,18 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, token: null, loading: true });
 
-  const setAuth = useCallback((user: AuthUser, token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  const setAuth = useCallback((user: AuthUser, token: string, rememberDevice = true) => {
+    if (rememberDevice) {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+    } else {
+      sessionStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
     setState({ user, token, loading: false });
   }, []);
 
@@ -139,12 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (identifier: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string, rememberDevice = true) => {
     const res = await apiFetch<AuthResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: { identifier, password },
     });
-    setAuth(res.user, res.token);
+    setAuth(res.user, res.token, rememberDevice);
     return res.user;
   }, [setAuth]);
 
@@ -153,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: 'POST',
       body: data,
     });
-    setAuth(res.user, res.token);
+    setAuth(res.user, res.token, true);
     return res.user;
   }, [setAuth]);
 
