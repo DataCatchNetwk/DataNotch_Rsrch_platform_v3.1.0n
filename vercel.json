@@ -1,26 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/$1"
-    }
-  ],
-  "env": {
-    "NEXT_PUBLIC_API_BASE_URL": {
-      "description": "API base URL for frontend requests (e.g., https://api.example.com or http://localhost:3001)"
-    },
-    "NEXT_PUBLIC_API_URL": {
-      "description": "Alternative API URL variable name"
-    },
-    "NEXT_PUBLIC_WS_BASE_URL": {
-      "description": "WebSocket URL for real-time features"
-    }
-  }
+  "framework": "nextjs"
 }
+

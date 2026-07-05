@@ -2,7 +2,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const port = Number(process.env.PORT ?? 3001);
+const port = Number.parseInt(process.env.PORT ?? '3001', 10);
+if (!Number.isFinite(port) || port < 0 || port >= 65536) {
+  throw new Error(`Invalid environment variable PORT: ${process.env.PORT}`);
+}
 
 function requireEnv(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
