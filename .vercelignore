@@ -1,0 +1,17 @@
+# Exclude API from Vercel deployment
+# API must be deployed separately to a Node.js host (Render, Railway, etc.)
+apps/api/
+
+# Exclude archive/legacy code
+archive/
+
+# Exclude Docker config
+docker/
+
+# Exclude scripts meant for non-Vercel environments
+scripts/
+
+# Documentation (not needed in deployment)
+docs/
+
+# Keep only what frontend needs
