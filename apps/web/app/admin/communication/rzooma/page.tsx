@@ -124,7 +124,6 @@ export default function RZoomaPage() {
       setActivePane(pane);
     }
     void loadMeetings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -133,7 +132,6 @@ export default function RZoomaPage() {
       void refreshRoomState();
     }, 15000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRoomId]);
 
   useEffect(() => {

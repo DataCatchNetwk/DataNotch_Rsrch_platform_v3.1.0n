@@ -132,17 +132,36 @@ function topFolderName(relativePaths: string[]): string {
   return folder || 'workspace-folder-bundle';
 }
 
-async function entryFile(entry: any): Promise<File> {
+type FileSystemEntryLike = {
+  name: string;
+  isFile: boolean;
+  isDirectory: boolean;
+  file: (success: (f: File) => void, error: (e: unknown) => void) => void;
+  createReader: () => FileSystemDirectoryReaderLike;
+};
+
+type FileSystemDirectoryReaderLike = {
+  readEntries: (success: (entries: FileSystemEntryLike[]) => void, error: (e: unknown) => void) => void;
+};
+
+type DirectoryHandleLike = {
+  name: string;
+  kind: 'file' | 'directory';
+  getFile: () => Promise<File>;
+  values: () => AsyncIterable<DirectoryHandleLike>;
+};
+
+async function entryFile(entry: FileSystemEntryLike): Promise<File> {
   return new Promise((resolve, reject) => {
     entry.file((file: File) => resolve(file), (error: unknown) => reject(error));
   });
 }
 
-async function readDirectoryEntries(reader: any): Promise<any[]> {
-  const all: any[] = [];
+async function readDirectoryEntries(reader: FileSystemDirectoryReaderLike): Promise<FileSystemEntryLike[]> {
+  const all: FileSystemEntryLike[] = [];
   while (true) {
-    const batch = await new Promise<any[]>((resolve, reject) => {
-      reader.readEntries((entries: any[]) => resolve(entries), (error: unknown) => reject(error));
+    const batch = await new Promise<FileSystemEntryLike[]>((resolve, reject) => {
+      reader.readEntries((entries: FileSystemEntryLike[]) => resolve(entries), (error: unknown) => reject(error));
     });
     if (!batch.length) {
       break;
@@ -152,7 +171,7 @@ async function readDirectoryEntries(reader: any): Promise<any[]> {
   return all;
 }
 
-async function collectFromEntry(entry: any, basePath = ''): Promise<StagedUploadFile[]> {
+async function collectFromEntry(entry: FileSystemEntryLike, basePath = ''): Promise<StagedUploadFile[]> {
   const currentPath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
   if (entry.isFile) {
@@ -177,13 +196,13 @@ async function collectFromEntry(entry: any, basePath = ''): Promise<StagedUpload
 
 async function collectDropFiles(dataTransfer: DataTransfer): Promise<StagedUploadFile[]> {
   const items = Array.from(dataTransfer.items || []);
-  const canTraverse = items.some((item: any) => typeof item.webkitGetAsEntry === 'function');
+  const canTraverse = items.some((item) => typeof (item as DataTransferItem & { webkitGetAsEntry?: () => FileSystemEntryLike | null }).webkitGetAsEntry === 'function');
 
   if (canTraverse) {
     const entries = items
-      .map((item: any) => item.webkitGetAsEntry())
-      .filter((entry: any) => !!entry);
-    const nested = await Promise.all(entries.map((entry: any) => collectFromEntry(entry)));
+      .map((item) => (item as DataTransferItem & { webkitGetAsEntry?: () => FileSystemEntryLike | null }).webkitGetAsEntry())
+      .filter((entry): entry is FileSystemEntryLike => !!entry);
+    const nested = await Promise.all(entries.map((entry) => collectFromEntry(entry)));
     return nested.flat();
   }
 
@@ -193,7 +212,7 @@ async function collectDropFiles(dataTransfer: DataTransfer): Promise<StagedUploa
   }));
 }
 
-async function collectDirectoryHandleFiles(handle: any, prefix = ''): Promise<StagedUploadFile[]> {
+async function collectDirectoryHandleFiles(handle: DirectoryHandleLike, prefix = ''): Promise<StagedUploadFile[]> {
   const collected: StagedUploadFile[] = [];
   for await (const child of handle.values()) {
     if (child.kind === 'file') {
@@ -425,7 +444,7 @@ export default function FilesPage() {
   }
 
   async function openDirectoryPicker() {
-    const picker = (window as Window & { showDirectoryPicker?: () => Promise<any> }).showDirectoryPicker;
+    const picker = (window as Window & { showDirectoryPicker?: () => Promise<DirectoryHandleLike> }).showDirectoryPicker;
     if (!picker) {
       folderInputRef.current?.click();
       return;

@@ -142,8 +142,8 @@ export default function UserMessagingPage() {
       }
       await Promise.all(items.slice(0, 20).map((item) => loadThread(item.id)));
       setStatus('Inbox synced.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to load user inbox.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to load user inbox.');
     } finally {
       setLoading(false);
     }
@@ -155,12 +155,10 @@ export default function UserMessagingPage() {
       void refreshInbox();
     }, 20000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void refreshInbox();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolder]);
 
   async function createThread() {
@@ -188,8 +186,8 @@ export default function UserMessagingPage() {
       }
       await refreshInbox();
       setStatus('Thread created.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create thread.');
     } finally {
       setLoading(false);
     }
@@ -210,8 +208,8 @@ export default function UserMessagingPage() {
       await loadThread(selectedThreadId);
       await refreshInbox();
       setStatus('Reply sent.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to send reply.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to send reply.');
     } finally {
       setLoading(false);
     }
@@ -260,8 +258,8 @@ export default function UserMessagingPage() {
       setComposeOpen(false);
       await refreshInbox();
       setStatus('Thread created.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create thread.');
     } finally {
       setLoading(false);
     }
@@ -311,8 +309,8 @@ export default function UserMessagingPage() {
       if (selectedFolder === 'starred') {
         await refreshInbox();
       }
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to update starred state.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to update starred state.');
     }
   }
 
@@ -589,7 +587,7 @@ export default function UserMessagingPage() {
                     ['Deleted', 'deleted', '-', Archive],
                     ['Starred', 'starred', '-', Star],
                     ['Sent', 'sent', '-', Send],
-                  ].map(([label, key, count, Icon]: any) => (
+                  ].map(([label, key, count, Icon]: [string, InboxFolder, string, typeof Mail]) => (
                     <button
                       key={label}
                       type="button"

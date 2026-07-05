@@ -210,9 +210,39 @@ export default function MessagingPage() {
       getSupportTickets(),
       listCommunicationMeetings(),
     ]);
-    setNotifications(notifs.slice(0, 8).map((item) => ({ id: item.id, title: item.title, description: item.description, createdAt: item.createdAt, isRead: item.isRead })));
-    setSupportTickets(tickets.slice(0, 30).map((item) => ({ id: item.id, subject: item.subject, status: item.status })));
-    setMeetings(meetingList as Array<{ room: { id: string }; metadata: { title: string; startsAt: string; status: string } }>);
+
+    type NotificationListItem = (typeof notifs)[number];
+    type TicketListItem = (typeof tickets)[number];
+    type MeetingListItem = (typeof meetingList)[number];
+
+    setNotifications(
+      notifs
+        .slice(0, 8)
+        .map((item: NotificationListItem) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          createdAt: item.createdAt,
+          isRead: item.isRead,
+        })),
+    );
+
+    setSupportTickets(
+      tickets
+        .slice(0, 30)
+        .map((item: TicketListItem) => ({ id: item.id, subject: item.subject, status: item.status })),
+    );
+
+    setMeetings(
+      (meetingList as MeetingListItem[]).map((m: MeetingListItem) => ({
+        room: { id: m.room.id },
+        metadata: {
+          title: m.metadata.title,
+          startsAt: m.metadata.startsAt,
+          status: m.metadata.status,
+        },
+      })),
+    );
   }
 
   useEffect(() => {
@@ -221,12 +251,10 @@ export default function MessagingPage() {
       void Promise.all([refreshInbox(), refreshSidePanels()]);
     }, 20000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void refreshInbox();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolder]);
 
   useEffect(() => {
@@ -276,8 +304,8 @@ export default function MessagingPage() {
       setComposeAttachmentUrl('');
       setComposeAttachmentName('');
       await refreshInbox();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Failed to send message.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Failed to send message.');
     } finally {
       setSending(false);
     }
@@ -298,8 +326,8 @@ export default function MessagingPage() {
       await refreshInbox();
       setStatus(replyScope === 'reply-all' ? 'Reply all sent.' : 'Reply sent.');
       setReplyScope('reply');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Failed to send reply.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Failed to send reply.');
     } finally {
       setSending(false);
     }
@@ -325,8 +353,8 @@ export default function MessagingPage() {
       }
       await refreshInbox();
       setStatus('Template thread created.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create template thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create template thread.');
     } finally {
       setSending(false);
     }
@@ -340,8 +368,8 @@ export default function MessagingPage() {
       setStatus('Thread archived.');
       setSelectedThreadId('');
       await refreshInbox();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to archive thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to archive thread.');
     } finally {
       setSending(false);
     }
@@ -356,8 +384,8 @@ export default function MessagingPage() {
       if (selectedFolder === 'starred') {
         await refreshInbox();
       }
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to update starred state.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to update starred state.');
     }
   }
 
@@ -370,8 +398,8 @@ export default function MessagingPage() {
       await updateCommunicationMeeting(roomId, { title: nextTitle, startsAt: nextStartsAt });
       setStatus('Meeting updated.');
       await refreshSidePanels();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to update meeting.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to update meeting.');
     }
   }
 
@@ -381,8 +409,8 @@ export default function MessagingPage() {
       await cancelCommunicationMeeting(roomId);
       setStatus('Meeting cancelled.');
       await refreshSidePanels();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to cancel meeting.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to cancel meeting.');
     }
   }
 
@@ -392,8 +420,8 @@ export default function MessagingPage() {
       await deleteCommunicationMeeting(roomId);
       setStatus('Meeting deleted.');
       await refreshSidePanels();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to delete meeting.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to delete meeting.');
     }
   }
 
@@ -440,8 +468,8 @@ export default function MessagingPage() {
       setComposeOpen(false);
       setStatus('New message thread created.');
       await refreshInbox();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create new thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create new thread.');
     } finally {
       setSending(false);
     }
@@ -502,6 +530,15 @@ export default function MessagingPage() {
   const participants = selectedThreadResolved?.participants ?? [];
   const attachments = (selectedThreadResolved?.messages ?? []).filter((message) => Boolean(message.attachmentUrl));
   const groupedThreads = useMemo(() => groupThreadsByDate(filteredThreads), [filteredThreads]);
+
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowTs(Date.now());
+    }, 30000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
     <CommShell title="Research Communication Hub" subtitle="Inbox, invitations, support, and asset-linked conversations for project, study, dataset, analysis, and publication workflows." backHref="/admin/communication">
@@ -770,7 +807,7 @@ export default function MessagingPage() {
             <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-slate-700"><Users className="h-4 w-4" /> Participants</h3>
             <div className="mt-3 space-y-2">
               {participants.map((participant) => {
-                const online = participant.lastReadAt ? Date.now() - new Date(participant.lastReadAt).getTime() < 5 * 60 * 1000 : false;
+                const online = participant.lastReadAt ? nowTs - new Date(participant.lastReadAt).getTime() < 5 * 60 * 1000 : false;
                 return (
                   <div key={participant.id} className="rounded-xl border bg-slate-50 p-3 text-sm">
                     <div className="font-semibold text-slate-900">{participant.user.email}</div>
@@ -884,7 +921,7 @@ export default function MessagingPage() {
                     ['Deleted', 'deleted', '-', Archive],
                     ['Starred', 'starred', '-', Star],
                     ['Sent', 'sent', '-', Send],
-                  ].map(([label, key, count, Icon]: any) => (
+                  ].map(([label, key, count, Icon]: [string, InboxFolder, string, typeof Inbox]) => (
                     <button
                       key={label}
                       type="button"

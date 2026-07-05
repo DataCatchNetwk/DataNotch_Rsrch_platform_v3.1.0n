@@ -51,8 +51,8 @@ export function MeetingLifecyclePanel({ admin = false, compact = false, createdB
       setSelectedMeetingId(meeting.id);
       setInvitees('');
       setStatus('Meeting scheduled and invitations recorded.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to schedule meeting.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to schedule meeting.');
     } finally {
       setLoading(false);
     }
@@ -65,8 +65,8 @@ export function MeetingLifecyclePanel({ admin = false, compact = false, createdB
       setMeetings((current) => [meeting, ...current.filter((item) => item.id !== meeting.id)]);
       setSelectedMeetingId(meeting.id);
       setStatus(message);
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Meeting action failed.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Meeting action failed.');
     } finally {
       setLoading(false);
     }
