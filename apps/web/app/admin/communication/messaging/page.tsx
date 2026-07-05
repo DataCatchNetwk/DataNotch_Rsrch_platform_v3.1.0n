@@ -30,6 +30,7 @@ import {
 type ThreadDetail = Awaited<ReturnType<typeof getMessageThread>>;
 type ComposerMode = 'Message' | 'Internal Note';
 type InboxFolder = 'inbox' | 'drafts' | 'spam' | 'deleted' | 'sent' | 'starred';
+type FolderShortcut = [label: string, key: InboxFolder, count: string, Icon: typeof Inbox];
 type ReplyScope = 'reply' | 'reply-all';
 
 const folderTabs: Array<{ key: InboxFolder; label: string }> = [
@@ -914,14 +915,14 @@ export default function MessagingPage() {
               <aside className="border-r bg-slate-100 p-4">
                 <Button className="mb-4 w-full rounded-lg bg-blue-600 text-white hover:bg-blue-700">Compose</Button>
                 <div className="space-y-2 text-sm">
-                  {[
+                  {([
                     ['Inbox', 'inbox', String(threads.length), Inbox],
                     ['Drafts', 'drafts', '-', Paperclip],
                     ['Spam', 'spam', '-', Bell],
                     ['Deleted', 'deleted', '-', Archive],
                     ['Starred', 'starred', '-', Star],
                     ['Sent', 'sent', '-', Send],
-                  ].map(([label, key, count, Icon]: [string, InboxFolder, string, typeof Inbox]) => (
+                  ] satisfies FolderShortcut[]).map(([label, key, count, Icon]) => (
                     <button
                       key={label}
                       type="button"
@@ -990,4 +991,3 @@ export default function MessagingPage() {
     </CommShell>
   );
 }
-

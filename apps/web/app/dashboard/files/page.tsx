@@ -144,6 +144,10 @@ type FileSystemDirectoryReaderLike = {
   readEntries: (success: (entries: FileSystemEntryLike[]) => void, error: (e: unknown) => void) => void;
 };
 
+type DataTransferItemWithEntry = Omit<DataTransferItem, 'webkitGetAsEntry'> & {
+  webkitGetAsEntry?: () => FileSystemEntryLike | null;
+};
+
 type DirectoryHandleLike = {
   name: string;
   kind: 'file' | 'directory';
@@ -196,11 +200,11 @@ async function collectFromEntry(entry: FileSystemEntryLike, basePath = ''): Prom
 
 async function collectDropFiles(dataTransfer: DataTransfer): Promise<StagedUploadFile[]> {
   const items = Array.from(dataTransfer.items || []);
-  const canTraverse = items.some((item) => typeof (item as DataTransferItem & { webkitGetAsEntry?: () => FileSystemEntryLike | null }).webkitGetAsEntry === 'function');
+  const canTraverse = items.some((item) => typeof (item as DataTransferItemWithEntry).webkitGetAsEntry === 'function');
 
   if (canTraverse) {
     const entries = items
-      .map((item) => (item as DataTransferItem & { webkitGetAsEntry?: () => FileSystemEntryLike | null }).webkitGetAsEntry())
+      .map((item): FileSystemEntryLike | null => (item as DataTransferItemWithEntry).webkitGetAsEntry?.() ?? null)
       .filter((entry): entry is FileSystemEntryLike => !!entry);
     const nested = await Promise.all(entries.map((entry) => collectFromEntry(entry)));
     return nested.flat();
