@@ -1,0 +1,83 @@
+{
+  "name": "datanotch-research-api",
+  "description": "DataNotch Research Platform API - Express backend with Prisma & PostgreSQL",
+  "buildCommand": "npm --prefix apps/api run build",
+  "startCommand": "npm --prefix apps/api start",
+  "envs": [
+    {
+      "key": "NODE_ENV",
+      "value": "production"
+    },
+    {
+      "key": "PORT",
+      "value": "3001"
+    },
+    {
+      "key": "DATABASE_URL",
+      "description": "PostgreSQL connection string from Supabase",
+      "sync": false
+    },
+    {
+      "key": "JWT_SECRET",
+      "description": "Secret for JWT token signing (generate a random string)",
+      "sync": false
+    },
+    {
+      "key": "CLIENT_URL",
+      "description": "Frontend URL (e.g., https://yourapp.vercel.app)",
+      "sync": false
+    },
+    {
+      "key": "SERVER_PUBLIC_URL",
+      "description": "This service's public URL (auto-filled by Render)",
+      "sync": false
+    },
+    {
+      "key": "ALLOWED_ORIGINS",
+      "description": "Comma-separated list of allowed frontend origins",
+      "sync": false
+    },
+    {
+      "key": "STORAGE_PROVIDER",
+      "value": "supabase"
+    },
+    {
+      "key": "SUPABASE_URL",
+      "description": "Supabase project URL",
+      "sync": false
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "description": "Supabase service role API key (keep secret)",
+      "sync": false
+    },
+    {
+      "key": "SUPABASE_STORAGE_BUCKET",
+      "value": "research-platform-storage"
+    },
+    {
+      "key": "QUEUE_BACKEND",
+      "value": "postgres"
+    },
+    {
+      "key": "POSTGRES_WORKER_POLL_MS",
+      "value": "1500"
+    },
+    {
+      "key": "AUTH_NETWORK_BLOCK_ENABLED",
+      "value": "true"
+    },
+    {
+      "key": "RATE_LIMIT_ENABLED",
+      "value": "true"
+    },
+    {
+      "key": "BCRYPT_ROUNDS",
+      "value": "12"
+    },
+    {
+      "key": "JWT_EXPIRES_IN",
+      "value": "7d"
+    }
+  ]
+}

@@ -42,6 +42,7 @@ import systemServicesCrossLayerRoutes from './routes/system-services-cross-layer
 import adminCommunicationRoutes from './routes/admin-communication.js';
 import userCommunicationRoutes from './routes/user-communication.js';
 import { uploadDir } from './common/runtime-storage.js';
+import { env } from './config/env.js';
 
 export function createApp() {
   const app = express();
