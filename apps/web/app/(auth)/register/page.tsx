@@ -301,11 +301,13 @@ export default function RegisterResearcherPage() {
         }
       });
 
-      // Replace with your real backend endpoint
-      const response = await fetch("/api/v1/auth/register-researcher-application", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/register-researcher-application`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);

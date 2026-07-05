@@ -25,6 +25,28 @@ type Props = {
   defaultSubject?: string;
 };
 
+type ErrorWithMessage = {
+  message: string;
+};
+
+type CreatedThreadShape = {
+  id: string;
+};
+
+function hasMessage(error: unknown): error is ErrorWithMessage {
+  return typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string';
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return hasMessage(error) ? error.message : fallback;
+}
+
+function createdThreadId(thread: unknown) {
+  return typeof thread === 'object' && thread !== null && 'id' in thread && typeof thread.id === 'string'
+    ? (thread as CreatedThreadShape).id
+    : '';
+}
+
 export function UnifiedInbox({ userId, role, defaultParticipantIds = '', defaultSubject = 'Platform message' }: Props) {
   const [threads, setThreads] = useState<InboxThreadListItem[]>([]);
   const [threadDetails, setThreadDetails] = useState<Record<string, Awaited<ReturnType<typeof getMessageThread>>>>({});
@@ -80,8 +102,8 @@ export function UnifiedInbox({ userId, role, defaultParticipantIds = '', default
         await loadThreadDetail(nextSelected);
       }
       setStatus('Inbox synced.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to load inbox.');
+    } catch (error) {
+      setStatus(errorMessage(error, 'Unable to load inbox.'));
     } finally {
       setLoading(false);
     }
@@ -91,7 +113,6 @@ export function UnifiedInbox({ userId, role, defaultParticipantIds = '', default
     refresh();
     const timer = window.setInterval(refresh, 20000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   async function createThread() {
@@ -110,13 +131,13 @@ export function UnifiedInbox({ userId, role, defaultParticipantIds = '', default
       setBody('');
       setStatus('Thread created and notifications routed.');
       await refresh();
-      const newId = (created.thread as { id?: string })?.id;
+      const newId = createdThreadId(created.thread);
       if (newId) {
         setSelectedThreadId(newId);
         await loadThreadDetail(newId);
       }
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create thread.');
+    } catch (error) {
+      setStatus(errorMessage(error, 'Unable to create thread.'));
     } finally {
       setLoading(false);
     }
@@ -133,8 +154,8 @@ export function UnifiedInbox({ userId, role, defaultParticipantIds = '', default
       await markThreadRead(selectedThread.id);
       await loadThreadDetail(selectedThread.id);
       await refresh();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to send message.');
+    } catch (error) {
+      setStatus(errorMessage(error, 'Unable to send message.'));
     } finally {
       setLoading(false);
     }
@@ -154,8 +175,8 @@ export function UnifiedInbox({ userId, role, defaultParticipantIds = '', default
       setStatus('Thread archived.');
       setSelectedThreadId('');
       await refresh();
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to archive thread.');
+    } catch (error) {
+      setStatus(errorMessage(error, 'Unable to archive thread.'));
     } finally {
       setLoading(false);
     }

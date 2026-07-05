@@ -83,8 +83,8 @@ export default function RZoomaMeetingPage() {
     try {
       setState(await getCommunicationRoomState(roomId));
       setStatus("Room synced.");
-    } catch (error: any) {
-      setStatus(error?.message ?? "Unable to load R-Zooma room.");
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : "Unable to load R-Zooma room.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,6 @@ export default function RZoomaMeetingPage() {
       void refresh();
     }, 15000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   useEffect(() => {
@@ -165,8 +164,8 @@ export default function RZoomaMeetingPage() {
         await ensureLocalPreview();
         await refresh();
         setStatus("R-Zooma video session started in direct room mode.");
-      } catch (error: any) {
-        setStatus(error?.message ?? "Unable to start R-Zooma video.");
+      } catch (error: unknown) {
+        setStatus(error instanceof Error ? error.message : "Unable to start R-Zooma video.");
       }
     } finally {
       setLoading(false);
@@ -181,8 +180,8 @@ export default function RZoomaMeetingPage() {
       await endCall(activeCall.id);
       await refresh();
       setStatus("R-Zooma call ended.");
-    } catch (error: any) {
-      setStatus(error?.message ?? "Unable to end call.");
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : "Unable to end call.");
     } finally {
       setLoading(false);
     }
@@ -196,8 +195,8 @@ export default function RZoomaMeetingPage() {
       setChatDraft("");
       await refresh();
       setStatus("Chat message sent.");
-    } catch (error: any) {
-      setStatus(error?.message ?? "Unable to send chat message.");
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : "Unable to send chat message.");
     } finally {
       setLoading(false);
     }
@@ -211,8 +210,8 @@ export default function RZoomaMeetingPage() {
       clear();
       await refresh();
       setStatus(`${tag} sent.`);
-    } catch (error: any) {
-      setStatus(error?.message ?? `Unable to send ${tag.toLowerCase()}.`);
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : `Unable to send ${tag.toLowerCase()}.`);
     } finally {
       setLoading(false);
     }

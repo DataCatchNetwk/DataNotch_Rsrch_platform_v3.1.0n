@@ -128,8 +128,9 @@ export function MeetingSchedulerPanel() {
       setMeetings((current) => [meeting, ...current.filter((item) => item.room.id !== meeting.room.id)]);
       setMessage(editingRoomId ? 'Booking updated successfully.' : `${mode === 'RMEET_AUDIO' ? 'R-Meet call/voice discussion' : 'R-Zooma meeting'} booked and invitations sent.`);
       setEditingRoomId(null);
-    } catch (error: any) {
-      setMessage(error?.message ?? 'Could not schedule the booking. Check backend API.');
+    } catch (error: unknown) {
+      const messageText = error instanceof Error ? error.message : undefined;
+      setMessage(messageText ?? 'Could not schedule the booking. Check backend API.');
     } finally {
       setLoading(false);
     }
@@ -155,8 +156,9 @@ export function MeetingSchedulerPanel() {
         setEditingRoomId(null);
       }
       setMessage('Booking cancelled.');
-    } catch (error: any) {
-      setMessage(error?.message ?? 'Unable to cancel booking.');
+    } catch (error: unknown) {
+      const messageText = error instanceof Error ? error.message : undefined;
+      setMessage(messageText ?? 'Unable to cancel booking.');
     } finally {
       setLoading(false);
     }

@@ -21,7 +21,7 @@ export function ResearchAssetDiscussion({ assetType, assetId }: Props) {
         setThreads(items);
         setStatus('Asset threads synced.');
       })
-      .catch((error: any) => setStatus(error?.message ?? 'Unable to load asset discussions.'));
+      .catch((error: unknown) => setStatus(error instanceof Error ? error.message : 'Unable to load asset discussions.'));
   }, [assetId, assetType]);
 
   return (

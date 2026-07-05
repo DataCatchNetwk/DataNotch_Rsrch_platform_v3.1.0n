@@ -20,6 +20,7 @@ import {
 
 type ComposerMode = 'Message' | 'Internal Note';
 type InboxFolder = 'inbox' | 'drafts' | 'spam' | 'deleted' | 'sent' | 'starred';
+type FolderShortcut = [label: string, key: InboxFolder, count: string, Icon: typeof Mail];
 type ReplyScope = 'reply' | 'reply-all';
 
 const folderTabs: Array<{ key: InboxFolder; label: string }> = [
@@ -142,8 +143,8 @@ export default function UserMessagingPage() {
       }
       await Promise.all(items.slice(0, 20).map((item) => loadThread(item.id)));
       setStatus('Inbox synced.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to load user inbox.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to load user inbox.');
     } finally {
       setLoading(false);
     }
@@ -155,12 +156,10 @@ export default function UserMessagingPage() {
       void refreshInbox();
     }, 20000);
     return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void refreshInbox();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolder]);
 
   async function createThread() {
@@ -188,8 +187,8 @@ export default function UserMessagingPage() {
       }
       await refreshInbox();
       setStatus('Thread created.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create thread.');
     } finally {
       setLoading(false);
     }
@@ -210,8 +209,8 @@ export default function UserMessagingPage() {
       await loadThread(selectedThreadId);
       await refreshInbox();
       setStatus('Reply sent.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to send reply.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to send reply.');
     } finally {
       setLoading(false);
     }
@@ -260,8 +259,8 @@ export default function UserMessagingPage() {
       setComposeOpen(false);
       await refreshInbox();
       setStatus('Thread created.');
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to create thread.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create thread.');
     } finally {
       setLoading(false);
     }
@@ -311,8 +310,8 @@ export default function UserMessagingPage() {
       if (selectedFolder === 'starred') {
         await refreshInbox();
       }
-    } catch (error: any) {
-      setStatus(error?.message ?? 'Unable to update starred state.');
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : 'Unable to update starred state.');
     }
   }
 
@@ -582,14 +581,14 @@ export default function UserMessagingPage() {
               <aside className="border-r bg-slate-100 p-4">
                 <Button className="mb-4 w-full rounded-lg bg-blue-600 text-white hover:bg-blue-700">Compose</Button>
                 <div className="space-y-2 text-sm">
-                  {[
+                  {([
                     ['Inbox', 'inbox', String(threads.length), Mail],
                     ['Drafts', 'drafts', '-', Paperclip],
                     ['Spam', 'spam', '-', Bell],
                     ['Deleted', 'deleted', '-', Archive],
                     ['Starred', 'starred', '-', Star],
                     ['Sent', 'sent', '-', Send],
-                  ].map(([label, key, count, Icon]: any) => (
+                  ] satisfies FolderShortcut[]).map(([label, key, count, Icon]) => (
                     <button
                       key={label}
                       type="button"

@@ -76,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const controller = new AbortController();
 
     const clearStoredAuth = () => {
@@ -117,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ user: storedUser, token: stored, loading: false });
     }
 
-    timeoutId = setTimeout(() => controller.abort(), 12000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     apiFetch<MeResponse>('/api/v1/auth/me', { token: stored, signal: controller.signal })
       .then((res) => {
