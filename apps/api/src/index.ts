@@ -9,13 +9,18 @@ import { systemMonitoringRealtimeService } from './modules/system-monitoring-rea
 const app = createApp();
 const server = createServer(app);
 
+const PORT = parseInt(process.env.PORT ?? '3001', 10);
+if (!Number.isFinite(PORT) || PORT < 0 || PORT >= 65536) {
+  throw new Error(`Invalid environment variable PORT: ${process.env.PORT}`);
+}
+
 async function bootstrap() {
   await prisma.$connect();
   attachNotificationGateway(server);
   attachCommunicationGateway(server);
   systemMonitoringRealtimeService.startBroadcastLoop();
-  server.listen(env.PORT, '0.0.0.0', () => {
-    console.log(`API running on http://0.0.0.0:${env.PORT}`);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`API running on http://0.0.0.0:${PORT}`);
   });
 }
 
@@ -24,3 +29,4 @@ bootstrap().catch(async (error) => {
   await prisma.$disconnect();
   process.exit(1);
 });
+
