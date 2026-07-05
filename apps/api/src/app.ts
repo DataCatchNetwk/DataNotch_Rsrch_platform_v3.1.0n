@@ -46,7 +46,13 @@ import { uploadDir } from './common/runtime-storage.js';
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: true, credentials: true }));
+  // Configure CORS with allowed origins
+  app.use(cors({
+    origin: env.ALLOWED_ORIGINS,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
   app.use(morgan('dev'));
   app.use(express.json());
   app.use('/uploads', express.static(uploadDir));

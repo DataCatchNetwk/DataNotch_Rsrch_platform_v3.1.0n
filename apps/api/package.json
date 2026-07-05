@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
+    "@supabase/supabase-js": "^2.45.0",
     "adm-zip": "^0.5.16",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.58.5",
