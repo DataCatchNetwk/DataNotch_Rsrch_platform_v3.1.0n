@@ -9,10 +9,11 @@ import { systemMonitoringRealtimeService } from './modules/system-monitoring-rea
 const app = createApp();
 const server = createServer(app);
 
-const PORT = parseInt(process.env.PORT ?? '3001', 10);
-if (!Number.isFinite(PORT) || PORT < 0 || PORT >= 65536) {
-  throw new Error(`Invalid environment variable PORT: ${process.env.PORT}`);
+const PORT = Number(process.env.PORT || 3001);
+if (!Number.isInteger(PORT) || PORT < 0 || PORT >= 65536) {
+  throw new Error(`Invalid PORT: ${process.env.PORT}`);
 }
+
 
 async function bootstrap() {
   await prisma.$connect();
