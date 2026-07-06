@@ -165,7 +165,7 @@ export function MeetingLifecyclePanel({ admin = false, compact = false, createdB
                   <Button variant="outline" onClick={decline} disabled={loading}><X className="mr-2 h-4 w-4" />Decline</Button>
                   <Button onClick={() => run(() => communicationApi.startMeeting(selected.id, { id: createdById, role: admin ? 'ADMIN' : 'USER' }), 'Meeting started.')} disabled={loading}><Play className="mr-2 h-4 w-4" />Start</Button>
                   <Button variant="outline" onClick={() => window.open(`/communication/join/${selected.roomSlug ?? selected.id}`, '_blank')}><ExternalLink className="mr-2 h-4 w-4" />Open R-Zooma</Button>
-                  <Button variant="outline" onClick={() => window.open(`/api/meetings/${selected.id}/calendar.ics`, '_blank')}><Download className="mr-2 h-4 w-4" />ICS</Button>
+                  <Button variant="outline" onClick={() => window.open(communicationApi.meetingCalendarUrl(selected.id), '_blank')}><Download className="mr-2 h-4 w-4" />ICS</Button>
                   <Button variant="outline" onClick={() => manage('PAUSE')} disabled={loading}><Pause className="mr-2 h-4 w-4" />Pause</Button>
                   <Button variant="destructive" onClick={() => manage('CANCEL')} disabled={loading}>Cancel</Button>
                 </div>
@@ -229,5 +229,4 @@ function toLocalInput(date: Date) {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
-
 
