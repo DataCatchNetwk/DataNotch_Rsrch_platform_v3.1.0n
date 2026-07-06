@@ -1,6 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/api';
+import { apiPathUrl } from '@/lib/api-base';
 
 export type GovernanceRole = 'USER' | 'REVIEWER' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
 export type GovernanceStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED';
@@ -48,10 +49,7 @@ export async function exportAdminAuditEventsCsv() {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:3001').replace(/\/+$/, '');
-  const url = base.endsWith('/api') ? `${base}/v1/admin-policy/audit-events/export` : `${base}/api/v1/admin-policy/audit-events/export`;
-
-  const response = await fetch(url, {
+  const response = await fetch(apiPathUrl('/v1/admin-policy/audit-events/export'), {
     method: 'GET',
     headers,
   });

@@ -103,8 +103,8 @@ Files stored in `storage/{bucket}/...` relative to current working directory.
 
 ```typescript
 STORAGE_PROVIDER=supabase
-SUPABASE_URL=https://project-id.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=[REDACTED]
+SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 SUPABASE_STORAGE_BUCKET=research-platform-storage
 ```
 
@@ -135,12 +135,12 @@ SERVER_PUBLIC_URL=https://api.example.com
 ALLOWED_ORIGINS=https://platform.example.com
 
 # Database
-DATABASE_URL=postgresql://postgres:...@db.supabase.co:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>?sslmode=require
 
 # Storage
 STORAGE_PROVIDER=supabase
-SUPABASE_URL=https://project-id.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=[REDACTED]
+SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 SUPABASE_STORAGE_BUCKET=research-platform-storage
 
 # Auth

@@ -13,9 +13,9 @@ Copy this and complete each step. Takes ~15 minutes total.
 - [ ] Copy these 3 values:
   
   ```
-  DATABASE_URL = "postgresql://postgres:PASSWORD@db.PROJECTREF.supabase.co:5432/postgres?sslmode=require"
-  SUPABASE_URL = "https://PROJECTREF.supabase.co"
-  SUPABASE_SERVICE_ROLE_KEY = "[from Settings → API → Service Role]"
+  DATABASE_URL = "postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>?sslmode=require"
+  SUPABASE_URL = "https://<PROJECT_REF>.supabase.co"
+  SUPABASE_SERVICE_ROLE_KEY = "<SUPABASE_SERVICE_ROLE_KEY>"
   ```
 
 - [ ] Create storage bucket:
@@ -95,7 +95,7 @@ Option A - If Render Shell is available:
 Option B - Via local terminal:
 - [ ] Locally run:
   ```bash
-  export DATABASE_URL="postgresql://postgres:PASSWORD@db.PROJECTREF.supabase.co:5432/postgres?sslmode=require"
+  export DATABASE_URL="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>?sslmode=require"
   npx prisma migrate deploy
   ```
 

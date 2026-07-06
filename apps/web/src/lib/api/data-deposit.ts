@@ -1,4 +1,5 @@
 import { apiRequest } from '@/src/lib/api/client';
+import { apiPathUrl } from '@/lib/api-base';
 
 export type DepositAccessibility = 'PUBLIC' | 'RESTRICTED' | 'CONTROLLED';
 export type DepositDomain =
@@ -153,8 +154,7 @@ export async function getDepositPullStatus(pullRequestId: string) {
 }
 
 export function getDepositPullStatusStreamUrl(pullRequestId: string) {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001/api';
-  return `${base}/v1/datasets/deposit/pull-requests/${pullRequestId}/stream`;
+  return apiPathUrl(`/v1/datasets/deposit/pull-requests/${pullRequestId}/stream`);
 }
 
 export async function getDepositDatasetLineage(datasetId: string) {

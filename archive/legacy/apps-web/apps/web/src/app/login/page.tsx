@@ -208,7 +208,7 @@ export default function LoginPage() {
           <div className={styles.footer}>
             <div className={styles.divider}></div>
             <p className={styles.footerText}>
-              Demo Credentials: <strong>admin@healthplatform.local</strong> / <strong>Admin@12345</strong>
+              Demo credentials are configured by the deployment administrator.
             </p>
             <p className={styles.footerText}>
               Don&apos;t have an account? <a href="/register" style={{ color: '#667eea', fontWeight: 600 }}>Register</a>

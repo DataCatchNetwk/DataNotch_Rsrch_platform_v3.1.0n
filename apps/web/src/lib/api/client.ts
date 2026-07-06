@@ -1,9 +1,5 @@
-const RAW_API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://127.0.0.1:3001";
+import { apiPathUrl } from "@/lib/api-base";
 
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 const TOKEN_KEY = "auth_token";
 
 type RequestOptions = RequestInit & {
@@ -26,12 +22,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const { json, headers, ...rest } = options;
   const isFormData = typeof FormData !== "undefined" && json instanceof FormData;
   const token = getStoredToken();
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const requestUrl = normalizedPath.startsWith("/api/")
-    ? `${API_BASE}${normalizedPath}`
-    : API_BASE.endsWith("/api")
-      ? `${API_BASE}${normalizedPath}`
-      : `${API_BASE}/api${normalizedPath}`;
+  const requestUrl = apiPathUrl(path);
 
   const response = await fetch(requestUrl, {
     ...rest,

@@ -47,7 +47,7 @@ const recentAudit: AuditItem[] = [
     id: '1',
     action: 'ROLE_UPDATED',
     actor: 'Admin Console',
-    target: 'jgodwin@datanotchplatform.org',
+    target: 'researcher@example.com',
     time: '10 min ago',
     severity: 'MEDIUM',
   },
@@ -55,7 +55,7 @@ const recentAudit: AuditItem[] = [
     id: '2',
     action: 'LOGIN_VERIFIED',
     actor: 'System',
-    target: 'donneyong.1@osu.edu',
+    target: 'admin@example.edu',
     time: '22 min ago',
     severity: 'LOW',
   },
@@ -651,4 +651,3 @@ export default function AdminPage() {
     </ProtectedRoute>
   );
 }
-

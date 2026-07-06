@@ -71,7 +71,7 @@ backend/src/websocket/communication.gateway.ts
 ## Environment
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/research_platform"
+DATABASE_URL="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>"
 SMTP_HOST="smtp.example.com"
 SMTP_PORT="587"
 SMTP_USER=""

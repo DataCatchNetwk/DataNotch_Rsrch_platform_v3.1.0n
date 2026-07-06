@@ -588,14 +588,14 @@ STORAGE_PROVIDER=S3
 STORAGE_BUCKET=research-platform
 STORAGE_REGION=us-east-1
 STORAGE_ENDPOINT=https://s3.amazonaws.com
-STORAGE_ACCESS_KEY_ID=your_access_key
-STORAGE_SECRET_ACCESS_KEY=your_secret_key
+STORAGE_ACCESS_KEY_ID=<STORAGE_ACCESS_KEY_ID>
+STORAGE_SECRET_ACCESS_KEY=<STORAGE_SECRET_ACCESS_KEY>
 STORAGE_FORCE_PATH_STYLE=false
 STORAGE_MAX_RETRIES=3
 STORAGE_RETRY_DELAY_MS=1000
 
 # Database (Required)
-DATABASE_URL=postgresql://user:password@localhost:5432/research_platform
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>
 
 # Redis (Required for workers)
 REDIS_URL=redis://localhost:6379
@@ -606,7 +606,7 @@ PORT=3001
 LOG_LEVEL=info
 
 # Auth
-JWT_SECRET=your_jwt_secret_key
+JWT_SECRET=<generate-a-strong-random-secret>
 JWT_EXPIRY=86400
 
 # Rate Limiting (Optional)

@@ -1,11 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
-  datasources: { db: { url: process.env.DATABASE_URL || 'postgresql://localhost:5432/health_data' } },
+  datasources: { db: { url: process.env.DATABASE_URL } },
 });
 
 async function resetResearcherStatus() {
-  const researcherEmail = process.env.RESEARCHER_IDENTIFIER ?? 'jgodwin@datanotchplatform.org';
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required.');
+  }
+
+  const researcherEmail = process.env.RESEARCHER_IDENTIFIER;
+  if (!researcherEmail) {
+    throw new Error('RESEARCHER_IDENTIFIER is required.');
+  }
+
   const newStatus = process.env.RESEARCHER_STATUS ?? 'PENDING_APPROVAL';
 
   try {

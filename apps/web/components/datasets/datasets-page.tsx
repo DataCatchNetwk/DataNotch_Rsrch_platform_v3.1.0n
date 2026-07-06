@@ -16,6 +16,7 @@ import { DatasetCardView } from "@/components/datasets/dataset-card-view"
 import { getDatasetColumns } from "@/components/datasets/dataset-columns"
 import { useDatasets } from "@/hooks/use-datasets"
 import { useDeleteDataset } from "@/hooks/use-upload-dataset"
+import { apiPathUrl } from "@/lib/api-base"
 import type { DatasetFilters, DatasetItem } from "@/types/dataset"
 
 const defaultFilters: DatasetFilters = {
@@ -52,7 +53,7 @@ export function DatasetsPageView({ embedded = false }: { embedded?: boolean } = 
           setAnalysisOpen(true)
         },
         onDownload: (row) => {
-          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")
+          window.open(apiPathUrl(`/v1/datasets/deposit/${row.id}/download`), "_blank")
         },
         onDelete: async (row) => {
           const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
@@ -159,7 +160,7 @@ export function DatasetsPageView({ embedded = false }: { embedded?: boolean } = 
         <DatasetCardView
           items={items}
           onAnalyze={(row) => { setAnalysisDatasetId(row.id); setAnalysisOpen(true) }}
-          onDownload={(row) => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api"}/v1/datasets/deposit/${row.id}/download`, "_blank")}
+          onDownload={(row) => window.open(apiPathUrl(`/v1/datasets/deposit/${row.id}/download`), "_blank")}
           onDelete={async (row) => {
             const confirmed = window.confirm(`Delete "${row.name}"? This action cannot be undone.`)
             if (!confirmed) return

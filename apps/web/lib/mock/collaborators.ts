@@ -13,7 +13,7 @@ export const collaborators: CollaboratorItem[] = [
   {
     id: "col_1",
     name: "Jerry Godwin",
-    email: "jgodwin@datanotchplatform.org",
+    email: "researcher@example.com",
     institution: "DataNotch Research Institute",
     department: "Clinical Informatics",
     type: "PI",

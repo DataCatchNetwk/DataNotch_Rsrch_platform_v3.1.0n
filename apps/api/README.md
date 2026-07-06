@@ -36,7 +36,7 @@ Server for a health data platform using:
 ## Seeded admin
 
 - email: `admin@healthplatform.local`
-- password: `Admin@12345`
+- password: set via `SEED_ADMIN_PASSWORD` before running `npm run prisma:seed`
 
 ## Trusted network enforcement (VPN/proxy blocking)
 

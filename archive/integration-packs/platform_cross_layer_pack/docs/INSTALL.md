@@ -47,5 +47,5 @@ npx prisma generate
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/health_data?schema=public
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>?schema=public
 ```

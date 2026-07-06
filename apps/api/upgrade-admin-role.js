@@ -4,9 +4,14 @@ const prisma = new PrismaClient();
 
 (async () => {
   try {
+    const targetEmail = process.env.ADMIN_IDENTIFIER;
+    if (!targetEmail) {
+      throw new Error('ADMIN_IDENTIFIER is required.');
+    }
+
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email: 'donneyong.1@osu.edu' },
+      where: { email: targetEmail },
       include: { roles: true }
     });
     

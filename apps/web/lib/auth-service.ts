@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api';
+import { apiUrl } from '@/lib/api-base';
 import type { AppUser } from '@/lib/auth-storage';
 
 export type UserLoginPayload = {
@@ -74,15 +75,14 @@ export async function getCurrentUser(accessToken: string) {
   });
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
-
 type SsoStartResponse = {
   url?: string;
   message?: string;
 };
 
 async function getSsoStart(provider: 'google' | 'microsoft', fallbackMessage: string) {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/sso/${provider}/start`, {
+  const url = apiUrl(`/api/v1/auth/sso/${provider}/start`);
+  const response = await fetch(url, {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
@@ -112,7 +112,7 @@ async function getSsoStart(provider: 'google' | 'microsoft', fallbackMessage: st
   }
 
   return {
-    url: `${API_BASE_URL}/api/v1/auth/sso/${provider}/start`,
+    url,
   };
 }
 

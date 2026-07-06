@@ -1,8 +1,16 @@
 const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required for the communication smoke test.`);
+  }
+  return value;
+}
+
 const account = {
-  identifier: process.env.COMM_SMOKE_IDENTIFIER ?? process.env.ADMIN_IDENTIFIER ?? 'donneyong.1@osu.edu',
-  password: process.env.COMM_SMOKE_PASSWORD ?? process.env.ADMIN_PASSWORD ?? 'g00d1234',
+  identifier: process.env.COMM_SMOKE_IDENTIFIER ?? requireEnv('ADMIN_IDENTIFIER'),
+  password: process.env.COMM_SMOKE_PASSWORD ?? requireEnv('ADMIN_PASSWORD'),
 };
 
 async function request(path, options = {}) {
