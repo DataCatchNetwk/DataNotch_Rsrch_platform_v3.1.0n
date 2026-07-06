@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { getApiBaseUrl } from "@/lib/api-base";
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 const ALLOWED_FILE_TYPES = [
@@ -301,8 +302,9 @@ export default function RegisterResearcherPage() {
         }
       });
 
+      const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/register-researcher-application`,
+        `${apiBaseUrl}/api/v1/auth/register-researcher-application`,
         {
           method: "POST",
           body: formData,

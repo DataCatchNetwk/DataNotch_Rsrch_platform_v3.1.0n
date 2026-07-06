@@ -6,6 +6,7 @@ import { HttpError } from '../utils/errors.js';
 import type { ApplicationReviewStatus, ResearcherType } from '@prisma/client';
 import { logAdminAuditEvent } from './audit.service.js';
 import { resolveUploadPath } from '../common/runtime-storage.js';
+import { getStorageProvider } from '../common/storage/storage.service.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,12 @@ export interface ListApplicationsQuery {
   sortDirection?: 'asc' | 'desc';
 }
 
+type RegistrationContext = {
+  requestId?: string;
+  route?: string;
+  method?: string;
+};
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function parseBooleanField(value: string | boolean | undefined): boolean {
@@ -93,6 +100,15 @@ function parseStringArray(value: string | string[] | undefined): string[] {
 
 const UPLOAD_DIR = resolveUploadPath('applications');
 
+function logRegistrationStage(stage: string, context?: RegistrationContext) {
+  console.info('[researcher-registration] stage', {
+    requestId: context?.requestId,
+    route: context?.route,
+    method: context?.method,
+    stage,
+  });
+}
+
 function saveUploadedFile(file: Express.Multer.File, subfolder: string): string {
   const dir = path.join(UPLOAD_DIR, subfolder);
   fs.mkdirSync(dir, { recursive: true });
@@ -103,28 +119,48 @@ function saveUploadedFile(file: Express.Multer.File, subfolder: string): string 
   return `/uploads/applications/${subfolder}/${filename}`;
 }
 
-function uploadFiles(
+async function saveUploadedFileToStorage(file: Express.Multer.File, subfolder: string): Promise<string> {
+  if ((process.env.STORAGE_PROVIDER ?? 'local').toLowerCase() !== 'supabase') {
+    return saveUploadedFile(file, subfolder);
+  }
+
+  const ext = path.extname(file.originalname);
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+  const storagePath = `applications/${subfolder}/${filename}`;
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'research-platform-storage';
+  const storage = getStorageProvider();
+
+  await storage.upload(bucket, storagePath, file.buffer, {
+    contentType: file.mimetype || 'application/octet-stream',
+  });
+
+  return storage.getPublicUrl(bucket, storagePath);
+}
+
+async function uploadFiles(
   applicantEmail: string,
   files: UploadedFiles,
-): { cvFileUrl?: string; affiliationProofUrl?: string; irbDocumentUrl?: string } {
+): Promise<{ cvFileUrl?: string; affiliationProofUrl?: string; irbDocumentUrl?: string }> {
   const subfolder = applicantEmail.replace(/[^a-z0-9]/gi, '_').toLowerCase();
   return {
-    cvFileUrl: files.cvFile?.[0] ? saveUploadedFile(files.cvFile[0], subfolder) : undefined,
+    cvFileUrl: files.cvFile?.[0] ? await saveUploadedFileToStorage(files.cvFile[0], subfolder) : undefined,
     affiliationProofUrl: files.affiliationProofFile?.[0]
-      ? saveUploadedFile(files.affiliationProofFile[0], subfolder)
+      ? await saveUploadedFileToStorage(files.affiliationProofFile[0], subfolder)
       : undefined,
     irbDocumentUrl: files.irbDocumentFile?.[0]
-      ? saveUploadedFile(files.irbDocumentFile[0], subfolder)
+      ? await saveUploadedFileToStorage(files.irbDocumentFile[0], subfolder)
       : undefined,
   };
 }
 
 // ─── Service functions ───────────────────────────────────────────────────────
 
-export async function createApplication(dto: CreateApplicationInput, files: UploadedFiles) {
+export async function createApplication(dto: CreateApplicationInput, files: UploadedFiles, context?: RegistrationContext) {
+  logRegistrationStage('start', context);
   const emailLower = dto.email.toLowerCase();
 
   // Check uniqueness
+  logRegistrationStage('check-duplicate-email', context);
   const existing = await prisma.user.findFirst({
     where: {
       OR: [
@@ -145,10 +181,13 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
     throw new HttpError(400, 'IRB protocol number is required when IRB is required.');
   }
 
+  logRegistrationStage('hash-password', context);
   const passwordHash = await hashPassword(dto.password);
-  const uploaded = uploadFiles(emailLower, files);
+  logRegistrationStage('store-uploaded-documents', context);
+  const uploaded = await uploadFiles(emailLower, files);
   const featureNeeds = parseStringArray(dto.featureNeeds);
 
+  logRegistrationStage('database-transaction', context);
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -217,6 +256,7 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
 
     return { user, application };
   });
+  logRegistrationStage('complete', context);
 
   // No-op placeholders for queue / mailer — swap with real implementations later
   console.info('[application-queue] enqueueNewSubmission', {

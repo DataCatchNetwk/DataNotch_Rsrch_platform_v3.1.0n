@@ -26,7 +26,7 @@ export function attachNotificationGateway(server: HttpServer) {
 
   io = new Server(server, {
     cors: {
-      origin: env.CLIENT_URL,
+      origin: env.CLIENT_ORIGINS,
       credentials: true,
     },
   });

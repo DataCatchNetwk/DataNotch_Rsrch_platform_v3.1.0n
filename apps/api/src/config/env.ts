@@ -13,26 +13,30 @@ function requireEnv(name: string, fallback?: string): string {
   return value;
 }
 
-// Parse CORS allowed origins from environment
-function parseAllowedOrigins(): string[] {
-  const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:3000';
-  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS ?? '';
-  
-  const origins = [clientUrl];
-  
-  if (allowedOriginsEnv) {
-    origins.push(...allowedOriginsEnv.split(',').map(o => o.trim()));
-  }
-  
-  return origins;
+function parseOriginList(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+// Parse CORS allowed origins from environment.
+function parseClientOrigins(): string[] {
+  const configuredOrigins = parseOriginList(process.env.CLIENT_ORIGINS ?? process.env.ALLOWED_ORIGINS ?? process.env.CLIENT_URL);
+  const developmentOrigins =
+    (process.env.NODE_ENV ?? 'development') === 'production'
+      ? []
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+  return Array.from(new Set([...configuredOrigins, ...developmentOrigins]));
 }
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? 'development',
   PORT: port,
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:3000',
+  CLIENT_ORIGINS: parseClientOrigins(),
   SERVER_PUBLIC_URL: process.env.SERVER_PUBLIC_URL ?? `http://localhost:${port}`,
-  ALLOWED_ORIGINS: parseAllowedOrigins(),
   REDIS_URL: process.env.REDIS_URL ?? '',
   QUEUE_BACKEND: (process.env.QUEUE_BACKEND ?? 'postgres').toLowerCase(),
   PIPELINE_EVENT_STREAM_KEY: process.env.PIPELINE_EVENT_STREAM_KEY ?? 'pipeline:events',

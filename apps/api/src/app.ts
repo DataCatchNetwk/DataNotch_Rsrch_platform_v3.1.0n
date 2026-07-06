@@ -1,5 +1,5 @@
 import express from 'express';
-import cors from 'cors';
+import cors, { type CorsOptions } from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.js';
 import healthDataRoutes from './routes/health-data.js';
@@ -43,17 +43,34 @@ import adminCommunicationRoutes from './routes/admin-communication.js';
 import userCommunicationRoutes from './routes/user-communication.js';
 import { uploadDir } from './common/runtime-storage.js';
 import { env } from './config/env.js';
+import { HttpError } from './utils/errors.js';
+
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (env.CLIENT_ORIGINS.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new HttpError(403, 'CORS origin not allowed'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
 
 export function createApp() {
   const app = express();
 
-  // Configure CORS with allowed origins
-  app.use(cors({
-    origin: env.ALLOWED_ORIGINS,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+  app.use(requestId);
+  app.use(securityHeaders);
+  app.use(cors(corsOptions));
+  app.use(rateLimit);
   app.use(morgan('dev'));
   app.use(express.json());
   app.use('/uploads', express.static(uploadDir));
