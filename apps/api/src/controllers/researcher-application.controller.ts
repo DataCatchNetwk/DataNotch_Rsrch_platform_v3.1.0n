@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import {
   createApplication,
   listApplicationsForAdmin,
@@ -7,11 +8,51 @@ import {
   requestMoreInfo,
   type UploadedFiles,
 } from '../services/researcher-application.service.js';
+import { getRequestId } from '../middleware/request-id.js';
+import { HttpError } from '../utils/errors.js';
+
+function errorType(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return `PrismaClientKnownRequestError:${error.code}`;
+  }
+
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    return 'PrismaClientValidationError';
+  }
+
+  if (error instanceof HttpError) {
+    return `HttpError:${error.statusCode}`;
+  }
+
+  return error instanceof Error ? error.name : typeof error;
+}
 
 export async function submitApplication(req: Request, res: Response) {
-  const files = req.files as UploadedFiles | undefined;
-  const result = await createApplication(req.body, files ?? {});
-  res.status(201).json(result);
+  const requestId = getRequestId(res);
+
+  try {
+    const files = req.files as UploadedFiles | undefined;
+    const result = await createApplication(req.body, files ?? {}, { requestId, route: req.path, method: req.method });
+    res.status(201).json({ ...result, requestId });
+  } catch (error) {
+    const status = error instanceof HttpError ? error.statusCode : 500;
+    console.error('[researcher-registration] failed', {
+      requestId,
+      route: req.path,
+      method: req.method,
+      errorType: errorType(error),
+      stack: process.env.NODE_ENV === 'production' ? undefined : error instanceof Error ? error.stack : undefined,
+    });
+
+    res.status(status).json({
+      error: 'REGISTRATION_FAILED',
+      message:
+        error instanceof HttpError && status < 500
+          ? error.message
+          : 'Unable to submit registration application.',
+      requestId,
+    });
+  }
 }
 
 export async function listApplications(req: Request, res: Response) {
