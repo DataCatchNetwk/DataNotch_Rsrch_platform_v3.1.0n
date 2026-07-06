@@ -1,5 +1,7 @@
 'use client'
 
+import { getApiBaseUrl } from '@/lib/api-base'
+
 function readPositiveIntegerEnv(name: string, fallback: number) {
   const raw = process.env[name]
   if (!raw) return fallback
@@ -17,7 +19,7 @@ function readBooleanEnv(name: string, fallback: boolean) {
   return fallback
 }
 
-const rawMonitoringApiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:3001'
+const rawMonitoringApiBase = getApiBaseUrl()
 const rawMonitoringWsBase = process.env.NEXT_PUBLIC_WS_BASE_URL ?? rawMonitoringApiBase
 
 export const monitoringApiBase = rawMonitoringApiBase.replace(/\/+$/, '')

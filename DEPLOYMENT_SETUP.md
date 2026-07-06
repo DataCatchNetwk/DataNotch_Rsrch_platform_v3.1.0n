@@ -100,7 +100,7 @@
 
 2. **Get Connection String:**
    - Settings → Database → Connection String
-   - Copy: `postgresql://postgres:PASSWORD@db.PROJECTREF.supabase.co:5432/postgres?sslmode=require`
+   - Copy: `postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>?sslmode=require`
    - Use in Render's DATABASE_URL
 
 3. **Get Service Role Key:**

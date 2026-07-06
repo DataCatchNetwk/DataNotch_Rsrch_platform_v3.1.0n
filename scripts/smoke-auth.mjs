@@ -1,18 +1,26 @@
 const apiBaseUrl = (process.env.API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required for the auth smoke test.`);
+  }
+  return value;
+}
+
 const accounts = [
   {
     label: 'admin',
-    identifier: process.env.ADMIN_IDENTIFIER ?? 'donneyong.1@osu.edu',
-    password: process.env.ADMIN_PASSWORD ?? 'g00d1234',
+    identifier: requireEnv('ADMIN_IDENTIFIER'),
+    password: requireEnv('ADMIN_PASSWORD'),
     expectedAccountStatus: 'ACTIVE',
     acceptableAccountStatuses: ['ACTIVE'],
     expectedRole: 'ADMIN',
   },
   {
     label: 'researcher',
-    identifier: process.env.RESEARCHER_IDENTIFIER ?? 'jgodwin@datanotchplatform.org',
-    password: process.env.RESEARCHER_PASSWORD ?? 'qwerty21',
+    identifier: requireEnv('RESEARCHER_IDENTIFIER'),
+    password: requireEnv('RESEARCHER_PASSWORD'),
     expectedAccountStatus: 'PENDING_APPROVAL',
     acceptableAccountStatuses: ['PENDING_APPROVAL', 'ACTIVE'],
     expectedRole: 'ANALYST',

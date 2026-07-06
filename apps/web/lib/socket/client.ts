@@ -1,4 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
+import { getApiBaseUrl } from '@/lib/api-base';
 
 let socket: Socket | null = null;
 let socketToken: string | undefined;
@@ -18,7 +19,7 @@ export function getSocket() {
 
   if (!socket) {
     socketToken = token;
-    socket = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://127.0.0.1:3001', {
+    socket = io(process.env.NEXT_PUBLIC_WS_URL ?? getApiBaseUrl(), {
       withCredentials: true,
       transports: ['websocket', 'polling'],
       auth: token ? { token } : undefined,

@@ -1,9 +1,5 @@
-const RAW_API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://127.0.0.1:3001"
+import { apiPathUrl, getApiBaseUrl } from "@/lib/api-base"
 
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "")
 const TOKEN_KEY = "auth_token"
 
 export type AnalysisJobStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED"
@@ -212,12 +208,7 @@ function clearStoredAuth() {
 }
 
 function buildApiUrl(path: string) {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`
-  return normalizedPath.startsWith("/api/")
-    ? `${API_BASE}${normalizedPath}`
-    : API_BASE.endsWith("/api")
-      ? `${API_BASE}${normalizedPath}`
-      : `${API_BASE}/api${normalizedPath}`
+  return apiPathUrl(path)
 }
 
 function withQuery(path: string, query?: Record<string, string | number | boolean | undefined>) {
@@ -262,7 +253,7 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     })
   } catch (error) {
     throw new ApiError(
-      `Unable to reach the API at ${API_BASE}. Start the server and try again.`,
+      `Unable to reach the API at ${getApiBaseUrl()}. Start the server and try again.`,
       0,
       error,
       path

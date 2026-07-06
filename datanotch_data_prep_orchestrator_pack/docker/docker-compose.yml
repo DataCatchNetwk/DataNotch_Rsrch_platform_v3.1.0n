@@ -3,7 +3,7 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: datanotch
-      POSTGRES_PASSWORD: datanotch
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your local shell}
       POSTGRES_DB: datanotch
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]

@@ -1,9 +1,4 @@
-const RAW_API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://127.0.0.1:3001';
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+import { apiUrl } from '@/lib/api-base';
 
 export type SdohAnalysisResponse = {
   module: string;
@@ -83,7 +78,7 @@ function token() {
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const authToken = token();
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: 'no-store',
     credentials: 'include',
@@ -103,7 +98,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 
 async function requestBlob(path: string, init?: RequestInit): Promise<{ blob: Blob; filename: string }> {
   const authToken = token();
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: 'no-store',
     credentials: 'include',

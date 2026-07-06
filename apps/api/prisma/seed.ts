@@ -12,6 +12,11 @@ async function assignRole(userId: string, roleId: string) {
 }
 
 async function main() {
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedAdminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD is required to seed admin accounts.');
+  }
+
   const adminRole = await prisma.role.upsert({
     where: { name: 'ADMIN' },
     update: {},
@@ -68,7 +73,7 @@ async function main() {
     });
   }
 
-  const passwordHash = await bcrypt.hash('Admin@12345', 12);
+  const passwordHash = await bcrypt.hash(seedAdminPassword, 12);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@healthplatform.local' },
     update: { accountStatus: AccountStatus.ACTIVE },

@@ -1,5 +1,4 @@
-const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:3001';
-const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+import { apiPathUrl, apiUrl, getApiBaseUrl } from '@/lib/api-base';
 
 type RequestOptions = {
   method?: string;
@@ -16,10 +15,9 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
   let url = path;
   if (!/^https?:\/\//i.test(path)) {
     if (path.startsWith('/api/')) {
-      url = `${API_BASE}${path}`;
+      url = apiUrl(path);
     } else {
-      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-      url = API_BASE.endsWith('/api') ? `${API_BASE}${normalizedPath}` : `${API_BASE}/api${normalizedPath}`;
+      url = apiPathUrl(path);
     }
   }
 
@@ -41,7 +39,7 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
   } catch (error) {
     const message =
       error instanceof Error && error.message
-        ? `Unable to reach the API at ${API_BASE}. Start the server and database, then try again.`
+        ? `Unable to reach the API at ${getApiBaseUrl()}. Start the server and database, then try again.`
         : 'Unable to reach the API. Start the server and try again.';
     throw new ApiError(0, message, { cause: error, url });
   }

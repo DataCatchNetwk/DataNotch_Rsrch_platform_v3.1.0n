@@ -8,27 +8,14 @@ import {
 } from "./workspaces";
 import { apiRequest } from "./client";
 import { io } from "socket.io-client";
+import { apiPathUrl, getApiBaseUrl } from "@/lib/api-base";
 
-const RAW_API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://127.0.0.1:3001";
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 const SOCKET_BASE =
   process.env.NEXT_PUBLIC_SOCKET_URL ??
-  RAW_API_BASE.replace(/\/api(?:\/v\d+)?$/i, "").replace(/\/+$/, "");
+  getApiBaseUrl().replace(/\/api(?:\/v\d+)?$/i, "").replace(/\/+$/, "");
 
 function buildApiUrl(path: string) {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-  if (normalizedPath.startsWith("/api/")) {
-    return `${API_BASE}${normalizedPath}`;
-  }
-
-  return API_BASE.endsWith("/api")
-    ? `${API_BASE}${normalizedPath}`
-    : `${API_BASE}/api${normalizedPath}`;
+  return apiPathUrl(path);
 }
 
 function getStoredToken() {

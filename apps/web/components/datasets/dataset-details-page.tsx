@@ -19,6 +19,7 @@ import { DatasetRowPreview } from "@/components/datasets/dataset-row-preview"
 import { DatasetAuditTrail } from "@/components/datasets/dataset-audit-trail"
 import { DatasetAccessInfoCard } from "@/components/datasets/dataset-access-info-card"
 import { DatasetLifecycleWorkspace } from "@/components/datasets/dataset-lifecycle-workspace"
+import { apiPathUrl } from "@/lib/api-base"
 
 export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
   const router = useRouter()
@@ -83,7 +84,7 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
             variant="outline"
             onClick={() =>
               window.open(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api"}/v1/datasets/deposit/${datasetId}/download`,
+                apiPathUrl(`/v1/datasets/deposit/${datasetId}/download`),
                 "_blank"
               )
             }
@@ -191,4 +192,3 @@ export function DatasetDetailsPage({ datasetId }: { datasetId: string }) {
     </div>
   )
 }
-

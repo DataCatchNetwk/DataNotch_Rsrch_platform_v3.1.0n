@@ -1,23 +1,8 @@
 import axios from "axios"
 
-function normalizeApiBaseUrl(rawBaseUrl: string | undefined) {
-  const fallback = "http://127.0.0.1:3001/api"
-  const baseUrl = (rawBaseUrl ?? fallback).replace(/\/+$/, "")
+import { apiPathUrl } from "@/lib/api-base"
 
-  if (baseUrl.endsWith("/api/v1")) {
-    return baseUrl.slice(0, -3)
-  }
-
-  if (baseUrl.endsWith("/v1")) {
-    return `${baseUrl.slice(0, -3)}/api`
-  }
-
-  if (baseUrl.endsWith("/api")) {
-    return baseUrl
-  }
-
-  return `${baseUrl}/api`
-}
+const apiBaseUrl = apiPathUrl("/")
 
 function getAuthToken() {
   if (typeof window === "undefined") {
@@ -46,7 +31,7 @@ function clearExpiredAuth() {
 }
 
 export const api = axios.create({
-  baseURL: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL),
+  baseURL: apiBaseUrl,
   withCredentials: true,
 })
 

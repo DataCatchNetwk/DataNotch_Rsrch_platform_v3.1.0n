@@ -1,3 +1,5 @@
+import { apiUrl } from '@/lib/api-base';
+
 export type SdohStudioAnalysisType =
   | 'descriptive'
   | 'hypothesis'
@@ -42,13 +44,6 @@ export interface SdohStudioAnalysisResult {
   raw?: Record<string, unknown>;
 }
 
-const RAW_API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://127.0.0.1:3001';
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
-
 const routeByType: Record<SdohStudioAnalysisType, string> = {
   descriptive: '/api/sdoh/analytics/descriptive',
   hypothesis: '/api/sdoh/analytics/correlation',
@@ -81,7 +76,7 @@ function token() {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const authToken = token();
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: 'no-store',
     credentials: 'include',

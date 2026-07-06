@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 
+import { apiPathUrl } from "@/lib/api-base"
 import type { AnalysisStreamEvent } from "@/types/analysis"
 
 type StreamState = "connecting" | "open" | "closed" | "error"
@@ -12,8 +13,7 @@ export function useJobStream(jobId?: string) {
 
   const streamUrl = useMemo(() => {
     if (!jobId) return null
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")
-    return `${base ?? ""}/analysis/jobs/${jobId}/stream`
+    return apiPathUrl(`/analysis/jobs/${jobId}/stream`)
   }, [jobId])
 
   useEffect(() => {

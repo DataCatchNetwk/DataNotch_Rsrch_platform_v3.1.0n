@@ -166,7 +166,7 @@ STORAGE_MAX_RETRIES=3
 STORAGE_RETRY_DELAY_MS=1000
 
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/research_platform
+DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>
 
 # Redis (for workers)
 REDIS_URL=redis://localhost:6379

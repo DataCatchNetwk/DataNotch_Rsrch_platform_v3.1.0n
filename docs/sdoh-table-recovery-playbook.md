@@ -25,22 +25,22 @@ Dropped tables:
 
 2. Restore schema and data for only those tables.
 
-   pg_restore --no-owner --no-privileges --schema=public --table=public.sdoh_audit_logs --table=public.sdoh_datasets --table=public.sdoh_exports --table=public.sdoh_feature_flags --table=public.sdoh_publication_outputs --dbname="postgresql://USER:PASSWORD@HOST:5432/health_data" pre_cleanup.dump
+   pg_restore --no-owner --no-privileges --schema=public --table=public.sdoh_audit_logs --table=public.sdoh_datasets --table=public.sdoh_exports --table=public.sdoh_feature_flags --table=public.sdoh_publication_outputs --dbname="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>" pre_cleanup.dump
 
 3. Validate row counts.
 
-   psql "postgresql://USER:PASSWORD@HOST:5432/health_data" -c "SELECT 'sdoh_audit_logs' AS table_name, count(_) FROM public.sdoh_audit_logs UNION ALL SELECT 'sdoh_datasets', count(_) FROM public.sdoh_datasets UNION ALL SELECT 'sdoh_exports', count(_) FROM public.sdoh_exports UNION ALL SELECT 'sdoh_feature_flags', count(_) FROM public.sdoh_feature_flags UNION ALL SELECT 'sdoh_publication_outputs', count(\*) FROM public.sdoh_publication_outputs;"
+   psql "postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>" -c "SELECT 'sdoh_audit_logs' AS table_name, count(_) FROM public.sdoh_audit_logs UNION ALL SELECT 'sdoh_datasets', count(_) FROM public.sdoh_datasets UNION ALL SELECT 'sdoh_exports', count(_) FROM public.sdoh_exports UNION ALL SELECT 'sdoh_feature_flags', count(_) FROM public.sdoh_feature_flags UNION ALL SELECT 'sdoh_publication_outputs', count(\*) FROM public.sdoh_publication_outputs;"
 
 ## Option B: recover from PITR clone (no direct table-level backup available)
 
 1. Restore a temporary database to a timestamp before the cleanup migration.
 2. Export only the five tables from the restored source DB.
 
-   pg_dump --format=custom --no-owner --no-privileges --schema=public --table=public.sdoh_audit_logs --table=public.sdoh_datasets --table=public.sdoh_exports --table=public.sdoh_feature_flags --table=public.sdoh_publication_outputs --dbname="postgresql://USER:PASSWORD@HOST:5432/health_data_restored" --file=sdoh_tables_only.dump
+   pg_dump --format=custom --no-owner --no-privileges --schema=public --table=public.sdoh_audit_logs --table=public.sdoh_datasets --table=public.sdoh_exports --table=public.sdoh_feature_flags --table=public.sdoh_publication_outputs --dbname="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>" --file=sdoh_tables_only.dump
 
 3. Import into current production database.
 
-   pg_restore --no-owner --no-privileges --dbname="postgresql://USER:PASSWORD@HOST:5432/health_data" sdoh_tables_only.dump
+   pg_restore --no-owner --no-privileges --dbname="postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>" sdoh_tables_only.dump
 
 4. Validate counts and basic spot checks as in Option A step 3.
 
