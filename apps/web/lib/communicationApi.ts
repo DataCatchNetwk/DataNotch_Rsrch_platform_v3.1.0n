@@ -1,5 +1,7 @@
 ﻿import { api } from '@/lib/api/client';
 
+import { apiPathUrl } from '@/lib/api-base';
+
 export type CommunicationRole = 'ADMIN' | 'USER';
 
 export type CommunicationThread = {
@@ -164,5 +166,8 @@ export const communicationApi = {
     const { data } = await api.post(`/v1/admin/communication/rooms/${roomId}/end`);
     return data as CommunicationRoom;
   },
-};
 
+  meetingCalendarUrl(meetingId: string): string {
+    return apiPathUrl(`/v1/communication/meetings/${meetingId}/calendar.ics`);
+  },
+};

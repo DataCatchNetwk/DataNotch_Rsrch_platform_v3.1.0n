@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { apiPathUrl } from '@/lib/api-base';
 
 export type CommunicationRoom = {
   id: string;
@@ -396,6 +397,5 @@ export async function deleteCommunicationMeetingLog(roomId: string, logId: strin
 }
 
 export function meetingCalendarUrl(roomId: string) {
-  return `/api/v1/communication/meetings/${roomId}/calendar.ics`;
+  return apiPathUrl(`/v1/communication/meetings/${roomId}/calendar.ics`);
 }
-

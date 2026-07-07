@@ -2,6 +2,20 @@ const rawApiBase =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
   process.env.NEXT_PUBLIC_API_URL?.trim();
 
+const apiPathPattern = /^\/?api(?:\/|$)/i;
+
+function asUrl(base: string) {
+  return new URL(base.endsWith('/') ? base : `${base}/`);
+}
+
+function ensureLeadingSlash(path: string) {
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+function stripTrailingSlash(path: string) {
+  return path.replace(/\/+$/, '');
+}
+
 export function getApiBaseUrl() {
   if (rawApiBase) {
     return rawApiBase.replace(/\/+$/, '');
@@ -23,19 +37,38 @@ export function apiUrl(path: string) {
     return path;
   }
 
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${getApiBaseUrl()}${cleanPath}`;
+  const base = asUrl(getApiBaseUrl());
+  const cleanPath = ensureLeadingSlash(path);
+
+  if (apiPathPattern.test(cleanPath)) {
+    return new URL(cleanPath, base.origin).href;
+  }
+
+  return new URL(cleanPath.replace(/^\/+/, ''), base).href;
 }
 
 export function apiPathUrl(path: string) {
-  const base = getApiBaseUrl();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
 
-  if (cleanPath.startsWith('/api/')) {
+  const base = asUrl(getApiBaseUrl());
+  let cleanPath = ensureLeadingSlash(path);
+
+  if (apiPathPattern.test(cleanPath)) {
     return apiUrl(cleanPath);
   }
 
-  return base.endsWith('/api')
-    ? `${base}${cleanPath}`
-    : `${base}/api${cleanPath}`;
+  let apiBasePath = stripTrailingSlash(base.pathname);
+  if (!apiPathPattern.test(apiBasePath)) {
+    apiBasePath = `${apiBasePath}/api`;
+  }
+
+  const baseVersion = apiBasePath.match(/\/(v\d+)$/i)?.[1];
+  const pathVersion = cleanPath.match(/^\/(v\d+)(?:\/|$)/i)?.[1];
+  if (baseVersion && pathVersion?.toLowerCase() === baseVersion.toLowerCase()) {
+    cleanPath = cleanPath.slice(pathVersion.length + 1) || '/';
+  }
+
+  return new URL(`${stripTrailingSlash(apiBasePath)}${cleanPath}`, base.origin).href;
 }
