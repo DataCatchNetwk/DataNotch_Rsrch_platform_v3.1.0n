@@ -4,6 +4,33 @@ import { apiPathUrl } from "@/lib/api-base"
 
 const apiBaseUrl = apiPathUrl("/")
 
+function normalizeRequestPath(url?: string) {
+  if (!url || /^https?:\/\//i.test(url)) {
+    return url
+  }
+
+  const basePath = new URL(apiBaseUrl).pathname.replace(/\/+$/, "")
+
+  if (/\/api\/v\d+$/i.test(basePath)) {
+    const version = basePath.match(/\/(v\d+)$/i)?.[1]
+    if (url.toLowerCase().startsWith(`${basePath.toLowerCase()}/`)) {
+      return url.slice(basePath.length) || "/"
+    }
+    if (version && url.toLowerCase().startsWith(`/api/${version.toLowerCase()}/`)) {
+      return url.slice(`/api/${version}`.length) || "/"
+    }
+    if (version && url.toLowerCase().startsWith(`/${version.toLowerCase()}/`)) {
+      return url.slice(version.length + 1) || "/"
+    }
+  }
+
+  if (/\/api$/i.test(basePath) && url.toLowerCase().startsWith("/api/")) {
+    return url.slice("/api".length) || "/"
+  }
+
+  return url
+}
+
 function getAuthToken() {
   if (typeof window === "undefined") {
     return undefined
@@ -36,6 +63,8 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
+  config.url = normalizeRequestPath(config.url)
+
   const token = getAuthToken()
   if (!token) {
     return config
