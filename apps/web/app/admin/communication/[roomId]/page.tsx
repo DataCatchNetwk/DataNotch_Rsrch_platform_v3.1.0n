@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageThread } from '@/components/communication/message-thread';
 import { ParticipantGrid } from '@/components/communication/participant-grid';
 import { CallControls } from '@/components/communication/call-controls';
+import { Button } from '@/components/ui/button';
 import { useRealtimeRoom } from '@/hooks/use-realtime-room';
 import { useWebRtc } from '@/hooks/use-webrtc';
 import { usePresence } from '@/hooks/use-presence';
@@ -52,11 +54,19 @@ export default function CommunicationRoomPage() {
 
   return (
     <div className="space-y-4 p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Communication Room: {roomId}</h1>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-          {connected ? 'Realtime connected' : 'Realtime reconnecting'}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin">Return to Dashboard</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/communication">Back to Communication</Link>
+          </Button>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+            {connected ? 'Realtime connected' : 'Realtime reconnecting'}
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">

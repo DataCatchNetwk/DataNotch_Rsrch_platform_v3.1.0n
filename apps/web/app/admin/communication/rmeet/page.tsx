@@ -8,7 +8,7 @@ const calls = ['Dataset Review Audio', 'Research PI Check-in', 'Support Escalati
 
 export default function RMeetPage() {
   return (
-    <CommShell title="R-Meet Call/Voice Workspace" subtitle="Dedicated audio operations page with scheduling, active calls, call queue, logs, and end-call controls." backHref="/admin/communication">
+    <CommShell title="R-Meet Call/Voice Workspace" subtitle="Dedicated audio operations page with scheduling, active calls, call queue, logs, and end-call controls." backHref="/admin/communication" dashboardHref="/admin">
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Live audio calls" value="23" delta="+4" />
         <MetricCard label="Queued calls" value="6" />

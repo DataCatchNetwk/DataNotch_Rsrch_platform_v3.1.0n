@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type ActionLink = {
@@ -14,13 +14,14 @@ type Props = {
   subtitle: string;
   children: ReactNode;
   backHref?: string;
+  dashboardHref?: string;
   actions?: ReactNode;
   links?: ActionLink[];
 };
 
-export function CommShell({ title, subtitle, children, backHref, actions, links = [] }: Props) {
+export function CommShell({ title, subtitle, children, backHref, dashboardHref, actions, links = [] }: Props) {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_36%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] px-4 py-6 text-slate-950 md:px-6 lg:px-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.12),transparent_36%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-4 py-6 text-slate-950 md:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.32)] backdrop-blur">
           <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
@@ -31,6 +32,14 @@ export function CommShell({ title, subtitle, children, backHref, actions, links 
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {dashboardHref ? (
+                <Button asChild variant="outline" className="rounded-2xl">
+                  <Link href={dashboardHref}>
+                    <Home className="mr-2 h-4 w-4" />
+                    Return to Dashboard
+                  </Link>
+                </Button>
+              ) : null}
               {backHref ? (
                 <Button asChild variant="outline" className="rounded-2xl">
                   <Link href={backHref}>

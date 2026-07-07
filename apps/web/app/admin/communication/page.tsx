@@ -17,7 +17,7 @@ const workspaces = [
 
 export default function CommunicationLandingPage() {
   return (
-    <CommShell title="Admin Communication Command Center" subtitle="Admin inbox, research threads, meeting workflow, and workspace launchers in one integrated hub.">
+    <CommShell title="Admin Communication Command Center" subtitle="Admin inbox, research threads, meeting workflow, and workspace launchers in one integrated hub." dashboardHref="/admin">
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Active sessions" value="31" delta="Live" />
         <MetricCard label="Pending invites" value="18" />

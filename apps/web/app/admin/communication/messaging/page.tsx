@@ -504,7 +504,7 @@ export default function MessagingPage() {
   const groupedThreads = useMemo(() => groupThreadsByDate(filteredThreads), [filteredThreads]);
 
   return (
-    <CommShell title="Research Communication Hub" subtitle="Inbox, invitations, support, and asset-linked conversations for project, study, dataset, analysis, and publication workflows." backHref="/admin/communication">
+    <CommShell title="Research Communication Hub" subtitle="Inbox, invitations, support, and asset-linked conversations for project, study, dataset, analysis, and publication workflows." backHref="/admin/communication" dashboardHref="/admin">
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Inbox Threads" value={String(threads.length)} />
         <MetricCard label="Open Tickets" value={String(supportSummary.open)} />
@@ -588,7 +588,7 @@ export default function MessagingPage() {
                   Attach
                 </Button>
               </div>
-              <input ref={replyAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleReplyAttachmentChange} />
+              <input ref={replyAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleReplyAttachmentChange} aria-label="Attach file to reply" title="Attach file to reply" />
               <p className="text-xs text-slate-500">{replyAttachmentName ? `Attached: ${replyAttachmentName}` : 'Used when sending a reply on the selected thread.'}</p>
             </div>
             <div className="mt-3 flex gap-2">
@@ -934,7 +934,7 @@ export default function MessagingPage() {
                         Attach
                       </Button>
                     </div>
-                    <input ref={composeAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleComposeAttachmentChange} />
+                    <input ref={composeAttachmentInputRef} type="file" accept="*/*" className="hidden" onChange={handleComposeAttachmentChange} aria-label="Attach file to compose" title="Attach file to compose" />
                     <p className="text-xs text-slate-500">{composeAttachmentName ? `Attached: ${composeAttachmentName}` : 'Accepts any file type and stores it as a data URL attachment.'}</p>
                   </div>
                 </div>

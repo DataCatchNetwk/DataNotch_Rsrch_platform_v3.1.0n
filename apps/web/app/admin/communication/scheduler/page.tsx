@@ -3,7 +3,7 @@ import { MeetingSchedulerPanel } from '@/components/communication/meeting-schedu
 
 export default function SchedulerPage() {
   return (
-    <CommShell title="R-Meet Schedule Panel" subtitle="Schedule R-Meet call/voice discussions and R-Zooma meetings, track availability, send invitations, and manage booking workflow." backHref="/admin/communication">
+    <CommShell title="R-Meet Schedule Panel" subtitle="Schedule R-Meet call/voice discussions and R-Zooma meetings, track availability, send invitations, and manage booking workflow." backHref="/admin/communication" dashboardHref="/admin">
       <div className="mx-auto max-w-5xl">
         <MeetingSchedulerPanel />
       </div>

@@ -6,6 +6,7 @@ import {
   Camera,
   Ellipsis,
   Heart,
+  Home,
   MessageSquare,
   Mic,
   PhoneOff,
@@ -261,6 +262,9 @@ export default function RZoomaPage() {
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">R-Zooma Video Workspace</h1>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="border-slate-600 bg-slate-900 text-white hover:bg-slate-800" onClick={() => router.push("/admin")}>
+              <Home className="mr-2 h-4 w-4" /> Return to Dashboard
+            </Button>
             <Button variant="outline" className="border-slate-600 bg-slate-900 text-white hover:bg-slate-800" onClick={() => router.push("/admin/communication")}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
