@@ -6,6 +6,7 @@ import { HttpError } from '../utils/errors.js';
 import type { ApplicationReviewStatus, ResearcherType } from '@prisma/client';
 import { logAdminAuditEvent } from './audit.service.js';
 import { resolveUploadPath } from '../common/runtime-storage.js';
+import { sendRegistrationStatusEmail } from './email-notification.service.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,28 @@ function parseStringArray(value: string | string[] | undefined): string[] {
   }
 }
 
+function normalizeResearcherType(value: string): ResearcherType {
+  const normalized = value.trim().toUpperCase();
+  if (
+    normalized === 'GENERAL_RESEARCHER' ||
+    normalized === 'STUDENT_RESEARCHER' ||
+    normalized === 'CLINICAL_RESEARCHER' ||
+    normalized === 'EXTERNAL_COLLABORATOR'
+  ) {
+    return normalized as ResearcherType;
+  }
+
+  throw new HttpError(400, 'Invalid researcher type.');
+}
+
+function parseDateInput(value: string): Date {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new HttpError(400, 'Invalid date of birth.');
+  }
+  return date;
+}
+
 const UPLOAD_DIR = resolveUploadPath('applications');
 
 function saveUploadedFile(file: Express.Multer.File, subfolder: string): string {
@@ -123,6 +146,8 @@ function uploadFiles(
 
 export async function createApplication(dto: CreateApplicationInput, files: UploadedFiles) {
   const emailLower = dto.email.toLowerCase();
+  const researcherType = normalizeResearcherType(dto.researcherType);
+  const dateOfBirth = parseDateInput(dto.dateOfBirth);
 
   // Check uniqueness
   const existing = await prisma.user.findFirst({
@@ -158,7 +183,7 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
         countryCode: dto.phoneCode,
         mobileNumber: dto.mobileNumber,
         passwordHash,
-        dateOfBirth: new Date(dto.dateOfBirth),
+        dateOfBirth,
         accountStatus: 'PENDING_APPROVAL',
         referralCode: dto.referralCode || null,
       },
@@ -167,7 +192,7 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
     const application = await tx.researcherApplication.create({
       data: {
         userId: user.id,
-        researcherType: dto.researcherType as ResearcherType,
+        researcherType,
         institution: dto.institution,
         department: dto.department,
         roleTitle: dto.roleTitle,
@@ -230,6 +255,17 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
     applicantName: `${result.user.firstname} ${result.user.surname}`,
     applicationId: result.application.id,
     institution: result.application.institution,
+  });
+  await sendRegistrationStatusEmail({
+    to: result.user.email,
+    applicantName: `${result.user.firstname} ${result.user.surname}`,
+    applicationId: result.application.id,
+    status: 'PENDING',
+  }).catch((error) => {
+    console.error('[application-mailer] failed to send pending email', {
+      applicationId: result.application.id,
+      error,
+    });
   });
 
   return {
@@ -398,6 +434,19 @@ export async function reviewApplication(
     applicationId: application.id,
     reviewStatus: nextReviewStatus,
     notes: dto.notes,
+  });
+  await sendRegistrationStatusEmail({
+    to: application.user.email,
+    applicantName: `${application.user.firstname} ${application.user.surname}`,
+    applicationId: application.id,
+    status: nextReviewStatus,
+    notes: dto.notes,
+  }).catch((error) => {
+    console.error('[application-mailer] failed to send review decision email', {
+      applicationId: application.id,
+      reviewStatus: nextReviewStatus,
+      error,
+    });
   });
 
   return {

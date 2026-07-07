@@ -225,7 +225,7 @@ export default function RegisterResearcherPage() {
     status: "idle",
   });
 
-  const defaultValues: Partial<ResearcherApplicationFormValues> = useMemo(
+  const defaultValues: ResearcherApplicationFormValues = useMemo(
     () => ({
       firstName: "",
       lastName: "",
@@ -235,6 +235,7 @@ export default function RegisterResearcherPage() {
       mobileNumber: "",
       password: "",
       confirmPassword: "",
+      dateOfBirth: "",
       referralCode: "",
 
       institution: "",
@@ -742,16 +743,16 @@ export default function RegisterResearcherPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="general_researcher">
+                              <SelectItem value="GENERAL_RESEARCHER">
                                 General Researcher
                               </SelectItem>
-                              <SelectItem value="student_researcher">
+                              <SelectItem value="STUDENT_RESEARCHER">
                                 Student Researcher
                               </SelectItem>
-                              <SelectItem value="clinical_researcher">
+                              <SelectItem value="CLINICAL_RESEARCHER">
                                 Clinical Researcher
                               </SelectItem>
-                              <SelectItem value="external_collaborator">
+                              <SelectItem value="EXTERNAL_COLLABORATOR">
                                 External Collaborator
                               </SelectItem>
                             </SelectContent>
