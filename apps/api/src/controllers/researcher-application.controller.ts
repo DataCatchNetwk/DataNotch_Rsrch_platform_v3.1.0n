@@ -41,18 +41,37 @@ export async function submitApplication(req: Request, res: Response) {
       route: req.path,
       method: req.method,
       errorType: errorType(error),
+      // Always log something safe from the error object.
+      name: error && typeof error === 'object' && 'name' in error ? (error as any).name : undefined,
+      code: error && typeof error === 'object' && 'code' in error ? (error as any).code : undefined,
+      message: (() => {
+        if (error instanceof Error) return error.message;
+        try {
+          return JSON.stringify(error);
+        } catch {
+          return String(error);
+        }
+      })(),
+      // Prisma errors often include structured details; log them when available.
+      prismaDetails:
+        error && typeof error === 'object' && 'meta' in error
+          ? (error as any).meta
+          : undefined,
+      // Helps when Prisma errors don’t expose message/meta directly.
+      errorKeys: error && typeof error === 'object' ? Object.keys(error as object) : undefined,
       stack: process.env.NODE_ENV === 'production' ? undefined : error instanceof Error ? error.stack : undefined,
     });
 
     res.status(status).json({
       error: 'REGISTRATION_FAILED',
       message:
-        error instanceof HttpError && status < 500
+        error instanceof HttpError
           ? error.message
           : 'Unable to submit registration application.',
       requestId,
     });
   }
+
 }
 
 export async function listApplications(req: Request, res: Response) {
