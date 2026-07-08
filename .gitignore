@@ -14,10 +14,19 @@ package.json
 .env.*
 !.env.example
 !**/.env.example
+!.env.e2e.example
 apps/api/.env
 apps/api/.env.local
 apps/api/.env.production
 !apps/api/.env.example
+
+# E2E test secrets (copy from .env.e2e.example)
+.env.e2e
+
+# Playwright output
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/.playwright/
 
 # SDOH uploaded implementation packs and generated artifacts
 sdoh_pack*/

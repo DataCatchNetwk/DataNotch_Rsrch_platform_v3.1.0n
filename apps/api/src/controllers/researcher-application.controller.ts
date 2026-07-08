@@ -35,7 +35,8 @@ export async function submitApplication(req: Request, res: Response) {
     const result = await createApplication(req.body, files ?? {}, { requestId, route: req.path, method: req.method });
     res.status(201).json({ ...result, requestId });
   } catch (error) {
-    const status = error instanceof HttpError ? error.statusCode : 500;
+    const isPrismaValidation = error instanceof Prisma.PrismaClientValidationError;
+    const status = error instanceof HttpError ? error.statusCode : isPrismaValidation ? 400 : 500;
     console.error('[researcher-registration] failed', {
       requestId,
       route: req.path,

@@ -15,7 +15,11 @@
     "build": "pnpm --dir apps/api build && pnpm --dir apps/web build",
     "build:web": "pnpm --dir apps/web build",
     "build:server": "pnpm --dir apps/api build",
-    "build:api": "pnpm --dir apps/api build"
+    "build:api": "pnpm --dir apps/api build",
+    "test:e2e:cloud": "pnpm --filter @datanotch/e2e test:cloud",
+    "test:e2e:cloud:headed": "pnpm --filter @datanotch/e2e test:cloud:headed",
+    "test:e2e:cloud:debug": "pnpm --filter @datanotch/e2e test:cloud:debug",
+    "test:e2e:install": "pnpm --filter @datanotch/e2e install:browsers"
   },
   "dependencies": {
     "recharts": "^3.8.1"
