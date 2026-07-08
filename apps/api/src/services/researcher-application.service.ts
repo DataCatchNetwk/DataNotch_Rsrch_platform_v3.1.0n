@@ -77,6 +77,31 @@ type RegistrationContext = {
   method?: string;
 };
 
+// ─── Enum mapping ───────────────────────────────────────────────────────────
+
+const RESEARCHER_TYPE_MAP: Record<string, ResearcherType> = {
+  general_researcher: 'GENERAL_RESEARCHER',
+  student_researcher: 'STUDENT_RESEARCHER',
+  clinical_researcher: 'CLINICAL_RESEARCHER',
+  external_collaborator: 'EXTERNAL_COLLABORATOR',
+  // Pass-through for already-uppercased values (e.g. from admin tools)
+  GENERAL_RESEARCHER: 'GENERAL_RESEARCHER',
+  STUDENT_RESEARCHER: 'STUDENT_RESEARCHER',
+  CLINICAL_RESEARCHER: 'CLINICAL_RESEARCHER',
+  EXTERNAL_COLLABORATOR: 'EXTERNAL_COLLABORATOR',
+};
+
+function mapResearcherType(raw: string): ResearcherType {
+  const mapped = RESEARCHER_TYPE_MAP[raw];
+  if (!mapped) {
+    throw new HttpError(
+      400,
+      `Invalid researcherType "${raw}". Accepted values: general_researcher, student_researcher, clinical_researcher, external_collaborator.`,
+    );
+  }
+  return mapped;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function parseBooleanField(value: string | boolean | undefined): boolean {
@@ -217,7 +242,7 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
     const application = await tx.researcherApplication.create({
       data: {
         userId: user.id,
-        researcherType: dto.researcherType as ResearcherType,
+        researcherType: mapResearcherType(dto.researcherType),
         institution: dto.institution,
         department: dto.department,
         roleTitle: dto.roleTitle,
