@@ -14,7 +14,12 @@
     },
     {
       "key": "DATABASE_URL",
-      "description": "PostgreSQL connection string from Supabase",
+      "description": "PostgreSQL connection string from Supabase (pooler or direct). Use port 5432 direct URL for best compatibility.",
+      "sync": false
+    },
+    {
+      "key": "DIRECT_URL",
+      "description": "Direct PostgreSQL connection string (port 5432, no pooler). Required when DATABASE_URL uses Supabase pgBouncer pooler (port 6543). Leave unset if DATABASE_URL is already a direct connection.",
       "sync": false
     },
     {
