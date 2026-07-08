@@ -5,6 +5,11 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  // DIRECT_URL is optional — only needed when DATABASE_URL points to a
+  // connection pooler (e.g. Supabase pgBouncer on port 6543).
+  // Set DIRECT_URL to the direct Postgres connection string (port 5432)
+  // when running migrations or introspection against a pooled DATABASE_URL.
+  // Leave unset on Render when DATABASE_URL already points to the direct URL.
   directUrl = env("DIRECT_URL")
 }
 

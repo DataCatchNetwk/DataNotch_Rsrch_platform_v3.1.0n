@@ -159,17 +159,17 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
   logRegistrationStage('start', context);
   const emailLower = dto.email.toLowerCase();
 
-  // Check uniqueness
+  // Check uniqueness — build OR conditions explicitly to avoid empty-array
+  // validation errors on some Prisma/PostgreSQL pooler configurations.
   logRegistrationStage('check-duplicate-email', context);
+  const emailsToCheck: string[] = [emailLower];
+  if (dto.institutionEmail) {
+    const instEmail = dto.institutionEmail.toLowerCase();
+    if (instEmail !== emailLower) emailsToCheck.push(instEmail);
+  }
   const existing = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { email: emailLower },
-        ...(dto.institutionEmail
-          ? [{ email: dto.institutionEmail.toLowerCase() }]
-          : []),
-      ],
-    },
+    where: { email: { in: emailsToCheck } },
+    select: { id: true },
   });
   if (existing) {
     throw new HttpError(409, 'An account with this email already exists.');
@@ -188,6 +188,17 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
   const featureNeeds = parseStringArray(dto.featureNeeds);
 
   logRegistrationStage('database-transaction', context);
+
+  // Check mobile number uniqueness before entering the transaction
+  // (avoids a unique-constraint error mid-transaction that would be harder to surface).
+  const existingMobile = await prisma.user.findFirst({
+    where: { countryCode: dto.phoneCode, mobileNumber: dto.mobileNumber },
+    select: { id: true },
+  });
+  if (existingMobile) {
+    throw new HttpError(409, 'An account with this phone number already exists.');
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -227,9 +238,9 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
         fundingSource: dto.fundingSource || null,
         supervisorName: dto.supervisorName,
         supervisorEmail: dto.supervisorEmail.toLowerCase(),
-        cvFileUrl: uploaded.cvFileUrl,
-        affiliationProofUrl: uploaded.affiliationProofUrl,
-        irbDocumentUrl: uploaded.irbDocumentUrl,
+        cvFileUrl: uploaded.cvFileUrl || null,
+        affiliationProofUrl: uploaded.affiliationProofUrl || null,
+        irbDocumentUrl: uploaded.irbDocumentUrl || null,
         reviewStatus: 'PENDING',
       },
     });
@@ -246,6 +257,7 @@ export async function createApplication(dto: CreateApplicationInput, files: Uplo
     await tx.notification.create({
       data: {
         userId: user.id,
+        workspaceId: null,
         type: 'APPLICATION_SUBMITTED',
         title: 'Application submitted',
         description:
