@@ -5,6 +5,7 @@ import {
   type NavSection,
   type RouteKey,
 } from "@/src/config/route-map-and-icons";
+import { expandRoleHierarchy } from "@/lib/rbac";
 
 export type BadgeValue = number | string;
 export type BadgeOverrides = Partial<Record<RouteKey, BadgeValue>>;
@@ -29,11 +30,19 @@ export type BuiltNavSection = {
 };
 
 function isKnownRole(role: string): role is AppRole {
-  return role === "ADMIN" || role === "ANALYST" || role === "PENDING" || role === "USER";
+  return (
+    role === "SUPER_ADMIN" ||
+    role === "ADMIN" ||
+    role === "ANALYST" ||
+    role === "PENDING" ||
+    role === "USER" ||
+    role === "REVIEWER" ||
+    role === "STAFF"
+  );
 }
 
 export function normalizeRoles(userRoles: readonly string[]): AppRole[] {
-  return userRoles.filter(isKnownRole);
+  return expandRoleHierarchy(userRoles).filter(isKnownRole);
 }
 
 export function hasRequiredRole(userRoles: readonly string[], allowedRoles?: readonly AppRole[]): boolean {

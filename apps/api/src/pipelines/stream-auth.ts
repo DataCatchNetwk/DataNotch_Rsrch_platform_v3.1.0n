@@ -1,8 +1,9 @@
 import type { Request } from 'express';
 import { HttpError } from '../utils/errors.js';
 import { verifyToken } from '../utils/jwt.js';
+import { resolveAuthenticatedUser } from '../services/authenticated-user.service.js';
 
-export function authenticateStreamRequest(req: Request) {
+export async function authenticateStreamRequest(req: Request) {
   const header = req.headers.authorization;
   const queryToken = typeof req.query.token === 'string' ? req.query.token : null;
   const token = header?.startsWith('Bearer ') ? header.slice(7) : queryToken;
@@ -11,6 +12,11 @@ export function authenticateStreamRequest(req: Request) {
     throw new HttpError(401, 'Missing stream authentication token');
   }
 
-  req.user = verifyToken(token);
+  const user = await resolveAuthenticatedUser(verifyToken(token));
+  if (!user) {
+    throw new HttpError(401, 'Authenticated user no longer exists');
+  }
+
+  req.user = user;
   return req.user;
 }

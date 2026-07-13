@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '../utils/jwt.js';
 
-export function authenticateOptional(req: Request, _res: Response, next: NextFunction): void {
+import { resolveAuthenticatedUser } from '../services/authenticated-user.service.js';
+
+export async function authenticateOptional(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     next();
@@ -10,7 +12,8 @@ export function authenticateOptional(req: Request, _res: Response, next: NextFun
 
   const token = header.slice(7);
   try {
-    req.user = verifyToken(token);
+    const payload = verifyToken(token);
+    req.user = (await resolveAuthenticatedUser(payload)) ?? undefined;
   } catch {
     // Ignore invalid optional credentials and continue as anonymous.
   }

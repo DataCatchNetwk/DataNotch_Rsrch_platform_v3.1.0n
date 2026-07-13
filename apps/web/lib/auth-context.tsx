@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { apiFetch, ApiError } from '@/lib/api';
+import { hasAnyRole } from '@/lib/rbac';
 
 export type AuthUser = {
   id: string;
@@ -121,6 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiFetch<MeResponse>('/api/v1/auth/me', { token: stored, signal: controller.signal })
       .then((res) => {
         if (!active) return;
+        localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+        sessionStorage.setItem(USER_KEY, JSON.stringify(res.user));
         setState({ user: res.user, token: stored, loading: false });
       })
       .catch(() => {
@@ -157,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setAuth]);
 
   const hasRole = useCallback((role: string) => {
-    return state.user?.roles.includes(role) ?? false;
+    return hasAnyRole(state.user?.roles, [role]);
   }, [state.user]);
 
   return (

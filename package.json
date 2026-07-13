@@ -16,6 +16,7 @@
     "build:web": "pnpm --dir apps/web build",
     "build:server": "pnpm --dir apps/api build",
     "build:api": "pnpm --dir apps/api build",
+    "test:rbac": "pnpm --dir apps/api test:rbac && pnpm --dir apps/web test:rbac",
     "test:e2e:cloud": "pnpm --filter @datanotch/e2e test:cloud",
     "test:e2e:cloud:headed": "pnpm --filter @datanotch/e2e test:cloud:headed",
     "test:e2e:cloud:debug": "pnpm --filter @datanotch/e2e test:cloud:debug",

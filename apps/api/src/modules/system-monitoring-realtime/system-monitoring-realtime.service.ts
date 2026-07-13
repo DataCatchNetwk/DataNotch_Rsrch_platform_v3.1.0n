@@ -3,6 +3,8 @@ import { HttpError } from '../../utils/errors.js'
 import { verifyToken } from '../../utils/jwt.js'
 import { emitSystemMonitoringSnapshot } from '../../realtime/notifications.gateway.js'
 import { systemMonitoringService } from '../system-monitoring/system-monitoring.module.js'
+import { isAdminRole } from '../../constants/rbac.js'
+import { resolveAuthenticatedUser } from '../../services/authenticated-user.service.js'
 
 export class SystemMonitoringRealtimeService {
   private timer: NodeJS.Timeout | null = null
@@ -11,11 +13,11 @@ export class SystemMonitoringRealtimeService {
     return systemMonitoringService.buildRealtimeSnapshot()
   }
 
-  ensureMonitoringAccess(req: Request) {
+  async ensureMonitoringAccess(req: Request) {
     const queryToken = req.query.token
     if (typeof queryToken === 'string' && queryToken.trim()) {
-      const user = verifyToken(queryToken)
-      if (user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')) {
+      const user = await resolveAuthenticatedUser(verifyToken(queryToken))
+      if (user && isAdminRole(user.roles)) {
         return user
       }
       throw new HttpError(403, 'Admin role required for monitoring stream')
@@ -23,8 +25,8 @@ export class SystemMonitoringRealtimeService {
 
     const header = req.headers.authorization
     if (typeof header === 'string' && header.startsWith('Bearer ')) {
-      const user = verifyToken(header.slice(7))
-      if (user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')) {
+      const user = await resolveAuthenticatedUser(verifyToken(header.slice(7)))
+      if (user && isAdminRole(user.roles)) {
         return user
       }
       throw new HttpError(403, 'Admin role required for monitoring stream')
@@ -34,7 +36,7 @@ export class SystemMonitoringRealtimeService {
   }
 
   async stream(req: Request, res: Response) {
-    this.ensureMonitoringAccess(req)
+    await this.ensureMonitoringAccess(req)
 
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache, no-transform')

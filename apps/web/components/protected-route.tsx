@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { hasAnyRole, isAdminUser } from '@/lib/rbac';
 import { Routes, type RouteKey } from '@/src/config/route-map-and-icons';
 import { rbacGuardMiddleware } from '@/src/config/route-guards-rbac';
 
@@ -25,12 +26,12 @@ export function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
 
-  const roleCheckPassed = !allowedRoles || allowedRoles.some((r) => user?.roles.includes(r));
+  const roleCheckPassed = !allowedRoles || hasAnyRole(user?.roles, allowedRoles);
   const routeGuard = routeKey && user ? rbacGuardMiddleware(routeKey, user.roles, redirectTo) : null;
   const isDashboardPath = pathname.startsWith('/dashboard');
   const isPendingScreen = pathname.startsWith('/dashboard/pending');
-  const isAdminUser = Boolean(user?.roles.some((role) => role === 'ADMIN' || role === 'SUPER_ADMIN'));
-  const requiresApproval = Boolean(user && !isAdminUser && user.accountStatus !== 'ACTIVE');
+  const hasAdminAccess = isAdminUser(user?.roles);
+  const requiresApproval = Boolean(user && !hasAdminAccess && user.accountStatus !== 'ACTIVE');
 
   useEffect(() => {
     if (loading) return;

@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../../.env.e2e'), override: false });
 
 const FRONTEND_URL =
-  process.env.E2E_FRONTEND_URL ?? 'https://data-notch-rsrch-platform-v3-1-0n-w.vercel.app';
+  process.env.E2E_FRONTEND_URL ?? 'https://contextualsdoh.org';
 
 const BACKEND_URL =
   process.env.E2E_BACKEND_URL ?? 'https://datacatchnetwk.onrender.com';

@@ -2,6 +2,7 @@ import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import { env } from '../config/env.js';
 import { verifyToken, type JwtPayload } from '../utils/jwt.js';
+import { resolveAuthenticatedUser } from '../services/authenticated-user.service.js';
 
 let io: Server | null = null;
 
@@ -32,17 +33,24 @@ export function attachNotificationGateway(server: HttpServer) {
   });
 
   io.use((socket, next) => {
-    try {
-      const token = getToken(socket);
-      if (!token) {
-        return next(new Error('Unauthorized'));
-      }
+    void (async () => {
+      try {
+        const token = getToken(socket);
+        if (!token) {
+          return next(new Error('Unauthorized'));
+        }
 
-      socket.data.user = verifyToken(token);
-      next();
-    } catch {
-      next(new Error('Unauthorized'));
-    }
+        const user = await resolveAuthenticatedUser(verifyToken(token));
+        if (!user) {
+          return next(new Error('Unauthorized'));
+        }
+
+        socket.data.user = user;
+        next();
+      } catch {
+        next(new Error('Unauthorized'));
+      }
+    })();
   });
 
   io.on('connection', (socket) => {
