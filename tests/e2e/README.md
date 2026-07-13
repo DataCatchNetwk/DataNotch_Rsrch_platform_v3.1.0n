@@ -56,6 +56,10 @@ cp .env.e2e.example .env.e2e
 | `E2E_FRONTEND_URL` | No | Override the Vercel URL (default: hardcoded in config) |
 | `E2E_BACKEND_URL` | No | Override the Render URL (default: hardcoded in config) |
 | `E2E_ADMIN_TOKEN` | No | Admin JWT — enables test 4 (Supabase DB verification) |
+| `E2E_SUPER_ADMIN_EMAIL` | No | Enables Super Admin RBAC cloud login/API tests |
+| `E2E_SUPER_ADMIN_PASSWORD` | No | Super Admin password for RBAC cloud tests |
+| `E2E_NORMAL_USER_EMAIL` | No | Enables normal-user 403 RBAC cloud test |
+| `E2E_NORMAL_USER_PASSWORD` | No | Normal-user password for RBAC cloud test |
 
 **Without `E2E_ADMIN_TOKEN`**, tests 4 and 5 are automatically skipped with a clear message.
 
@@ -238,6 +242,6 @@ pnpm test:e2e:cloud
 
 | Service | URL |
 |---------|-----|
-| Frontend (Vercel) | https://data-notch-rsrch-platform-v3-1-0n-w.vercel.app |
+| Frontend (Vercel) | https://contextualsdoh.org |
 | Backend (Render) | https://datacatchnetwk.onrender.com |
 | Health endpoint | https://datacatchnetwk.onrender.com/health |

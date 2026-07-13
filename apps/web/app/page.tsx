@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { getGoogleSsoStart, getMicrosoftSsoStart } from '@/lib/auth-service';
+import { dashboardForRoles, isAdminUser } from '@/lib/rbac';
 
 const TRUST_DEVICE_KEY = 'trust_device_preference';
 
@@ -37,7 +38,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    router.replace(user.roles.includes('ADMIN') ? '/admin' : '/dashboard');
+    router.replace(dashboardForRoles(user.roles));
   }, [authLoading, router, user]);
 
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function HomePage() {
 
     try {
       const authenticatedUser = await login(email, password);
-      const isAdminAccount = authenticatedUser.roles.includes('ADMIN') || authenticatedUser.roles.includes('SUPER_ADMIN');
+      const isAdminAccount = isAdminUser(authenticatedUser.roles);
 
       if (isAdmin && !isAdminAccount) {
         // Researcher account tried to use the Admin tab
@@ -146,7 +147,7 @@ export default function HomePage() {
         }
       }
 
-      router.push(isAdminAccount ? '/admin' : '/dashboard');
+      router.push(dashboardForRoles(authenticatedUser.roles));
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : 'An error occurred');
       setPassword('');

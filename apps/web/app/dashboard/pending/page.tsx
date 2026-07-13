@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { dashboardForRoles, isAdminUser } from '@/lib/rbac';
 import { Clock, CheckCircle2, ShieldCheck, Mail, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,8 +18,8 @@ export default function PendingApprovalPage() {
       return;
     }
     // If the user has been approved already, redirect to dashboard
-    if (user.accountStatus === 'ACTIVE' || user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')) {
-      router.push(user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN') ? '/admin' : '/dashboard');
+    if (user.accountStatus === 'ACTIVE' || isAdminUser(user.roles)) {
+      router.push(dashboardForRoles(user.roles));
     }
   }, [user, loading, router]);
 

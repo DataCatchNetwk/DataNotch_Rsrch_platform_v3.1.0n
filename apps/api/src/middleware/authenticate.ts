@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '../utils/jwt.js';
 import { HttpError } from '../utils/errors.js';
 import { assertTrustedNetwork } from './network-access.js';
+import { resolveAuthenticatedUser } from '../services/authenticated-user.service.js';
 
 export async function authenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
@@ -14,7 +15,13 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
   try {
     await assertTrustedNetwork(req);
-    req.user = verifyToken(token);
+    const payload = verifyToken(token);
+    const currentUser = await resolveAuthenticatedUser(payload);
+    if (!currentUser) {
+      next(new HttpError(401, 'Authenticated user no longer exists'));
+      return;
+    }
+    req.user = currentUser;
     next();
   } catch (error) {
     if (error instanceof HttpError) {

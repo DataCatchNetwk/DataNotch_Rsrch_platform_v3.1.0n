@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { getGoogleSsoStart, getMicrosoftSsoStart } from '@/lib/auth-service';
+import { dashboardForRoles, isAdminUser } from '@/lib/rbac';
 
 const TRUST_DEVICE_KEY = 'trust_device_preference';
 
@@ -33,7 +34,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    router.replace(user.roles.includes('ADMIN') ? '/admin' : '/dashboard');
+    router.replace(dashboardForRoles(user.roles));
   }, [authLoading, router, user]);
 
   useEffect(() => {
@@ -116,7 +117,8 @@ export default function AdminLoginPage() {
 
     try {
       const authenticatedUser = await login(email, password);
-      if (isAdmin && !authenticatedUser.roles.includes('ADMIN')) {
+      const isAdminAccount = isAdminUser(authenticatedUser.roles);
+      if (isAdmin && !isAdminAccount) {
         setError('This account does not have admin access.');
         setPassword('');
         setLoading(false);
@@ -129,7 +131,7 @@ export default function AdminLoginPage() {
           sessionStorage.setItem('auth_token', storedToken);
         }
       }
-      router.push(authenticatedUser.roles.includes('ADMIN') || isAdmin ? '/admin' : '/dashboard');
+      router.push(dashboardForRoles(authenticatedUser.roles));
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : 'An error occurred');
       setPassword('');

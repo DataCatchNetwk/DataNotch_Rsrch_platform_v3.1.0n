@@ -11,6 +11,8 @@
     "start": "node dist/index.js",
     "worker": "tsx src/worker.ts",
     "queue:repair": "tsx src/workers/repair-queue.ts",
+    "test:rbac": "node --test --import tsx tests/rbac.test.ts",
+    "audit:user-rbac": "tsx scripts/audit-user-rbac.ts",
     "paths:repair-legacy-uploads": "node scripts/repair-legacy-upload-paths.mjs",
     "paths:repair-legacy-uploads:apply": "node scripts/repair-legacy-upload-paths.mjs --apply",
     "test:network-enforcement": "node scripts/network-enforcement-smoke.mjs",

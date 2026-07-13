@@ -151,7 +151,7 @@ export const ROUTES = {
 export type RouteKey = keyof typeof ROUTES;
 export type RouteHref = (typeof ROUTES)[RouteKey];
 
-export const APP_ROLES = ["ADMIN", "ANALYST", "PENDING", "USER"] as const;
+export const APP_ROLES = ["SUPER_ADMIN", "ADMIN", "ANALYST", "PENDING", "USER", "REVIEWER", "STAFF"] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 // ─── 2. Icon registry ─────────────────────────────────────────────────────────

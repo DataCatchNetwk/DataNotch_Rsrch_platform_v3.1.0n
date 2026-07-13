@@ -12,7 +12,7 @@ import { asyncHandler } from '../utils/async-handler.js';
 
 const router = Router();
 
-// All admin routes require authentication and ADMIN role
+// All admin routes require authentication and an admin-equivalent role.
 router.use(authenticate, authorize('ADMIN'));
 
 router.get('/', asyncHandler(listApplications));

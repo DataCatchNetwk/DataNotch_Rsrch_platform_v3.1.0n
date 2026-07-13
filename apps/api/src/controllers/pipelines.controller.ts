@@ -78,7 +78,7 @@ export async function tailPipelineRunLiveLog(req: Request, res: Response) {
 }
 
 export async function streamPipelineRunEvents(req: Request, res: Response) {
-  const user = authenticateStreamRequest(req);
+  const user = await authenticateStreamRequest(req);
   await service.getRun({ id: user.id, email: user.email }, req.params.runId);
 
   res.setHeader('Content-Type', 'text/event-stream');
